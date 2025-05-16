@@ -60,7 +60,12 @@ export default function Dashboard() {
               <span>Help</span>
             </Button>
             
-            <Button variant="outline" size="sm" className="flex items-center space-x-1">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center space-x-1"
+              onClick={() => document.querySelector('.search-button')?.dispatchEvent(new MouseEvent('click'))}
+            >
               <Search className="h-4 w-4" />
               <span>Search</span>
             </Button>

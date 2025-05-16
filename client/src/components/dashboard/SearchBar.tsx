@@ -76,7 +76,7 @@ export default function SearchBar() {
       <Button
         variant="outline"
         size="icon"
-        className="w-10 h-10 rounded-full"
+        className="w-10 h-10 rounded-full search-button"
         onClick={() => setIsOpen(true)}
       >
         <Search className="h-4 w-4" />
