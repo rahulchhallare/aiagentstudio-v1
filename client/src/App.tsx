@@ -8,6 +8,11 @@ import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import Dashboard from "@/pages/Dashboard";
 import AgentBuilder from "@/pages/AgentBuilder";
+import Agents from "@/pages/Agents";
+import Templates from "@/pages/Templates";
+import Settings from "@/pages/Settings";
+import Billing from "@/pages/Billing";
+import Help from "@/pages/Help";
 import Header from "@/components/Header";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -21,6 +26,11 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/builder" component={AgentBuilder} />
       <Route path="/builder/:id" component={AgentBuilder} />
+      <Route path="/agents" component={Agents} />
+      <Route path="/templates" component={Templates} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/billing" component={Billing} />
+      <Route path="/help" component={Help} />
       <Route component={NotFound} />
     </Switch>
   );
