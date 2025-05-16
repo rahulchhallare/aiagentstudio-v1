@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'wouter';
+import { useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import {
@@ -25,8 +26,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
+  
+  const handleProfileClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate('/profile');
+  }, [navigate]);
   
   // Navigation items
   const navItems = [
@@ -130,7 +136,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             ) : (
               <Link 
                 key={index} 
-                href={item.href || "/"} 
+                to={item.href || "/"} 
                 className={cn(
                   "flex items-center px-4 py-3 rounded-lg transition-colors",
                   location === item.href
@@ -147,7 +153,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         
         {/* User Profile Section */}
         <div className="p-4 border-t border-gray-200">
-          <Link href="/profile" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+          <button
+            onClick={handleProfileClick}
+            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 w-full text-left"
+          >
             <Avatar className="h-9 w-9">
               <AvatarFallback className="bg-primary-100 text-primary-700">
                 {user?.username?.substring(0, 2).toUpperCase() || 'AI'}
@@ -161,7 +170,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {user?.email || 'user@example.com'}
               </p>
             </div>
-          </Link>
+          </button>
         </div>
         
         {/* Sidebar Footer */}
