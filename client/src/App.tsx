@@ -16,6 +16,7 @@ import Help from "@/pages/Help";
 import Features from "@/pages/Features";
 import Pricing from "@/pages/Pricing";
 import Documentation from "@/pages/Documentation";
+import Profile from "@/pages/Profile";
 import Header from "@/components/Header";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/help" component={Help} />
+      <Route path="/profile" component={Profile} />
       <Route path="/features" component={Features} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/documentation" component={Documentation} />
