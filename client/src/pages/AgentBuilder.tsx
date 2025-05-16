@@ -158,29 +158,42 @@ export default function AgentBuilder() {
           y: event.clientY - reactFlowBounds.top,
         });
 
+        // Define node types mapping
+        const typeMap = {
+          'inputNode': 'inputNode',
+          'gptNode': 'gptNode',
+          'outputNode': 'outputNode',
+          'textInput': 'inputNode',
+          'gptBlock': 'gptNode',
+          'textOutput': 'outputNode'
+        };
+        
+        // Use the mapping to determine the correct type
+        const nodeType = typeMap[type] || type;
+        
         let newNode: Node = {
-          id: `${type}-${Date.now()}`,
-          type,
+          id: `${nodeType}-${Date.now()}`,
+          type: nodeType,
           position,
           data: {}
         };
 
         // Set default data based on node type
-        if (type === 'inputNode') {
+        if (nodeType === 'inputNode') {
           newNode.data = { 
             label: 'Text Input',
             placeholder: 'Enter your question...',
             description: 'Type your query here'
           };
-        } else if (type === 'gptNode') {
+        } else if (nodeType === 'gptNode') {
           newNode.data = { 
             label: 'GPT-4 Processor',
-            model: 'gpt-4',
+            model: 'gpt-4o',
             systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
             temperature: 0.7,
             maxTokens: 1000
           };
-        } else if (type === 'outputNode') {
+        } else if (nodeType === 'outputNode') {
           newNode.data = { 
             label: 'Text Output',
             format: 'markdown'
