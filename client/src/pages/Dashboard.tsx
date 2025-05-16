@@ -74,16 +74,6 @@ export default function Dashboard() {
               <Search className="h-4 w-4" />
               <span>Search</span>
             </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center space-x-1"
-              onClick={() => navigate('/profile')}
-            >
-              <UserCircle className="h-4 w-4" />
-              <span>Profile</span>
-            </Button>
           </div>
         </div>
         
