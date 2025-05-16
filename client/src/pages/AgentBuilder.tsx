@@ -116,41 +116,67 @@ export default function AgentBuilder() {
     }
   }, [user, authLoading, navigate]);
 
-  // Load template if template ID is provided
+  // Handle template loading
   useEffect(() => {
-    if (templateId && user && !id) {
-      // Only load template if we're creating a new agent (not editing)
-      const template = getTemplateById(templateId);
+    // Only attempt to load a template if:
+    // 1. User is authenticated
+    // 2. Not currently editing an existing agent (no id)
+    // 3. A template ID is provided in the URL
+    if (user && !id && templateId) {
+      console.log('Loading template with ID:', templateId);
       
-      if (template) {
-        // Set template name based on template ID
-        if (templateId === 'cc-1') {
-          setAgentName('Blog Writer Agent');
-        } else if (templateId === 'cc-2') {
-          setAgentName('Social Media Agent');
-        } else if (templateId === 'cs-1') {
-          setAgentName('FAQ Responder Agent');
-        } else if (templateId === 'dp-1') {
-          setAgentName('Data Summarizer Agent');
-        } else if (templateId === 'dp-2') {
-          setAgentName('Research Assistant Agent');
+      // Delay template loading slightly to ensure reactflow is initialized
+      setTimeout(() => {
+        const templateData = getTemplateById(templateId);
+        
+        if (templateData) {
+          // Determine agent name from template ID
+          let templateName = 'Template Agent';
+          
+          switch(templateId) {
+            case 'cc-1':
+              templateName = 'Blog Writer Agent';
+              break;
+            case 'cc-2':
+              templateName = 'Social Media Agent';
+              break;
+            case 'cs-1':
+              templateName = 'FAQ Responder Agent';
+              break;
+            case 'dp-1':
+              templateName = 'Data Summarizer Agent';
+              break;
+            case 'dp-2':
+              templateName = 'Research Assistant Agent';
+              break;
+          }
+          
+          // Set agent name
+          setAgentName(templateName);
+          
+          // Apply the template's nodes and edges
+          console.log('Template data:', templateData);
+          setNodes(templateData.nodes);
+          setEdges(templateData.edges);
+          
+          // Remove template parameter from URL to prevent reapplying on refresh
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Show success message
+          toast({
+            title: 'Template Applied',
+            description: `${templateName} template loaded successfully.`,
+          });
+        } else {
+          toast({
+            title: 'Template Error',
+            description: 'Could not load the requested template.',
+            variant: 'destructive',
+          });
         }
-        
-        // Set nodes and edges from template
-        setNodes(template.nodes || []);
-        setEdges(template.edges || []);
-        
-        // Remove template ID from URL to prevent reloading on refresh
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
-        
-        toast({
-          title: 'Template loaded',
-          description: `${agentName} template has been loaded successfully.`,
-        });
-      }
+      }, 500);
     }
-  }, [templateId, user, id, setNodes, setEdges, toast, agentName]);
+  }, [user, id, templateId, setNodes, setEdges, toast]);
 
   // Load agent data if editing
   useEffect(() => {
