@@ -11,9 +11,13 @@ import {
   HelpCircle,
   X,
   ChevronUp,
+  UserCircle,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import SearchBar from './SearchBar';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -53,6 +57,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     {
       title: 'Section: Account',
       type: 'section',
+    },
+    {
+      title: 'My Profile',
+      href: '/profile',
+      icon: <UserCircle className="h-5 w-5" />,
     },
     {
       title: 'Settings',
@@ -102,12 +111,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
             <span className="font-bold text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
           </Link>
-          <button 
-            className="lg:hidden text-gray-500 hover:text-gray-900"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5" />
-          </button>
+          
+          <div className="flex items-center space-x-2">
+            <SearchBar />
+            <button 
+              className="lg:hidden text-gray-500 hover:text-gray-900"
+              onClick={onClose}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         
         {/* Sidebar Navigation */}
@@ -122,7 +135,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             ) : (
               <Link 
                 key={index} 
-                href={item.href} 
+                href={item.href || "/"} 
                 className={cn(
                   "flex items-center px-4 py-3 rounded-lg transition-colors",
                   location === item.href
@@ -136,6 +149,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             )
           ))}
         </nav>
+        
+        {/* User Profile Section */}
+        <div className="p-4 border-t border-gray-200">
+          <Link href="/profile" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-primary-100 text-primary-700">
+                {user?.username?.substring(0, 2).toUpperCase() || 'AI'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.username || 'User'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.email || 'user@example.com'}
+              </p>
+            </div>
+          </Link>
+        </div>
         
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-200">
