@@ -31,6 +31,7 @@ import GPTNode from '@/components/builder/nodes/GPTNode';
 import OutputNode from '@/components/builder/nodes/OutputNode';
 import { Save, Rocket, Menu, ChevronLeft, ZoomIn, ZoomOut, 
   MousePointer } from 'lucide-react';
+import { getTemplateById } from '@/lib/templates';
 
 // Node types
 const nodeTypes = {
@@ -41,7 +42,7 @@ const nodeTypes = {
 
 export default function AgentBuilder() {
   const { id } = useParams();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -53,6 +54,10 @@ export default function AgentBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  // Check for template ID in URL query parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const templateId = urlParams.get('template');
 
   // Fetch agent data if editing existing agent
   const { data: agent, isLoading: isAgentLoading } = useQuery({
@@ -110,6 +115,42 @@ export default function AgentBuilder() {
       navigate('/');
     }
   }, [user, authLoading, navigate]);
+
+  // Load template if template ID is provided
+  useEffect(() => {
+    if (templateId && user && !id) {
+      // Only load template if we're creating a new agent (not editing)
+      const template = getTemplateById(templateId);
+      
+      if (template) {
+        // Set template name based on template ID
+        if (templateId === 'cc-1') {
+          setAgentName('Blog Writer Agent');
+        } else if (templateId === 'cc-2') {
+          setAgentName('Social Media Agent');
+        } else if (templateId === 'cs-1') {
+          setAgentName('FAQ Responder Agent');
+        } else if (templateId === 'dp-1') {
+          setAgentName('Data Summarizer Agent');
+        } else if (templateId === 'dp-2') {
+          setAgentName('Research Assistant Agent');
+        }
+        
+        // Set nodes and edges from template
+        setNodes(template.nodes || []);
+        setEdges(template.edges || []);
+        
+        // Remove template ID from URL to prevent reloading on refresh
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+        
+        toast({
+          title: 'Template loaded',
+          description: `${agentName} template has been loaded successfully.`,
+        });
+      }
+    }
+  }, [templateId, user, id, setNodes, setEdges, toast, agentName]);
 
   // Load agent data if editing
   useEffect(() => {
