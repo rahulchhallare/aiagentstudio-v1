@@ -13,6 +13,9 @@ import Templates from "@/pages/Templates";
 import Settings from "@/pages/Settings";
 import Billing from "@/pages/Billing";
 import Help from "@/pages/Help";
+import Features from "@/pages/Features";
+import Pricing from "@/pages/Pricing";
+import Documentation from "@/pages/Documentation";
 import Header from "@/components/Header";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -31,6 +34,9 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/help" component={Help} />
+      <Route path="/features" component={Features} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/documentation" component={Documentation} />
       <Route component={NotFound} />
     </Switch>
   );
