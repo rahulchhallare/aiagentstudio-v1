@@ -430,7 +430,7 @@ export default function AgentBuilder() {
           <NodePanel />
           
           {/* Canvas (React Flow Area) */}
-          <div className="flex-grow bg-gray-50 relative overflow-hidden" ref={reactFlowWrapper}>
+          <div className="flex-grow bg-[#f9fafc] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] relative overflow-hidden" ref={reactFlowWrapper}>
             <ReactFlowProvider>
               <ReactFlow
                 nodes={nodes}
@@ -448,9 +448,47 @@ export default function AgentBuilder() {
                 snapToGrid
                 snapGrid={[15, 15]}
                 defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                className="touch-none"
+                defaultEdgeOptions={{
+                  style: { strokeWidth: 2 },
+                  markerEnd: {
+                    type: MarkerType.ArrowClosed,
+                    width: 20,
+                    height: 20,
+                  },
+                  animated: true,
+                }}
               >
-                <Background />
-                <Controls />
+                <Background gap={20} size={1} />
+                <Controls 
+                  position="bottom-right"
+                  showInteractive={false}
+                  className="m-3"
+                />
+                <MiniMap
+                  nodeStrokeWidth={3}
+                  className="bg-white border rounded-lg shadow-sm p-1"
+                />
+                
+                {/* Empty state guidance */}
+                {nodes.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-center">
+                    <div className="max-w-sm p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                      <h3 className="text-lg font-medium text-gray-900 mb-3">Build Your AI Agent</h3>
+                      <p className="text-gray-600 mb-4">
+                        Drag and drop components from the panel on the left to create your agent's workflow.
+                      </p>
+                      <div className="text-sm text-gray-500">
+                        <p className="mb-2">Start with:</p>
+                        <ul className="space-y-1 list-disc pl-5">
+                          <li>An input block to collect data</li>
+                          <li>Processing blocks like GPT to analyze</li>
+                          <li>Output blocks to show results</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </ReactFlow>
             </ReactFlowProvider>
           </div>
