@@ -348,38 +348,80 @@ export default function AgentBuilder() {
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 flex flex-col h-screen">
         {/* Builder Header */}
-        <div className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8 z-20">
+        <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 z-20">
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden text-gray-500 hover:text-gray-900"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </button>
             
             <Button 
               variant="ghost" 
-              className="flex items-center space-x-2"
+              size="sm"
+              className="flex items-center space-x-1.5 text-gray-600 hover:text-gray-900"
               onClick={() => navigate('/dashboard')}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span>Back</span>
+              <span>Back to Dashboard</span>
             </Button>
             
-            <div>
+            <div className="flex items-center space-x-3 h-9 border border-gray-200 rounded-md px-3 bg-gray-50 hover:bg-white transition-colors">
               <Input 
                 type="text" 
                 value={agentName} 
                 onChange={(e) => setAgentName(e.target.value)}
-                className="text-lg font-medium text-gray-900 border-b-2 border-transparent focus:border-primary-500 focus:outline-none bg-transparent py-1" 
+                placeholder="Name your agent..."
+                className="h-full border-none text-sm md:text-base font-medium text-gray-900 focus:ring-0 bg-transparent px-0 py-0" 
               />
             </div>
           </div>
           
           <div className="flex items-center space-x-3">
+            {/* Zoom Controls - Desktop Only */}
+            <div className="hidden md:flex items-center bg-gray-50 rounded-md border border-gray-200 p-0.5">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7"
+                onClick={() => {
+                  if (reactFlowInstance) {
+                    reactFlowInstance.zoomOut();
+                  }
+                }}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7"
+                onClick={() => {
+                  if (reactFlowInstance) {
+                    reactFlowInstance.fitView();
+                  }
+                }}
+              >
+                <MousePointer className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7"
+                onClick={() => {
+                  if (reactFlowInstance) {
+                    reactFlowInstance.zoomIn();
+                  }
+                }}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
+            
             {lastSaved && (
-              <span className="text-gray-500 text-sm hidden md:inline-block">
-                Last saved: {lastSaved.toLocaleTimeString()}
+              <span className="text-gray-500 text-xs hidden md:inline-block">
+                Last saved at {lastSaved.toLocaleTimeString()}
               </span>
             )}
             
@@ -389,11 +431,11 @@ export default function AgentBuilder() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="flex items-center space-x-1"
+                    className="flex items-center"
                     onClick={() => saveAgent(false)}
                     disabled={isSaving}
                   >
-                    <Save className="h-4 w-4" />
+                    <Save className="h-4 w-4 mr-1.5" />
                     <span className="hidden md:inline-block">Save</span>
                   </Button>
                 </TooltipTrigger>
@@ -408,11 +450,11 @@ export default function AgentBuilder() {
                 <TooltipTrigger asChild>
                   <Button 
                     size="sm"
-                    className="flex items-center space-x-1"
+                    className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
                     onClick={() => saveAgent(true)}
                     disabled={isSaving}
                   >
-                    <Rocket className="h-4 w-4" />
+                    <Rocket className="h-4 w-4 mr-1.5" />
                     <span className="hidden md:inline-block">Deploy</span>
                   </Button>
                 </TooltipTrigger>
