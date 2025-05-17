@@ -434,12 +434,74 @@ export const researchAssistantTemplate = (): FlowData => {
   return createTemplateFlow(nodes, edges);
 };
 
+// Ticket Classifier Template
+export const ticketClassifierTemplate = (): FlowData => {
+  const nodes: Node[] = [
+    {
+      id: 'input-1',
+      type: 'inputNode',
+      position: { x: 250, y: 50 },
+      data: {
+        label: 'Support Ticket',
+        placeholder: 'Enter the customer support ticket...',
+        description: 'Paste the full text of the customer ticket',
+        required: true
+      }
+    },
+    {
+      id: 'gpt-1',
+      type: 'gptNode',
+      position: { x: 250, y: 180 },
+      data: {
+        label: 'Ticket Classifier',
+        model: 'gpt-4o',
+        systemPrompt: 'You are a customer support ticket classifier. Analyze the provided ticket text and categorize it based on the following criteria:\n\n1. Priority Level: Low, Medium, High, Critical\n2. Department: Technical Support, Billing, Product Information, Feature Request, Bug Report, Account Issues\n3. Estimated Resolution Time: Quick (< 1 hour), Standard (1-24 hours), Extended (1-3 days), Complex (3+ days)\n\nProvide a brief justification for each classification. Then suggest a specific next action for the support team to take.',
+        temperature: 0.3,
+        maxTokens: 800
+      }
+    },
+    {
+      id: 'output-1',
+      type: 'outputNode',
+      position: { x: 250, y: 310 },
+      data: {
+        label: 'Ticket Classification',
+        format: 'markdown'
+      }
+    }
+  ];
+  
+  const edges: Edge[] = [
+    {
+      id: 'edge-1',
+      source: 'input-1',
+      target: 'gpt-1',
+      sourceHandle: 'output',
+      targetHandle: 'input',
+      type: 'smoothstep',
+      animated: true
+    },
+    {
+      id: 'edge-2',
+      source: 'gpt-1',
+      target: 'output-1',
+      sourceHandle: 'output',
+      targetHandle: 'input',
+      type: 'smoothstep',
+      animated: true
+    }
+  ];
+  
+  return createTemplateFlow(nodes, edges);
+};
+
 // Map template IDs to template generator functions
 export const getTemplateById = (templateId: string): FlowData | null => {
   const templates: Record<string, () => FlowData> = {
     'cc-1': blogWriterTemplate,
     'cc-2': socialMediaTemplate,
     'cs-1': faqResponderTemplate,
+    'cs-2': ticketClassifierTemplate,
     'dp-1': dataSummarizerTemplate,
     'dp-2': researchAssistantTemplate,
   };
