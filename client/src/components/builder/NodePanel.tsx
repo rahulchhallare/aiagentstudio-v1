@@ -1,12 +1,10 @@
 import { Brain, ArrowRightLeft, FileText, SquareFunction, FileOutput, GitBranch, Repeat, SearchIcon, Image, MessageSquare, Database, Globe, Zap, BarChart, Palette, Share2, Mail, BellRing, Calculator, Cloud, Languages } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 export default function NodePanel() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentTab, setCurrentTab] = useState('blocks');
 
   const nodeTypes = [
     {
@@ -255,10 +253,10 @@ export default function NodePanel() {
   return (
     <div className="w-72 bg-white shadow-md overflow-hidden flex flex-col" id="components-panel">
       <div className="p-4 border-b">
-        <h3 className="font-medium text-gray-900 mb-4">Components</h3>
+        <h3 className="font-medium text-gray-900 mb-4">AI Components</h3>
         
         {/* Search Components */}
-        <div className="mb-4">
+        <div className="mb-2">
           <div className="relative">
             <Input 
               placeholder="Search components..." 
@@ -269,19 +267,11 @@ export default function NodePanel() {
             <SearchIcon className="h-4 w-4 absolute right-3 top-2.5 text-gray-500" />
           </div>
         </div>
-        
-        {/* Component Tabs */}
-        <Tabs defaultValue="blocks" className="w-full" onValueChange={setCurrentTab}>
-          <TabsList className="w-full grid grid-cols-2 mb-2">
-            <TabsTrigger value="blocks" className="text-sm">AI Blocks</TabsTrigger>
-            <TabsTrigger value="templates" className="text-sm">Templates</TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
       
       <div className="overflow-y-auto flex-grow">
-        <TabsContent value="blocks" className="p-4 m-0">
-          {/* Quick Access - Popular Components */}
+        {/* Component Categories */}
+        <div className="p-4 space-y-6">
           {searchTerm === '' && (
             <div className="mb-6">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
@@ -305,94 +295,39 @@ export default function NodePanel() {
             </div>
           )}
           
-          {/* Component Categories */}
-          <div className="space-y-6">
-            {filteredNodeTypes.map((category) => (
-              <div key={category.type}>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  {category.category}
-                </h4>
-                <div className="space-y-2">
-                  {category.nodes.map((node) => (
-                    <div 
-                      key={node.type}
-                      className={`p-3 ${getNodeColor(node.color)} border border-opacity-80 rounded-lg cursor-grab flex items-center hover:shadow-sm transition-shadow`} 
-                      draggable 
-                      onDragStart={(event) => onDragStart(event, node.type)}
-                    >
-                      <div className={`w-8 h-8 ${getIconBgColor(node.color)} rounded-md flex items-center justify-center mr-3 flex-shrink-0`}>
-                        {node.icon}
-                      </div>
-                      <div className="flex-grow min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h5 className="font-medium text-sm text-gray-900 truncate">{node.name}</h5>
-                          {node.badge && (
-                            <Badge className={`px-1.5 py-0.5 text-[10px] h-auto font-medium ${getBadgeColor(node.badge)}`}>
-                              {node.badge}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 truncate">{node.description}</p>
-                      </div>
+          {filteredNodeTypes.map((category) => (
+            <div key={category.type} className="mb-6">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                {category.category}
+              </h4>
+              <div className="space-y-2">
+                {category.nodes.map((node) => (
+                  <div 
+                    key={node.type}
+                    className={`p-3 ${getNodeColor(node.color)} border border-opacity-80 rounded-lg cursor-grab flex items-center hover:shadow-sm transition-shadow`} 
+                    draggable 
+                    onDragStart={(event) => onDragStart(event, node.type)}
+                  >
+                    <div className={`w-8 h-8 ${getIconBgColor(node.color)} rounded-md flex items-center justify-center mr-3 flex-shrink-0`}>
+                      {node.icon}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="templates" className="p-4 m-0">
-          <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              Ready-to-Use Agents
-            </h4>
-            
-            {/* Mini Template Cards */}
-            <div className="grid grid-cols-1 gap-3">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-2">
-                    <FileText className="h-5 w-5 text-blue-600" />
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h5 className="font-medium text-sm text-gray-900 truncate">{node.name}</h5>
+                        {node.badge && (
+                          <Badge className={`px-1.5 py-0.5 text-[10px] h-auto font-medium ${getBadgeColor(node.badge)}`}>
+                            {node.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{node.description}</p>
+                    </div>
                   </div>
-                  <h5 className="font-medium text-blue-900">Blog Writer</h5>
-                </div>
-                <p className="text-xs text-blue-700 mb-2">Generate complete blog posts from topics</p>
-                <div className="flex gap-1">
-                  <Badge className="bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[10px] h-auto">Content</Badge>
-                  <Badge className="bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[10px] h-auto">Popular</Badge>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-2">
-                    <MessageSquare className="h-5 w-5 text-green-600" />
-                  </div>
-                  <h5 className="font-medium text-green-900">Customer Support</h5>
-                </div>
-                <p className="text-xs text-green-700 mb-2">AI-powered customer service responses</p>
-                <div className="flex gap-1">
-                  <Badge className="bg-green-100 text-green-700 px-1.5 py-0.5 text-[10px] h-auto">Service</Badge>
-                  <Badge className="bg-green-100 text-green-700 px-1.5 py-0.5 text-[10px] h-auto">New</Badge>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center mr-2">
-                    <Share2 className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <h5 className="font-medium text-purple-900">Social Media Suite</h5>
-                </div>
-                <p className="text-xs text-purple-700 mb-2">Generate posts for multiple platforms</p>
-                <div className="flex gap-1">
-                  <Badge className="bg-purple-100 text-purple-700 px-1.5 py-0.5 text-[10px] h-auto">Marketing</Badge>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
-        </TabsContent>
+          ))}
+        </div>
       </div>
     </div>
   );
