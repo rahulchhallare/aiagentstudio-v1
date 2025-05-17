@@ -36,8 +36,26 @@ import { getTemplateById } from '@/lib/templates';
 // Node types
 const nodeTypes = {
   inputNode: InputNode,
+  fileInputNode: InputNode,
+  imageInputNode: InputNode,
+  webhookInputNode: InputNode,
   gptNode: GPTNode,
-  outputNode: OutputNode
+  imageGenerationNode: GPTNode,
+  chatbotNode: GPTNode,
+  transformNode: GPTNode,
+  translationNode: GPTNode,
+  outputNode: OutputNode,
+  imageOutputNode: OutputNode,
+  emailNode: OutputNode,
+  notificationNode: OutputNode,
+  dashboardNode: OutputNode,
+  conditionNode: GPTNode,
+  loopNode: GPTNode,
+  calculatorNode: GPTNode,
+  databaseNode: GPTNode,
+  apiNode: GPTNode,
+  socialMediaNode: GPTNode,
+  webhookNode: GPTNode
 };
 
 export default function AgentBuilder() {
@@ -245,25 +263,135 @@ export default function AgentBuilder() {
           data: {}
         };
 
-        // Set default data based on node type
-        if (nodeType === 'inputNode') {
+        // Set default data based on node type category
+        if (nodeType.includes('input')) {
+          // Input node types
+          if (nodeType === 'inputNode') {
+            newNode.data = { 
+              label: 'Text Input',
+              placeholder: 'Enter your question...',
+              description: 'Type your query here'
+            };
+          } else if (nodeType === 'fileInputNode') {
+            newNode.data = {
+              label: 'File Input',
+              placeholder: 'Upload a file...',
+              description: 'Upload a document or image'
+            };
+          } else if (nodeType === 'imageInputNode') {
+            newNode.data = {
+              label: 'Image Input',
+              placeholder: 'Upload an image...',
+              description: 'Upload an image for processing'
+            };
+          } else if (nodeType === 'webhookInputNode') {
+            newNode.data = {
+              label: 'Webhook Input',
+              placeholder: 'Receiving data...',
+              description: 'Receive data from external sources'
+            };
+          } else {
+            // Default input node
+            newNode.data = { 
+              label: 'Input',
+              placeholder: 'Enter data...',
+              description: 'User input node'
+            };
+          }
+        } else if (nodeType.includes('gpt') || nodeType.includes('transform') || nodeType.includes('bot')) {
+          // Processing node types
+          if (nodeType === 'gptNode') {
+            newNode.data = { 
+              label: 'GPT-4 Processor',
+              model: 'gpt-4o',
+              systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
+              temperature: 0.7,
+              maxTokens: 1000
+            };
+          } else if (nodeType === 'imageGenerationNode') {
+            newNode.data = {
+              label: 'Image Generator',
+              model: 'dall-e-3',
+              systemPrompt: 'Generate a detailed, high-quality image based on the description.',
+              temperature: 0.7,
+              maxTokens: 1000
+            };
+          } else if (nodeType === 'chatbotNode') {
+            newNode.data = {
+              label: 'Conversational AI',
+              model: 'gpt-4o',
+              systemPrompt: 'You are a friendly chatbot assistant designed to help users with their questions and engage in natural conversation.',
+              temperature: 0.8,
+              maxTokens: 1000
+            };
+          } else if (nodeType === 'transformNode') {
+            newNode.data = {
+              label: 'Data Transformer',
+              model: 'gpt-4o',
+              systemPrompt: 'Transform the input data as specified. Maintain accuracy and structure.',
+              temperature: 0.2,
+              maxTokens: 1000
+            };
+          } else if (nodeType === 'translationNode') {
+            newNode.data = {
+              label: 'Language Translator',
+              model: 'gpt-4o',
+              systemPrompt: 'Translate the input text to the specified language while preserving meaning and context.',
+              temperature: 0.3,
+              maxTokens: 1000
+            };
+          } else {
+            // Default processing node
+            newNode.data = { 
+              label: 'AI Processor',
+              model: 'gpt-4o',
+              systemPrompt: 'Process the input data as instructed.',
+              temperature: 0.7,
+              maxTokens: 1000
+            };
+          }
+        } else if (nodeType.includes('output')) {
+          // Output node types
+          if (nodeType === 'outputNode') {
+            newNode.data = { 
+              label: 'Text Output',
+              format: 'markdown'
+            };
+          } else if (nodeType === 'imageOutputNode') {
+            newNode.data = {
+              label: 'Image Output',
+              format: 'image'
+            };
+          } else if (nodeType === 'emailNode') {
+            newNode.data = {
+              label: 'Email Sender',
+              format: 'markdown'
+            };
+          } else if (nodeType === 'notificationNode') {
+            newNode.data = {
+              label: 'Notification',
+              format: 'plaintext'
+            };
+          } else if (nodeType === 'dashboardNode') {
+            newNode.data = {
+              label: 'Dashboard Display',
+              format: 'html'
+            };
+          } else {
+            // Default output node
+            newNode.data = { 
+              label: 'Output',
+              format: 'plaintext'
+            };
+          }
+        } else {
+          // Logic, integration, or other node types
           newNode.data = { 
-            label: 'Text Input',
-            placeholder: 'Enter your question...',
-            description: 'Type your query here'
-          };
-        } else if (nodeType === 'gptNode') {
-          newNode.data = { 
-            label: 'GPT-4 Processor',
+            label: nodeType.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()),
             model: 'gpt-4o',
-            systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
-            temperature: 0.7,
+            systemPrompt: 'Process the input according to specific logic rules.',
+            temperature: 0.5,
             maxTokens: 1000
-          };
-        } else if (nodeType === 'outputNode') {
-          newNode.data = { 
-            label: 'Text Output',
-            format: 'markdown'
           };
         }
 
