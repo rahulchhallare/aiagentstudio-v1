@@ -18,6 +18,8 @@ export const agents = pgTable("agents", {
   description: text("description"),
   flow_data: jsonb("flow_data").notNull(),
   is_active: boolean("is_active").notNull().default(false),
+  deploy_url: text("deploy_url"),
+  deploy_id: text("deploy_id"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

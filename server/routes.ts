@@ -132,6 +132,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // If is_active is being set to true, generate a deployment URL
+      if (updateData.is_active === true) {
+        // Generate a unique ID for the deployment
+        const deployId = Math.random().toString(36).substring(2, 15) + 
+                        Math.random().toString(36).substring(2, 15);
+        
+        // Create a deploy URL using the hostname from the request
+        const host = req.get('host') || 'aiagent-studio.ai';
+        const deployUrl = `https://${host}/agent/${deployId}`;
+        
+        // Add deploy information to update data
+        updateData.deploy_id = deployId;
+        updateData.deploy_url = deployUrl;
+      }
+      
       const updatedAgent = await storage.updateAgent(id, updateData);
       
       if (!updatedAgent) {
@@ -139,6 +154,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       return res.status(200).json(updatedAgent);
+    } catch (error) {
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Route to access a deployed agent
+  app.get("/api/agent/:deployId", async (req: Request, res: Response) => {
+    try {
+      const { deployId } = req.params;
+      
+      if (!deployId) {
+        return res.status(400).json({ message: "Valid deployment ID is required" });
+      }
+      
+      const agent = await storage.getAgentByDeployId(deployId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      if (!agent.is_active) {
+        return res.status(403).json({ message: "Agent is not currently active" });
+      }
+      
+      // Return a minimal version of the agent for public consumption
+      return res.status(200).json({
+        id: agent.id,
+        name: agent.name,
+        description: agent.description,
+        flow_data: agent.flow_data,
+      });
     } catch (error) {
       return res.status(500).json({ message: "Internal server error" });
     }

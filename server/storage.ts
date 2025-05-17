@@ -11,6 +11,7 @@ export interface IStorage {
   // Agent operations
   getAgent(id: number): Promise<Agent | undefined>;
   getAgentsByUserId(userId: number): Promise<Agent[]>;
+  getAgentByDeployId(deployId: string): Promise<Agent | undefined>;
   createAgent(agent: InsertAgent): Promise<Agent>;
   updateAgent(id: number, agent: Partial<InsertAgent>): Promise<Agent | undefined>;
   deleteAgent(id: number): Promise<boolean>;
