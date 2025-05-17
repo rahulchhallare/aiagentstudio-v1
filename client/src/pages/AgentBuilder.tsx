@@ -317,10 +317,37 @@ export default function AgentBuilder() {
       });
 
       if (deploy) {
-        toast({
-          title: 'Agent deployed',
-          description: `Your agent "${agentName}" has been deployed successfully.`,
+        // Fetch the updated agent info to get the deployment URL
+        const updatedAgent = await queryClient.fetchQuery({
+          queryKey: [`/api/agents/${id}`],
         });
+        
+        if (updatedAgent && updatedAgent.deploy_url) {
+          toast({
+            title: 'Agent deployed',
+            description: (
+              <div>
+                <p>Your agent "{agentName}" has been deployed successfully.</p>
+                <p className="mt-2">
+                  <a 
+                    href={updatedAgent.deploy_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    View deployed agent
+                  </a>
+                </p>
+              </div>
+            ),
+            duration: 10000, // Show for 10 seconds so user has time to click
+          });
+        } else {
+          toast({
+            title: 'Agent deployed',
+            description: `Your agent "${agentName}" has been deployed successfully.`,
+          });
+        }
       }
     } catch (error) {
       console.error('Error saving agent:', error);

@@ -77,6 +77,12 @@ export class MemStorage implements IStorage {
       (agent) => agent.user_id === userId
     );
   }
+  
+  async getAgentByDeployId(deployId: string): Promise<Agent | undefined> {
+    return Array.from(this.agents.values()).find(
+      (agent) => agent.deploy_id === deployId
+    );
+  }
 
   async createAgent(insertAgent: InsertAgent): Promise<Agent> {
     const id = this.agentIdCounter++;
@@ -85,7 +91,10 @@ export class MemStorage implements IStorage {
       ...insertAgent,
       id,
       created_at: now,
-      updated_at: now
+      updated_at: now,
+      deploy_url: insertAgent.deploy_url || null,
+      deploy_id: insertAgent.deploy_id || null,
+      description: insertAgent.description || null
     };
     this.agents.set(id, agent);
     return agent;

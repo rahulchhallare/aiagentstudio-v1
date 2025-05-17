@@ -44,6 +44,8 @@ export const insertAgentSchema = createInsertSchema(agents).pick({
   description: true,
   flow_data: true,
   is_active: true,
+  deploy_url: true,
+  deploy_id: true,
 });
 
 export const insertWaitlistSchema = createInsertSchema(waitlist).pick({
