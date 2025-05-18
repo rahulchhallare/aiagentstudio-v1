@@ -22,7 +22,6 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { apiRequest } from '@/lib/queryClient';
 import { queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { FlowData } from '@/lib/types';
@@ -72,6 +71,7 @@ export default function AgentBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   
   // Check for template ID in URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -85,46 +85,55 @@ export default function AgentBuilder() {
 
   // Mutation for saving agent
   const saveMutation = useMutation({
-    mutationFn: async (data: { name: string, flowData: FlowData, userId: number, isActive: boolean }) => {
+    mutationFn: async (data: { 
+      name: string, 
+      flowData: FlowData, 
+      userId: number, 
+      isActive: boolean 
+    }) => {
       if (id) {
         // Update existing agent
-        const response = await apiRequest('PUT', `/api/agents/${id}`, {
-          name: data.name,
-          flow_data: data.flowData,
-          is_active: data.isActive,
+        const response = await fetch(`/api/agents/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            flow_data: data.flowData,
+            is_active: data.isActive,
+            description: selectedNode?.data?.description || 'AI Agent created with AIagentStudio'
+          }),
+          credentials: 'include'
         });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to update agent: ${errorText}`);
+        }
+        
         return response.json();
       } else {
         // Create new agent
-        const response = await apiRequest('POST', '/api/agents', {
-          name: data.name,
-          flow_data: data.flowData,
-          user_id: data.userId,
-          is_active: data.isActive,
+        const response = await fetch('/api/agents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            user_id: data.userId,
+            flow_data: data.flowData,
+            is_active: data.isActive,
+            description: selectedNode?.data?.description || 'AI Agent created with AIagentStudio'
+          }),
+          credentials: 'include'
         });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to create agent: ${errorText}`);
+        }
+        
         return response.json();
       }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
-      setLastSaved(new Date());
-      toast({
-        title: 'Agent saved successfully',
-        description: `Your agent "${data.name}" has been saved.`,
-      });
-      
-      // If this was a new agent, redirect to the edit page
-      if (!id && data.id) {
-        navigate(`/builder/${data.id}`);
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: 'Failed to save agent',
-        description: error.message || 'An error occurred while saving your agent. Please try again.',
-        variant: 'destructive',
-      });
-    },
+    }
   });
 
   // Redirect to home if not authenticated
@@ -166,6 +175,9 @@ export default function AgentBuilder() {
               break;
             case 'dp-2':
               templateName = 'Research Assistant Agent';
+              break;
+            case 'tc-1':
+              templateName = 'Ticket Classifier Agent';
               break;
           }
           
@@ -244,7 +256,7 @@ export default function AgentBuilder() {
         });
 
         // Define node types mapping
-        const typeMap = {
+        const typeMap: Record<string, string> = {
           'inputNode': 'inputNode',
           'gptNode': 'gptNode',
           'outputNode': 'outputNode',
@@ -387,7 +399,7 @@ export default function AgentBuilder() {
         } else {
           // Logic, integration, or other node types
           newNode.data = { 
-            label: nodeType.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()),
+            label: nodeType.replace(/([A-Z])/g, ' $1').replace(/^./, function(str) { return str.toUpperCase(); }),
             model: 'gpt-4o',
             systemPrompt: 'Process the input according to specific logic rules.',
             temperature: 0.5,
@@ -431,12 +443,12 @@ export default function AgentBuilder() {
     // Check if the agent has the required node types for deployment
     if (deploy && reactFlowInstance) {
       const flowData = reactFlowInstance.toObject();
-      const hasInputNode = flowData.nodes.some(node => node.type?.includes('input'));
-      const hasProcessingNode = flowData.nodes.some(node => 
+      const hasInputNode = flowData.nodes.some((node: any) => node.type?.includes('input'));
+      const hasProcessingNode = flowData.nodes.some((node: any) => 
         node.type?.includes('gpt') || 
         node.type?.includes('transform') || 
         node.type?.includes('bot'));
-      const hasOutputNode = flowData.nodes.some(node => node.type?.includes('output'));
+      const hasOutputNode = flowData.nodes.some((node: any) => node.type?.includes('output'));
 
       if (!hasInputNode || !hasProcessingNode || !hasOutputNode) {
         toast({
@@ -457,120 +469,61 @@ export default function AgentBuilder() {
 
       const flowData: FlowData = reactFlowInstance.toObject();
       
-      if (id) {
-        // Update existing agent
-        const response = await apiRequest(`/api/agents/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            name: agentName,
-            flow_data: flowData,
-            is_active: deploy,
-            description: selectedNode?.data?.description || 'AI Agent created with AIagentStudio'
-          }),
-        });
-        
-        // Update success message with deploy URL if available
-        if (deploy && response.deploy_url) {
-          // Show toast with deploy link
-          toast({
-            title: '🎉 Agent Deployed Successfully!',
-            description: (
-              <div>
-                <p>Your agent "{agentName}" is now live and can be accessed at:</p>
-                <div className="mt-2 mb-1 p-2 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-between">
-                  <code className="text-sm text-blue-500 break-all">{response.deploy_url}</code>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(response.deploy_url);
-                      toast({ title: "URL copied to clipboard!" });
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-                <div className="mt-3">
-                  <Button asChild variant="default" className="w-full">
-                    <a href={response.deploy_url} target="_blank" rel="noopener noreferrer">
-                      Open Agent
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            ),
-            duration: 15000, // Show for 15 seconds
-          });
-        } else if (deploy) {
-          toast({
-            title: 'Agent deployed',
-            description: `Your agent "${agentName}" has been deployed successfully.`,
-          });
-        } else {
-          toast({
-            title: 'Agent saved',
-            description: `Your agent "${agentName}" has been saved successfully.`,
-          });
-        }
-      } else {
-        // Create new agent
-        const response = await apiRequest('/api/agents', {
-          method: 'POST',
-          body: JSON.stringify({
-            name: agentName,
-            user_id: user.id,
-            flow_data: flowData,
-            is_active: deploy,
-            description: selectedNode?.data?.description || 'AI Agent created with AIagentStudio'
-          }),
-        });
-
-        // Redirect to the edit page for the new agent
+      // Call the mutation
+      const response = await saveMutation.mutateAsync({
+        name: agentName,
+        flowData,
+        userId: user.id,
+        isActive: deploy
+      });
+      
+      // Handle response based on create/update and deploy status
+      if (id === undefined && response.id) {
+        // Created a new agent
         navigate(`/builder/${response.id}`);
-        
-        // Update success message with deploy URL if available
-        if (deploy && response.deploy_url) {
-          // Show toast with deploy link
-          toast({
-            title: '🎉 Agent Deployed Successfully!',
-            description: (
-              <div>
-                <p>Your agent "{agentName}" is now live and can be accessed at:</p>
-                <div className="mt-2 mb-1 p-2 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-between">
-                  <code className="text-sm text-blue-500 break-all">{response.deploy_url}</code>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(response.deploy_url);
-                      toast({ title: "URL copied to clipboard!" });
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-                <div className="mt-3">
-                  <Button asChild variant="default" className="w-full">
-                    <a href={response.deploy_url} target="_blank" rel="noopener noreferrer">
-                      Open Agent
-                    </a>
-                  </Button>
-                </div>
+      }
+      
+      // Handle deployed status and display appropriate toast
+      if (deploy && response.deploy_url) {
+        toast({
+          title: '🎉 Agent Deployed Successfully!',
+          description: (
+            <div>
+              <p>Your agent "{agentName}" is now live and can be accessed at:</p>
+              <div className="mt-2 mb-1 p-2 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-between">
+                <code className="text-sm text-blue-500 break-all">{response.deploy_url}</code>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(response.deploy_url);
+                    toast({ title: "URL copied to clipboard!" });
+                  }}
+                >
+                  Copy
+                </Button>
               </div>
-            ),
-            duration: 15000, // Show for 15 seconds
-          });
-        } else if (deploy) {
-          toast({
-            title: 'Agent created and deployed',
-            description: `Your agent "${agentName}" has been created and deployed successfully.`,
-          });
-        } else {
-          toast({
-            title: 'Agent created',
-            description: `Your agent "${agentName}" has been created successfully.`,
-          });
-        }
+              <div className="mt-3">
+                <Button asChild variant="default" className="w-full">
+                  <a href={response.deploy_url} target="_blank" rel="noopener noreferrer">
+                    Open Agent
+                  </a>
+                </Button>
+              </div>
+            </div>
+          ),
+          duration: 15000, // Show for 15 seconds
+        });
+      } else if (deploy) {
+        toast({
+          title: id ? 'Agent deployed' : 'Agent created and deployed',
+          description: `Your agent "${agentName}" has been ${id ? 'deployed' : 'created and deployed'} successfully.`,
+        });
+      } else {
+        toast({
+          title: id ? 'Agent saved' : 'Agent created',
+          description: `Your agent "${agentName}" has been ${id ? 'saved' : 'created'} successfully.`,
+        });
       }
     } catch (error) {
       console.error('Error saving agent:', error);
@@ -584,223 +537,134 @@ export default function AgentBuilder() {
       // Refresh agent list after save/deploy
       queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
     }
-  }, [user, agentName, reactFlowInstance, saveMutation, toast]);
+  }, [user, agentName, reactFlowInstance, id, navigate, saveMutation, toast, selectedNode]);
+
+  // Function to update a node
+  const updateNode = useCallback((updatedNode: Node) => {
+    setNodes((nds) => 
+      nds.map((node) => (node.id === updatedNode.id ? updatedNode : node))
+    );
+  }, [setNodes]);
 
   // If loading, show spinner
   if (authLoading || (id && isAgentLoading)) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
-  if (!user) return null;
-
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
+    <div className="flex h-screen flex-col overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
-      {/* Main Content */}
-      <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 flex flex-col h-screen">
-        {/* Builder Header */}
-        <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 z-20">
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-900"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="flex items-center space-x-1.5 text-gray-600 hover:text-gray-900"
-              onClick={() => navigate('/dashboard')}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span>Back to Dashboard</span>
-            </Button>
-            
-            <div className="flex items-center space-x-3 h-9 border border-gray-200 rounded-md px-3 bg-gray-50 hover:bg-white transition-colors">
-              <Input 
-                type="text" 
-                value={agentName} 
-                onChange={(e) => setAgentName(e.target.value)}
-                placeholder="Name your agent..."
-                className="h-full border-none text-sm md:text-base font-medium text-gray-900 focus:ring-0 bg-transparent px-0 py-0" 
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            {/* Zoom Controls - Desktop Only */}
-            <div className="hidden md:flex items-center bg-gray-50 rounded-md border border-gray-200 p-0.5">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7"
-                onClick={() => {
-                  if (reactFlowInstance) {
-                    reactFlowInstance.zoomOut();
-                  }
-                }}
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7"
-                onClick={() => {
-                  if (reactFlowInstance) {
-                    reactFlowInstance.fitView();
-                  }
-                }}
-              >
-                <MousePointer className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7"
-                onClick={() => {
-                  if (reactFlowInstance) {
-                    reactFlowInstance.zoomIn();
-                  }
-                }}
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {lastSaved && (
-              <span className="text-gray-500 text-xs hidden md:inline-block">
-                Last saved at {lastSaved.toLocaleTimeString()}
-              </span>
-            )}
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center"
-                    onClick={() => saveAgent(false)}
-                    disabled={isSaving}
-                  >
-                    <Save className="h-4 w-4 mr-1.5" />
-                    <span className="hidden md:inline-block">Save</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Save your agent
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    size="sm"
-                    className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
-                    onClick={() => saveAgent(true)}
-                    disabled={isSaving}
-                  >
-                    <Rocket className="h-4 w-4 mr-1.5" />
-                    <span className="hidden md:inline-block">Deploy</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Save and deploy your agent
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b bg-card p-4">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setIsSidebarOpen(true)}
+            className="mr-2 lg:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <div className="mx-4 h-6 w-px bg-border"></div>
+          <Input
+            value={agentName}
+            onChange={(e) => setAgentName(e.target.value)}
+            className="max-w-[200px] text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0"
+          />
+        </div>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => saveAgent(false)}
+            disabled={isSaving}
+            className="flex items-center"
+          >
+            <Save className="mr-1 h-4 w-4" />
+            Save
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => saveAgent(true)}
+            disabled={isSaving}
+            className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          >
+            <Rocket className="mr-1 h-4 w-4" />
+            Deploy
+          </Button>
+        </div>
+      </div>
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left sidebar - Components panel */}
+        <div className="w-64 border-r bg-card overflow-y-auto hidden md:block">
+          <NodePanel />
         </div>
         
-        {/* Builder Content */}
-        <div className="flex-grow flex overflow-hidden">
-          {/* Left Panel (Components) */}
-          <NodePanel />
-          
-          {/* Canvas (React Flow Area) */}
-          <div className="flex-grow bg-[#f9fafc] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] relative overflow-hidden" ref={reactFlowWrapper}>
-            <ReactFlowProvider>
+        {/* Main content - ReactFlow canvas */}
+        <div className="flex-1 flex overflow-hidden">
+          <ReactFlowProvider>
+            <div
+              ref={reactFlowWrapper}
+              className="flex-1 h-full"
+            >
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
-                onInit={setReactFlowInstance}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
                 nodeTypes={nodeTypes}
+                deleteKeyCode="Delete"
                 fitView
                 snapToGrid
-                snapGrid={[15, 15]}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                className="touch-none"
-                defaultEdgeOptions={{
-                  style: { strokeWidth: 2 },
-                  markerEnd: {
-                    type: MarkerType.ArrowClosed,
-                    width: 20,
-                    height: 20,
-                  },
-                  animated: true,
-                }}
+                onInit={setReactFlowInstance}
               >
-                <Background gap={20} size={1} />
-                <Controls 
-                  position="bottom-right"
-                  showInteractive={false}
-                  className="m-3"
-                />
-                <MiniMap
-                  nodeStrokeWidth={3}
-                  className="bg-white border rounded-lg shadow-sm p-1"
-                />
-                
-                {/* Empty state guidance */}
-                {nodes.length === 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-center">
-                    <div className="max-w-sm p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">Build Your AI Agent</h3>
-                      <p className="text-gray-600 mb-4">
-                        Drag and drop components from the panel on the left to create your agent's workflow.
-                      </p>
-                      <div className="text-sm text-gray-500">
-                        <p className="mb-2">Start with:</p>
-                        <ul className="space-y-1 list-disc pl-5">
-                          <li>An input block to collect data</li>
-                          <li>Processing blocks like GPT to analyze</li>
-                          <li>Output blocks to show results</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <Background gap={12} size={1} color="#f1f1f1" />
+                <Controls showInteractive={false}>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="react-flow__controls-button">
+                          <MousePointer className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Select Mode</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </Controls>
+                <MiniMap />
               </ReactFlow>
-            </ReactFlowProvider>
-          </div>
+            </div>
+          </ReactFlowProvider>
           
-          {/* Right Panel (Properties) */}
-          <PropertiesPanel 
-            selectedNode={selectedNode} 
-            updateNode={(updatedNode) => {
-              setNodes(nodes.map(node => 
-                node.id === updatedNode.id ? updatedNode : node
-              ));
-            }}
-          />
+          {/* Right sidebar - Properties panel */}
+          <div className="w-80 border-l bg-card overflow-y-auto hidden lg:block">
+            <PropertiesPanel
+              selectedNode={selectedNode}
+              updateNode={updateNode}
+            />
+          </div>
         </div>
       </div>
     </div>
