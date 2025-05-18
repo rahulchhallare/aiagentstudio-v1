@@ -30,6 +30,7 @@ import GPTNode from '@/components/builder/nodes/GPTNode';
 import OutputNode from '@/components/builder/nodes/OutputNode';
 import { Save, Rocket, Menu, ChevronLeft, ZoomIn, ZoomOut, 
   MousePointer } from 'lucide-react';
+import DeployModal from '@/components/builder/DeployModal';
 import { getTemplateById } from '@/lib/templates';
 
 // Node types
@@ -599,7 +600,7 @@ export default function AgentBuilder() {
           <Button
             variant="default"
             size="sm"
-            onClick={() => saveAgent(true)}
+            onClick={() => setIsDeployModalOpen(true)}
             disabled={isSaving}
             className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
           >
@@ -667,6 +668,22 @@ export default function AgentBuilder() {
           </div>
         </div>
       </div>
+      
+      {/* Deploy Modal */}
+      {user && reactFlowInstance && (
+        <DeployModal
+          isOpen={isDeployModalOpen}
+          onClose={() => setIsDeployModalOpen(false)}
+          agentName={agentName}
+          agentId={id}
+          flowData={reactFlowInstance.toObject()}
+          userId={user.id}
+          onDeploy={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+            setLastSaved(new Date());
+          }}
+        />
+      )}
     </div>
   );
 }
