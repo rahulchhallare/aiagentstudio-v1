@@ -67,6 +67,7 @@ export default function AgentBuilder() {
   const { toast } = useToast();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [agentName, setAgentName] = useState('Untitled Agent');
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -82,7 +83,13 @@ export default function AgentBuilder() {
 
   // Fetch agent data if editing existing agent
   // Only enabled if an ID is provided (we don't need a user for the initial view)
-  const { data: agent, isLoading: isAgentLoading } = useQuery({
+  const { data: agent, isLoading: isAgentLoading } = useQuery<{
+    id: number;
+    name: string;
+    flow_data: FlowData;
+    description?: string;
+    is_active: boolean;
+  }>({
     queryKey: [`/api/agents/${id}`],
     enabled: !!id,
   });
@@ -219,9 +226,13 @@ export default function AgentBuilder() {
       setAgentName(agent.name || 'Untitled Agent');
       
       if (agent.flow_data) {
-        const flowData = agent.flow_data as FlowData;
-        setNodes(flowData.nodes || []);
-        setEdges(flowData.edges || []);
+        try {
+          const flowData = agent.flow_data as FlowData;
+          setNodes(flowData.nodes || []);
+          setEdges(flowData.edges || []);
+        } catch (error) {
+          console.error("Error loading flow data:", error);
+        }
       }
     }
   }, [agent, id, setNodes, setEdges]);
@@ -575,7 +586,7 @@ export default function AgentBuilder() {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b bg-card p-4">
+      <div className="flex items-center justify-between border-b bg-background p-4">
         <div className="flex items-center">
           <Button 
             variant="ghost" 
@@ -587,18 +598,34 @@ export default function AgentBuilder() {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/')}
             className="flex items-center text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to Dashboard
+            Back to Home
           </Button>
           <div className="mx-4 h-6 w-px bg-border"></div>
-          <Input
-            value={agentName}
-            onChange={(e) => setAgentName(e.target.value)}
-            className="max-w-[200px] text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0"
-          />
+          <div className="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-6 w-6 mr-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white p-1 rounded-md"
+            >
+              <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+              <path d="M17.5 8a2.5 2.5 0 0 0 -5 0" />
+              <path d="M19.5 17a2.5 2.5 0 0 0 0 -5" />
+            </svg>
+            <Input
+              value={agentName}
+              onChange={(e) => setAgentName(e.target.value)}
+              className="max-w-[200px] text-lg font-semibold border-none shadow-none focus-visible:ring-0 p-0"
+            />
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button 
@@ -616,7 +643,7 @@ export default function AgentBuilder() {
             size="sm"
             onClick={() => setIsDeployModalOpen(true)}
             disabled={isSaving}
-            className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             <Rocket className="mr-1 h-4 w-4" />
             Deploy
