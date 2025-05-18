@@ -137,21 +137,22 @@ export default function AgentBuilder() {
     }
   });
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/');
-    }
-  }, [user, authLoading, navigate]);
+  // With the new Canva-like approach, we allow non-authenticated users to use the builder
+  // We'll only require authentication when they try to save or deploy
+  // No redirection needed here
 
   // Handle template loading
   useEffect(() => {
     // Only attempt to load a template if:
-    // 1. User is authenticated
-    // 2. Not currently editing an existing agent (no id)
-    // 3. A template ID is provided in the URL
-    if (user && !id && templateId) {
-      console.log('Loading template with ID:', templateId);
+    // 1. Not currently editing an existing agent (no id)
+    // 2. A template ID is provided in the URL or from localStorage
+    const storedTemplateId = localStorage.getItem('selectedTemplate');
+    const templateToLoad = templateId || storedTemplateId;
+    
+    if (!id && templateToLoad) {
+      // Clear stored template ID after loading
+      localStorage.removeItem('selectedTemplate');
+      console.log('Loading template with ID:', templateToLoad);
       
       // Delay template loading slightly to ensure reactflow is initialized
       setTimeout(() => {

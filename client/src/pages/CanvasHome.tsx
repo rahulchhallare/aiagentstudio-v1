@@ -114,7 +114,17 @@ export default function CanvasHome() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
-  const templates = [
+  // Define template interfaces
+  interface Template {
+    id: string;
+    title: string;
+    description: string;
+    category: 'content' | 'customer-support' | 'data-processing';
+    popular?: boolean;
+    new?: boolean;
+  }
+  
+  const templates: Template[] = [
     {
       id: 'cc-1',
       title: 'Blog Writer',
@@ -155,7 +165,7 @@ export default function CanvasHome() {
       category: 'customer-support',
       new: true
     }
-  ] as const;
+  ];
 
   const filteredTemplates = templates.filter(template =>
     template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -175,6 +185,10 @@ export default function CanvasHome() {
 
   // Handle create blank agent
   const handleCreateBlank = () => {
+    // Store the fact that user wants blank agent
+    localStorage.setItem('selectedTemplate', 'blank');
+    
+    // Always navigate to builder - authentication will be handled there if needed
     navigate('/builder');
   };
 

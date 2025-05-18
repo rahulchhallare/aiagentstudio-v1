@@ -20,7 +20,8 @@ interface CanvasHeaderProps {
 export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   
   return (
     <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -77,7 +78,7 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-full w-8 h-8 p-0">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.profileImageUrl || ''} alt={user?.firstName || 'User'} />
+                      <AvatarImage src={user?.avatar_url || ''} alt={user?.username || 'User'} />
                       <AvatarFallback>
                         <User className="h-4 w-4" />
                       </AvatarFallback>
@@ -87,8 +88,8 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
                 <DropdownMenuContent align="end">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      {user?.firstName && (
-                        <p className="font-medium">{user.firstName} {user.lastName}</p>
+                      {user?.username && (
+                        <p className="font-medium">{user.username}</p>
                       )}
                       {user?.email && (
                         <p className="text-sm text-muted-foreground">{user.email}</p>
