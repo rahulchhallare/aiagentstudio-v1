@@ -174,13 +174,12 @@ export default function CanvasHome() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
-    if (user) {
-      navigate(`/builder?template=${templateId}`);
-    } else {
-      // Store template ID for after login
-      localStorage.setItem('selectedTemplate', templateId);
-      navigate('/builder?template=${templateId}');
-    }
+    // Store template ID for after login/signup
+    localStorage.setItem('selectedTemplate', templateId);
+    
+    // With Canva-like experience, we directly navigate to builder
+    // Authentication will be handled there when saving/deploying
+    navigate(`/builder`);
   };
 
   // Handle create blank agent

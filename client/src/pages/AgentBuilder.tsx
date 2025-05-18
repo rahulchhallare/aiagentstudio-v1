@@ -32,6 +32,8 @@ import { Save, Rocket, Menu, ChevronLeft, ZoomIn, ZoomOut,
   MousePointer } from 'lucide-react';
 import DeployModal from '@/components/builder/DeployModal';
 import { getTemplateById } from '@/lib/templates';
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
 
 // Node types
 const nodeTypes = {
@@ -156,7 +158,7 @@ export default function AgentBuilder() {
       
       // Delay template loading slightly to ensure reactflow is initialized
       setTimeout(() => {
-        const templateData = getTemplateById(templateId);
+        const templateData = getTemplateById(templateToLoad || '');
         
         if (templateData) {
           // Determine agent name from template ID
@@ -212,8 +214,8 @@ export default function AgentBuilder() {
 
   // Load agent data if editing
   useEffect(() => {
-    if (agent) {
-      setAgentName(agent.name);
+    if (agent && id) {
+      setAgentName(agent.name || 'Untitled Agent');
       
       if (agent.flow_data) {
         const flowData = agent.flow_data as FlowData;
@@ -221,7 +223,7 @@ export default function AgentBuilder() {
         setEdges(flowData.edges || []);
       }
     }
-  }, [agent, setNodes, setEdges]);
+  }, [agent, id, setNodes, setEdges]);
 
   // Handle connecting nodes
   const onConnect = useCallback(
@@ -431,13 +433,23 @@ export default function AgentBuilder() {
     setSelectedNode(null);
   }, []);
 
+  // Login modal state for the Canva-like experience
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'save' | 'deploy' | null>(null);
+  
   // Save agent
   const saveAgent = useCallback(async (deploy: boolean = false) => {
     if (!user) {
+      // Store the action (save or deploy) that the user was trying to perform
+      setPendingAction(deploy ? 'deploy' : 'save');
+      
+      // Open login modal instead of showing toast
+      setIsLoginModalOpen(true);
+      
       toast({
-        title: 'Authentication required',
-        description: 'You need to be logged in to save an agent.',
-        variant: 'destructive',
+        title: 'Almost there!',
+        description: 'Log in or sign up to save your agent.',
       });
       return;
     }
@@ -685,6 +697,25 @@ export default function AgentBuilder() {
           }}
         />
       )}
+      
+      {/* Login/Signup Modals for Canva-like experience */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)}
+        onSignupClick={() => {
+          setIsLoginModalOpen(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
+      
+      <SignupModal 
+        isOpen={isSignupModalOpen} 
+        onClose={() => setIsSignupModalOpen(false)}
+        onLoginClick={() => {
+          setIsSignupModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
+      />
     </div>
   );
 }
