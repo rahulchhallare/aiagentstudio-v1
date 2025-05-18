@@ -251,9 +251,9 @@ export default function NodePanel() {
   };
 
   return (
-    <div className="w-72 bg-white shadow-md overflow-hidden flex flex-col" id="components-panel">
+    <div className="w-full h-full bg-background border-r overflow-hidden flex flex-col" id="components-panel">
       <div className="p-4 border-b">
-        <h3 className="font-medium text-gray-900 mb-4">AI Components</h3>
+        <h3 className="font-medium text-lg bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-4">AI Components</h3>
         
         {/* Search Components */}
         <div className="mb-2">

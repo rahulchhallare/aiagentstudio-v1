@@ -720,7 +720,7 @@ export default function AgentBuilder() {
       
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar - Components panel */}
-        <div className="w-64 border-r bg-card overflow-y-auto hidden md:block">
+        <div className="w-72 border-r bg-background overflow-y-auto flex-shrink-0 shadow-sm">
           <NodePanel />
         </div>
         
