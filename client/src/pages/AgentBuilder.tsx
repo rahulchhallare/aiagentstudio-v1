@@ -81,9 +81,10 @@ export default function AgentBuilder() {
   const templateId = urlParams.get('template');
 
   // Fetch agent data if editing existing agent
+  // Only enabled if an ID is provided (we don't need a user for the initial view)
   const { data: agent, isLoading: isAgentLoading } = useQuery({
     queryKey: [`/api/agents/${id}`],
-    enabled: !!id && !!user,
+    enabled: !!id,
   });
 
   // Mutation for saving agent
@@ -158,13 +159,13 @@ export default function AgentBuilder() {
       
       // Delay template loading slightly to ensure reactflow is initialized
       setTimeout(() => {
-        const templateData = getTemplateById(templateToLoad || '');
+        const templateData = getTemplateById(templateToLoad);
         
         if (templateData) {
           // Determine agent name from template ID
           let templateName = 'Template Agent';
           
-          switch(templateId) {
+          switch(templateToLoad) {
             case 'cc-1':
               templateName = 'Blog Writer Agent';
               break;

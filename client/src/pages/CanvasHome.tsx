@@ -184,10 +184,11 @@ export default function CanvasHome() {
 
   // Handle create blank agent
   const handleCreateBlank = () => {
-    // Store the fact that user wants blank agent
-    localStorage.setItem('selectedTemplate', 'blank');
+    // Clear any existing template selections
+    localStorage.removeItem('selectedTemplate');
     
-    // Always navigate to builder - authentication will be handled there if needed
+    // Directly navigate to builder with no template
+    // (Authentication will be handled in the builder when saving/deploying)
     navigate('/builder');
   };
 
