@@ -155,10 +155,77 @@ export default function AgentBuilder() {
   useEffect(() => {
     // Only attempt to load a template if:
     // 1. Not currently editing an existing agent (no id)
-    // 2. A template ID is provided in the URL or from localStorage
+    // 2. A template ID is provided in the URL or from localStorage, or blank template is requested
     const storedTemplateId = localStorage.getItem('selectedTemplate');
+    const blankTemplate = localStorage.getItem('blankTemplate');
     const templateToLoad = templateId || storedTemplateId;
     
+    // Check if we're creating a blank agent from the canvas home
+    if (!id && blankTemplate === 'true') {
+      localStorage.removeItem('blankTemplate');
+      
+      // Create a simple blank agent with basic nodes
+      setTimeout(() => {
+        // Create basic nodes: input -> gpt -> output
+        const blankNodes = [
+          {
+            id: 'input-1',
+            type: 'inputNode',
+            position: { x: 250, y: 100 },
+            data: { label: 'Text Input', placeholder: 'Enter your question...', description: 'Type your query here' }
+          },
+          {
+            id: 'gpt-1',
+            type: 'gptNode',
+            position: { x: 250, y: 250 },
+            data: { 
+              label: 'GPT-4 Processor',
+              model: 'gpt-4o',
+              systemPrompt: 'You are a helpful assistant.',
+              temperature: 0.7,
+              maxTokens: 1000
+            }
+          },
+          {
+            id: 'output-1',
+            type: 'outputNode',
+            position: { x: 250, y: 400 },
+            data: { label: 'Text Output', format: 'markdown' }
+          }
+        ];
+        
+        const blankEdges = [
+          {
+            id: 'e1-2',
+            source: 'input-1',
+            target: 'gpt-1',
+            type: 'smoothstep',
+            animated: true,
+            markerEnd: { type: 'arrowclosed' },
+          },
+          {
+            id: 'e2-3',
+            source: 'gpt-1',
+            target: 'output-1',
+            type: 'smoothstep',
+            animated: true,
+            markerEnd: { type: 'arrowclosed' },
+          }
+        ];
+        
+        setNodes(blankNodes);
+        setEdges(blankEdges);
+        setAgentName("Untitled Agent");
+        toast({
+          title: 'New Agent Created',
+          description: 'Start building your agent by customizing the nodes.',
+        });
+      }, 500);
+      
+      return;
+    }
+    
+    // Otherwise, load a predefined template if available
     if (!id && templateToLoad) {
       // Clear stored template ID after loading
       localStorage.removeItem('selectedTemplate');

@@ -187,56 +187,11 @@ export default function CanvasHome() {
     // Clear any existing template selections
     localStorage.removeItem('selectedTemplate');
     
-    // Create a basic agent with minimal template
-    const basicTemplate = {
-      nodes: [
-        {
-          id: 'input-1',
-          type: 'inputNode',
-          position: { x: 250, y: 100 },
-          data: { label: 'Text Input', placeholder: 'Enter your question...', description: 'Type your query here' }
-        },
-        {
-          id: 'gpt-1',
-          type: 'gptNode',
-          position: { x: 250, y: 250 },
-          data: { 
-            label: 'GPT-4 Processor',
-            model: 'gpt-4o',
-            systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
-            temperature: 0.7,
-            maxTokens: 1000
-          }
-        },
-        {
-          id: 'output-1',
-          type: 'outputNode',
-          position: { x: 250, y: 400 },
-          data: { label: 'Text Output', format: 'markdown' }
-        }
-      ],
-      edges: [
-        {
-          id: 'e1-2',
-          source: 'input-1',
-          target: 'gpt-1',
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: { type: MarkerType.ArrowClosed },
-        },
-        {
-          id: 'e2-3',
-          source: 'gpt-1',
-          target: 'output-1',
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: { type: MarkerType.ArrowClosed },
-        }
-      ]
-    };
+    // Simple flag to indicate we want a blank starting agent
+    // The actual node setup will be done in the AgentBuilder component
     
-    // Store template in localStorage
-    localStorage.setItem('blankTemplate', JSON.stringify(basicTemplate));
+    // Store flag in localStorage to indicate blank template
+    localStorage.setItem('blankTemplate', 'true');
     
     // Directly navigate to builder
     // (Authentication will be handled in the builder when saving/deploying)
