@@ -1,56 +1,57 @@
 import { useState } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SquareFunction } from 'lucide-react';
+import { InputNodeData } from '@/lib/types';
 
-interface InputNodeData {
-  label?: string;
-  placeholder?: string;
-  description?: string;
-  required?: boolean;
+interface InputNodeProps {
+  data: InputNodeData;
+  selected: boolean;
+  id: string;
 }
 
-export default function InputNode({ data, selected }: NodeProps<InputNodeData>) {
-  const [value, setValue] = useState('');
+const InputNode = ({ data, selected, id }: InputNodeProps) => {
+  const [inputText, setInputText] = useState('');
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value);
   };
   
   return (
-    <div className={`bg-white shadow-lg rounded-lg overflow-hidden transition-shadow duration-200 ${selected ? 'ring-2 ring-blue-500' : 'border border-gray-200'}`}>
-      <div className="bg-blue-500 h-2 w-full"></div>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center">
-              <SquareFunction className="h-3 w-3 text-blue-600" />
-            </div>
-            <h4 className="font-medium text-gray-900">{data.label || 'Text Input'}</h4>
-          </div>
+    <Card className={`w-[280px] shadow-md ${selected ? 'ring-2 ring-blue-500' : ''}`}>
+      <CardHeader className="bg-blue-50 py-2 px-4 flex flex-row items-center gap-2 border-b">
+        <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+          <SquareFunction className="h-5 w-5 text-blue-600" />
         </div>
-        
-        <div className="space-y-1">
+        <CardTitle className="text-sm font-medium text-gray-800">{data.label || 'Text Input'}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="space-y-2">
           {data.description && (
             <p className="text-xs text-gray-500">{data.description}</p>
           )}
-          <input
-            type="text"
-            placeholder={data.placeholder || 'Enter text here...'}
-            value={value}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-            required={data.required}
+          <textarea
+            placeholder={data.placeholder || "Enter text here..."}
+            className="w-full min-h-[80px] text-sm resize-none p-2 border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            value={inputText}
+            onChange={handleChange}
           />
         </div>
-      </div>
-      
-      {/* Output handle */}
+      </CardContent>
       <Handle
         type="source"
-        position={Position.Right}
+        position={Position.Bottom}
         id="output"
-        className="w-3 h-3 bg-blue-500 border-2 border-white"
+        style={{ 
+          bottom: -8, 
+          background: '#2563eb',
+          width: 12,
+          height: 12,
+          border: '2px solid white'
+        }}
       />
-    </div>
+    </Card>
   );
-}
+};
+
+export default InputNode;

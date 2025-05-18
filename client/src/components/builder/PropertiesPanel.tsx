@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Node } from 'reactflow';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { GPTNodeData, InputNodeData, OutputNodeData } from '@/lib/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Node } from 'reactflow';
+import { InputNodeData, GPTNodeData, OutputNodeData } from '@/lib/types';
+import { X } from 'lucide-react';
 
 interface PropertiesPanelProps {
   selectedNode: Node | null;
@@ -16,108 +19,92 @@ interface PropertiesPanelProps {
 }
 
 export default function PropertiesPanel({ selectedNode, updateNode }: PropertiesPanelProps) {
-  const [nodeData, setNodeData] = useState<any>(null);
-
-  useEffect(() => {
-    if (selectedNode) {
-      setNodeData({ ...selectedNode.data });
-    } else {
-      setNodeData(null);
-    }
-  }, [selectedNode]);
-
-  if (!selectedNode || !nodeData) {
-    return (
-      <div className="p-4 text-center">
-        <div className="flex flex-col items-center justify-center h-40">
-          <div className="text-gray-400 mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9.5 7L13.5 12L9.5 17"></path>
-              <path d="M17 13.5L13 8.5L17 3.5"></path>
-            </svg>
-          </div>
-          <p className="text-gray-500">Select a node to edit its properties</p>
-        </div>
-      </div>
-    );
-  }
-
+  if (!selectedNode) return null;
+  
+  // Generic handler for updating node data
   const handleChange = (key: string, value: any) => {
-    const updatedData = { ...nodeData, [key]: value };
-    setNodeData(updatedData);
+    if (!selectedNode) return;
     
-    if (selectedNode) {
-      const updatedNode = {
-        ...selectedNode,
-        data: updatedData
-      };
-      updateNode(updatedNode);
-    }
+    const updatedNode = {
+      ...selectedNode,
+      data: {
+        ...selectedNode.data,
+        [key]: value
+      }
+    };
+    
+    updateNode(updatedNode);
   };
-
-  // Render different properties based on node type
-  switch (selectedNode.type) {
-    case 'inputNode':
-      return renderInputNodeProperties(nodeData as InputNodeData, handleChange);
-    case 'gptNode':
-      return renderGPTNodeProperties(nodeData as GPTNodeData, handleChange);
-    case 'outputNode':
-      return renderOutputNodeProperties(nodeData as OutputNodeData, handleChange);
-    default:
-      return (
-        <div className="p-4">
-          <h3 className="text-lg font-medium mb-4">Properties</h3>
-          <p className="text-gray-500">No editable properties for this node type</p>
-        </div>
-      );
-  }
+  
+  // Render properties based on node type
+  const renderPropertiesPanel = () => {
+    if (selectedNode.type === 'inputNode') {
+      return renderInputNodeProperties(selectedNode.data as InputNodeData, handleChange);
+    } else if (selectedNode.type === 'gptNode') {
+      return renderGPTNodeProperties(selectedNode.data as GPTNodeData, handleChange);
+    } else if (selectedNode.type === 'outputNode') {
+      return renderOutputNodeProperties(selectedNode.data as OutputNodeData, handleChange);
+    }
+    
+    return <div className="p-4">No properties available for this node type.</div>;
+  };
+  
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h3 className="font-medium text-lg">Node Properties</h3>
+        <X className="h-5 w-5 text-gray-500 cursor-pointer" onClick={() => updateNode({ ...selectedNode, selected: false })} />
+      </div>
+      
+      {renderPropertiesPanel()}
+    </div>
+  );
 }
 
 function renderInputNodeProperties(data: InputNodeData, handleChange: (key: string, value: any) => void) {
   return (
-    <div className="p-4">
-      <h3 className="text-lg font-medium mb-4">Input Properties</h3>
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="label">Label</Label>
+        <Input
+          id="label"
+          value={data.label || ''}
+          onChange={(e) => handleChange('label', e.target.value)}
+          placeholder="Node Label"
+        />
+      </div>
       
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="input-label">Label</Label>
-          <Input
-            id="input-label"
-            value={data.label || ''}
-            onChange={(e) => handleChange('label', e.target.value)}
-            placeholder="Enter input label"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="input-placeholder">Placeholder</Label>
-          <Input
-            id="input-placeholder"
-            value={data.placeholder || ''}
-            onChange={(e) => handleChange('placeholder', e.target.value)}
-            placeholder="Enter input placeholder"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="input-description">Description</Label>
-          <Textarea
-            id="input-description"
-            value={data.description || ''}
-            onChange={(e) => handleChange('description', e.target.value)}
-            placeholder="Enter description text"
-            rows={3}
-          />
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="input-required"
-            checked={data.required || false}
-            onCheckedChange={(checked) => handleChange('required', checked)}
-          />
-          <Label htmlFor="input-required">Required field</Label>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="placeholder">Placeholder Text</Label>
+        <Input
+          id="placeholder"
+          value={data.placeholder || ''}
+          onChange={(e) => handleChange('placeholder', e.target.value)}
+          placeholder="Enter placeholder text..."
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={data.description || ''}
+          onChange={(e) => handleChange('description', e.target.value)}
+          placeholder="Describe this input..."
+          className="resize-none"
+          rows={3}
+        />
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="required"
+          checked={data.required || false}
+          onChange={(e) => handleChange('required', e.target.checked)}
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <Label htmlFor="required">Required Field</Label>
       </div>
     </div>
   );
@@ -125,124 +112,110 @@ function renderInputNodeProperties(data: InputNodeData, handleChange: (key: stri
 
 function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, value: any) => void) {
   return (
-    <div className="p-4">
-      <h3 className="text-lg font-medium mb-4">GPT Properties</h3>
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="label">Label</Label>
+        <Input
+          id="label"
+          value={data.label || ''}
+          onChange={(e) => handleChange('label', e.target.value)}
+          placeholder="Node Label"
+        />
+      </div>
       
-      <Tabs defaultValue="basic">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="basic">Basic</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="basic" className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="gpt-label">Label</Label>
-            <Input
-              id="gpt-label"
-              value={data.label || ''}
-              onChange={(e) => handleChange('label', e.target.value)}
-              placeholder="Enter GPT block label"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="gpt-model">Model</Label>
-            <Select
-              value={data.model || 'gpt-4o'}
-              onValueChange={(value) => handleChange('model', value)}
-            >
-              <SelectTrigger id="gpt-model">
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gpt-4o">GPT-4o (Newest)</SelectItem>
-                <SelectItem value="gpt-4">GPT-4</SelectItem>
-                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">The newest OpenAI model is "gpt-4o" which was released May 13, 2024.</p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="gpt-system-prompt">System Prompt</Label>
-            <Textarea
-              id="gpt-system-prompt"
-              value={data.systemPrompt || ''}
-              onChange={(e) => handleChange('systemPrompt', e.target.value)}
-              placeholder="You are a helpful AI assistant..."
-              rows={5}
-            />
-            <p className="text-xs text-gray-500">Define the AI's persona and behavior</p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="advanced" className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label htmlFor="gpt-temperature">Temperature: {data.temperature || 0.7}</Label>
-            </div>
-            <Slider
-              id="gpt-temperature"
-              min={0}
-              max={1}
-              step={0.1}
-              value={[data.temperature || 0.7]}
-              onValueChange={(value) => handleChange('temperature', value[0])}
-            />
-            <p className="text-xs text-gray-500">Controls randomness: 0 is deterministic, 1 is creative</p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="gpt-max-tokens">Max Tokens</Label>
-            <Input
-              id="gpt-max-tokens"
-              type="number"
-              value={data.maxTokens || 500}
-              onChange={(e) => handleChange('maxTokens', parseInt(e.target.value))}
-              min={50}
-              max={4000}
-            />
-            <p className="text-xs text-gray-500">Maximum length of the generated response</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-2">
+        <Label htmlFor="model">Model</Label>
+        <Select
+          value={data.model || 'gpt-4o'}
+          onValueChange={(value) => handleChange('model', value)}
+        >
+          <SelectTrigger id="model">
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+            <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+            <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+            <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+            <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="systemPrompt">System Prompt</Label>
+        <Textarea
+          id="systemPrompt"
+          value={data.systemPrompt || ''}
+          onChange={(e) => handleChange('systemPrompt', e.target.value)}
+          placeholder="Enter system instructions..."
+          className="resize-none"
+          rows={4}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
+        </div>
+        <Slider
+          id="temperature"
+          min={0}
+          max={2}
+          step={0.1}
+          value={[data.temperature || 0.7]}
+          onValueChange={(value) => handleChange('temperature', value[0])}
+          className="py-4"
+        />
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>More Precise</span>
+          <span>More Creative</span>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="maxTokens">Max Tokens</Label>
+        <Input
+          id="maxTokens"
+          type="number"
+          min={1}
+          max={4000}
+          value={data.maxTokens || 1000}
+          onChange={(e) => handleChange('maxTokens', parseInt(e.target.value, 10))}
+        />
+      </div>
     </div>
   );
 }
 
 function renderOutputNodeProperties(data: OutputNodeData, handleChange: (key: string, value: any) => void) {
   return (
-    <div className="p-4">
-      <h3 className="text-lg font-medium mb-4">Output Properties</h3>
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="label">Label</Label>
+        <Input
+          id="label"
+          value={data.label || ''}
+          onChange={(e) => handleChange('label', e.target.value)}
+          placeholder="Node Label"
+        />
+      </div>
       
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="output-label">Label</Label>
-          <Input
-            id="output-label"
-            value={data.label || ''}
-            onChange={(e) => handleChange('label', e.target.value)}
-            placeholder="Enter output label"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="output-format">Output Format</Label>
-          <Select
-            value={data.format || 'plaintext'}
-            onValueChange={(value: 'plaintext' | 'markdown' | 'html') => handleChange('format', value)}
-          >
-            <SelectTrigger id="output-format">
-              <SelectValue placeholder="Select format" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="plaintext">Plain Text</SelectItem>
-              <SelectItem value="markdown">Markdown</SelectItem>
-              <SelectItem value="html">HTML</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-gray-500">How the output should be displayed</p>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="format">Output Format</Label>
+        <Select
+          value={data.format || 'markdown'}
+          onValueChange={(value) => handleChange('format', value)}
+        >
+          <SelectTrigger id="format">
+            <SelectValue placeholder="Select format" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="plaintext">Plain Text</SelectItem>
+            <SelectItem value="markdown">Markdown</SelectItem>
+            <SelectItem value="html">HTML</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

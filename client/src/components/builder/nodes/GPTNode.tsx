@@ -1,71 +1,75 @@
-import { Handle, Position, NodeProps } from 'reactflow';
-import { Brain, Settings } from 'lucide-react';
+import { Handle, Position } from 'reactflow';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Brain } from 'lucide-react';
+import { GPTNodeData } from '@/lib/types';
 
-interface GPTNodeData {
-  label?: string;
-  model?: string;
-  systemPrompt?: string;
-  temperature?: number;
-  maxTokens?: number;
+interface GPTNodeProps {
+  data: GPTNodeData;
+  selected: boolean;
+  id: string;
 }
 
-export default function GPTNode({ data, selected }: NodeProps<GPTNodeData>) {
+const GPTNode = ({ data, selected, id }: GPTNodeProps) => {
   return (
-    <div className={`bg-white shadow-lg rounded-lg overflow-hidden transition-shadow duration-200 ${selected ? 'ring-2 ring-green-500' : 'border border-gray-200'}`}>
-      <div className="bg-green-500 h-2 w-full"></div>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded bg-green-100 flex items-center justify-center">
-              <Brain className="h-3 w-3 text-green-600" />
-            </div>
-            <h4 className="font-medium text-gray-900">{data.label || 'GPT-4 Processor'}</h4>
-          </div>
-          <button className="text-gray-400 hover:text-gray-600">
-            <Settings className="h-4 w-4" />
-          </button>
+    <Card className={`w-[280px] shadow-md ${selected ? 'ring-2 ring-green-500' : ''}`}>
+      <CardHeader className="bg-green-50 py-2 px-4 flex flex-row items-center gap-2 border-b">
+        <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+          <Brain className="h-5 w-5 text-green-600" />
         </div>
-        
-        <div className="space-y-3 text-xs text-gray-500">
-          <div className="flex justify-between">
-            <span>Model:</span>
-            <span className="font-medium">{data.model || 'gpt-4'}</span>
+        <CardTitle className="text-sm font-medium text-gray-800">{data.label || 'GPT Block'}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-medium text-gray-700">Model:</span>
+            <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+              {data.model || 'gpt-4o'}
+            </span>
           </div>
-          
           {data.systemPrompt && (
             <div>
-              <span className="block mb-1">System Prompt:</span>
-              <p className="bg-gray-50 p-2 rounded text-gray-600 line-clamp-2">{data.systemPrompt}</p>
+              <span className="text-xs font-medium text-gray-700 block mb-1">System Prompt:</span>
+              <div className="text-xs bg-gray-50 p-2 rounded border border-gray-200 max-h-20 overflow-y-auto">
+                {data.systemPrompt}
+              </div>
             </div>
           )}
-          
-          <div className="flex justify-between">
-            <span>Temperature:</span>
-            <span className="font-medium">{data.temperature || 0.7}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-medium text-gray-700">Temperature:</span>
+            <span className="text-xs text-gray-600">{data.temperature || 0.7}</span>
           </div>
-          
-          <div className="flex justify-between">
-            <span>Max Tokens:</span>
-            <span className="font-medium">{data.maxTokens || 1000}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-medium text-gray-700">Max Tokens:</span>
+            <span className="text-xs text-gray-600">{data.maxTokens || 1000}</span>
           </div>
         </div>
-      </div>
-      
-      {/* Input handle */}
+      </CardContent>
       <Handle
         type="target"
-        position={Position.Left}
+        position={Position.Top}
         id="input"
-        className="w-3 h-3 bg-green-500 border-2 border-white"
+        style={{ 
+          top: -8, 
+          background: '#16a34a',
+          width: 12,
+          height: 12,
+          border: '2px solid white'
+        }}
       />
-      
-      {/* Output handle */}
       <Handle
         type="source"
-        position={Position.Right}
+        position={Position.Bottom}
         id="output"
-        className="w-3 h-3 bg-green-500 border-2 border-white"
+        style={{ 
+          bottom: -8, 
+          background: '#16a34a',
+          width: 12,
+          height: 12,
+          border: '2px solid white'
+        }}
       />
-    </div>
+    </Card>
   );
-}
+};
+
+export default GPTNode;

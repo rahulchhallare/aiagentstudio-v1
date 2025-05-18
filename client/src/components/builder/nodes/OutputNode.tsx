@@ -1,61 +1,53 @@
-import { Handle, Position, NodeProps } from 'reactflow';
+import { useState } from 'react';
+import { Handle, Position } from 'reactflow';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileOutput } from 'lucide-react';
+import { OutputNodeData } from '@/lib/types';
 
-interface OutputNodeData {
-  label?: string;
-  format?: 'plaintext' | 'markdown' | 'html';
+interface OutputNodeProps {
+  data: OutputNodeData;
+  selected: boolean;
+  id: string;
 }
 
-export default function OutputNode({ data, selected }: NodeProps<OutputNodeData>) {
-  const getFormatLabel = () => {
-    switch (data.format) {
-      case 'markdown':
-        return 'Markdown';
-      case 'html':
-        return 'HTML';
-      default:
-        return 'Plain Text';
-    }
-  };
+const OutputNode = ({ data, selected, id }: OutputNodeProps) => {
+  const [output, setOutput] = useState('Your AI response will appear here...');
   
   return (
-    <div className={`bg-white shadow-lg rounded-lg overflow-hidden transition-shadow duration-200 ${selected ? 'ring-2 ring-purple-500' : 'border border-gray-200'}`}>
-      <div className="bg-purple-500 h-2 w-full"></div>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded bg-purple-100 flex items-center justify-center">
-              <FileOutput className="h-3 w-3 text-purple-600" />
-            </div>
-            <h4 className="font-medium text-gray-900">{data.label || 'Text Output'}</h4>
+    <Card className={`w-[280px] shadow-md ${selected ? 'ring-2 ring-purple-500' : ''}`}>
+      <CardHeader className="bg-purple-50 py-2 px-4 flex flex-row items-center gap-2 border-b">
+        <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+          <FileOutput className="h-5 w-5 text-purple-600" />
+        </div>
+        <CardTitle className="text-sm font-medium text-gray-800">{data.label || 'Text Output'}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-medium text-gray-700">Format:</span>
+            <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+              {data.format || 'markdown'}
+            </span>
+          </div>
+          <div className="min-h-[100px] bg-gray-50 p-3 rounded border border-gray-200 text-sm text-gray-600 overflow-y-auto">
+            {output}
           </div>
         </div>
-        
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 min-h-[80px] flex items-center justify-center">
-          <p className="text-sm text-gray-500 text-center">
-            {data.format ? (
-              <span>Output will be displayed as {getFormatLabel()}</span>
-            ) : (
-              <span>Connect to see output</span>
-            )}
-          </p>
-        </div>
-        
-        <div className="mt-3 text-xs text-gray-500">
-          <div className="flex justify-between">
-            <span>Format:</span>
-            <span className="font-medium">{getFormatLabel()}</span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Input handle */}
+      </CardContent>
       <Handle
         type="target"
-        position={Position.Left}
+        position={Position.Top}
         id="input"
-        className="w-3 h-3 bg-purple-500 border-2 border-white"
+        style={{ 
+          top: -8, 
+          background: '#9333ea',
+          width: 12,
+          height: 12,
+          border: '2px solid white'
+        }}
       />
-    </div>
+    </Card>
   );
-}
+};
+
+export default OutputNode;
