@@ -193,9 +193,8 @@ export default function CanvasHome() {
     // Store flag in localStorage to indicate blank template
     localStorage.setItem('blankTemplate', 'true');
     
-    // Directly navigate to builder
-    // (Authentication will be handled in the builder when saving/deploying)
-    navigate('/builder');
+    // Navigate to our simpler builder with pre-loaded components
+    navigate('/simple-builder');
   };
 
   return (
