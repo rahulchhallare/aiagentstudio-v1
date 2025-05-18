@@ -428,6 +428,26 @@ export default function AgentBuilder() {
       return;
     }
 
+    // Check if the agent has the required node types for deployment
+    if (deploy && reactFlowInstance) {
+      const flowData = reactFlowInstance.toObject();
+      const hasInputNode = flowData.nodes.some(node => node.type?.includes('input'));
+      const hasProcessingNode = flowData.nodes.some(node => 
+        node.type?.includes('gpt') || 
+        node.type?.includes('transform') || 
+        node.type?.includes('bot'));
+      const hasOutputNode = flowData.nodes.some(node => node.type?.includes('output'));
+
+      if (!hasInputNode || !hasProcessingNode || !hasOutputNode) {
+        toast({
+          title: 'Incomplete Agent',
+          description: 'Your agent needs at least one input node, one processing node, and one output node to be deployed.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     setIsSaving(true);
 
     try {
@@ -437,50 +457,132 @@ export default function AgentBuilder() {
 
       const flowData: FlowData = reactFlowInstance.toObject();
       
-      await saveMutation.mutateAsync({
-        name: agentName,
-        flowData,
-        userId: user.id,
-        isActive: deploy,
-      });
-
-      if (deploy) {
-        // Fetch the updated agent info to get the deployment URL
-        const updatedAgent = await queryClient.fetchQuery({
-          queryKey: [`/api/agents/${id}`],
+      if (id) {
+        // Update existing agent
+        const response = await apiRequest(`/api/agents/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: agentName,
+            flow_data: flowData,
+            is_active: deploy,
+            description: selectedNode?.data?.description || 'AI Agent created with AIagentStudio'
+          }),
         });
         
-        if (updatedAgent && updatedAgent.deploy_url) {
+        // Update success message with deploy URL if available
+        if (deploy && response.deploy_url) {
+          // Show toast with deploy link
           toast({
-            title: 'Agent deployed',
+            title: '🎉 Agent Deployed Successfully!',
             description: (
               <div>
-                <p>Your agent "{agentName}" has been deployed successfully.</p>
-                <p className="mt-2">
-                  <a 
-                    href={updatedAgent.deploy_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline"
+                <p>Your agent "{agentName}" is now live and can be accessed at:</p>
+                <div className="mt-2 mb-1 p-2 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-between">
+                  <code className="text-sm text-blue-500 break-all">{response.deploy_url}</code>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(response.deploy_url);
+                      toast({ title: "URL copied to clipboard!" });
+                    }}
                   >
-                    View deployed agent
-                  </a>
-                </p>
+                    Copy
+                  </Button>
+                </div>
+                <div className="mt-3">
+                  <Button asChild variant="default" className="w-full">
+                    <a href={response.deploy_url} target="_blank" rel="noopener noreferrer">
+                      Open Agent
+                    </a>
+                  </Button>
+                </div>
               </div>
             ),
-            duration: 10000, // Show for 10 seconds so user has time to click
+            duration: 15000, // Show for 15 seconds
           });
-        } else {
+        } else if (deploy) {
           toast({
             title: 'Agent deployed',
             description: `Your agent "${agentName}" has been deployed successfully.`,
+          });
+        } else {
+          toast({
+            title: 'Agent saved',
+            description: `Your agent "${agentName}" has been saved successfully.`,
+          });
+        }
+      } else {
+        // Create new agent
+        const response = await apiRequest('/api/agents', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: agentName,
+            user_id: user.id,
+            flow_data: flowData,
+            is_active: deploy,
+            description: selectedNode?.data?.description || 'AI Agent created with AIagentStudio'
+          }),
+        });
+
+        // Redirect to the edit page for the new agent
+        navigate(`/builder/${response.id}`);
+        
+        // Update success message with deploy URL if available
+        if (deploy && response.deploy_url) {
+          // Show toast with deploy link
+          toast({
+            title: '🎉 Agent Deployed Successfully!',
+            description: (
+              <div>
+                <p>Your agent "{agentName}" is now live and can be accessed at:</p>
+                <div className="mt-2 mb-1 p-2 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-between">
+                  <code className="text-sm text-blue-500 break-all">{response.deploy_url}</code>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(response.deploy_url);
+                      toast({ title: "URL copied to clipboard!" });
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <div className="mt-3">
+                  <Button asChild variant="default" className="w-full">
+                    <a href={response.deploy_url} target="_blank" rel="noopener noreferrer">
+                      Open Agent
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            ),
+            duration: 15000, // Show for 15 seconds
+          });
+        } else if (deploy) {
+          toast({
+            title: 'Agent created and deployed',
+            description: `Your agent "${agentName}" has been created and deployed successfully.`,
+          });
+        } else {
+          toast({
+            title: 'Agent created',
+            description: `Your agent "${agentName}" has been created successfully.`,
           });
         }
       }
     } catch (error) {
       console.error('Error saving agent:', error);
+      toast({
+        title: 'Error saving agent',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
+      // Refresh agent list after save/deploy
+      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
     }
   }, [user, agentName, reactFlowInstance, saveMutation, toast]);
 
