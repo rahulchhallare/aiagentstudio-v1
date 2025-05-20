@@ -17,8 +17,28 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Rocket, ChevronLeft } from 'lucide-react';
+import { Save, Rocket, ChevronLeft, X, PanelLeft, LayoutTemplate } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { 
+  blogWriterTemplate, 
+  socialMediaTemplate, 
+  faqResponderTemplate, 
+  dataSummarizerTemplate, 
+  researchAssistantTemplate 
+} from '@/lib/templates';
 
 // Import node components
 import InputNode from '@/components/builder/nodes/InputNode';
@@ -39,6 +59,7 @@ export default function EnhancedBuilder() {
   // Agent state
   const [agentName, setAgentName] = useState('Untitled Agent');
   const [isSaving, setIsSaving] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   
   // ReactFlow state
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -47,69 +68,110 @@ export default function EnhancedBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   
+  // Load template function
+  const loadTemplate = useCallback((templateData: { nodes: Node[], edges: Edge[] }) => {
+    if (!templateData) return;
+    
+    setNodes(templateData.nodes);
+    setEdges(templateData.edges);
+    
+    setTimeout(() => {
+      if (reactFlowInstance) {
+        reactFlowInstance.fitView();
+      }
+    }, 50);
+  }, [setNodes, setEdges, reactFlowInstance]);
+
+  // Template selection handler
+  const handleTemplateSelect = useCallback((templateId: string) => {
+    let templateData;
+    
+    switch(templateId) {
+      case 'blog-writer':
+        templateData = blogWriterTemplate();
+        break;
+      case 'social-media':
+        templateData = socialMediaTemplate();
+        break;
+      case 'faq-responder':
+        templateData = faqResponderTemplate();
+        break;
+      case 'data-summarizer':
+        templateData = dataSummarizerTemplate();
+        break;
+      case 'research-assistant':
+        templateData = researchAssistantTemplate();
+        break;
+      default:
+        // Default blank template
+        templateData = {
+          nodes: [
+            {
+              id: 'input-1',
+              type: 'inputNode',
+              position: { x: 250, y: 100 },
+              data: { 
+                label: 'Text Input', 
+                placeholder: 'Enter your question...', 
+                description: 'Type your query here' 
+              }
+            },
+            {
+              id: 'gpt-1',
+              type: 'gptNode',
+              position: { x: 250, y: 250 },
+              data: { 
+                label: 'GPT-4 Processor',
+                model: 'gpt-4o',
+                systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
+                temperature: 0.7,
+                maxTokens: 1000
+              }
+            },
+            {
+              id: 'output-1',
+              type: 'outputNode',
+              position: { x: 250, y: 400 },
+              data: { 
+                label: 'Text Output', 
+                format: 'markdown' 
+              }
+            }
+          ],
+          edges: [
+            {
+              id: 'e1-2',
+              source: 'input-1',
+              target: 'gpt-1',
+              type: 'smoothstep',
+              animated: true,
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+              },
+            },
+            {
+              id: 'e2-3',
+              source: 'gpt-1',
+              target: 'output-1',
+              type: 'smoothstep',
+              animated: true,
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+              },
+            }
+          ]
+        };
+    }
+    
+    loadTemplate(templateData);
+    setShowTemplateMenu(false);
+  }, [loadTemplate]);
+
   // Load initial nodes and edges when component mounts
   useEffect(() => {
-    // Create default nodes for blank template
-    const initialNodes: Node[] = [
-      {
-        id: 'input-1',
-        type: 'inputNode',
-        position: { x: 250, y: 100 },
-        data: { 
-          label: 'Text Input', 
-          placeholder: 'Enter your question...', 
-          description: 'Type your query here' 
-        }
-      },
-      {
-        id: 'gpt-1',
-        type: 'gptNode',
-        position: { x: 250, y: 250 },
-        data: { 
-          label: 'GPT-4 Processor',
-          model: 'gpt-4o',
-          systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
-          temperature: 0.7,
-          maxTokens: 1000
-        }
-      },
-      {
-        id: 'output-1',
-        type: 'outputNode',
-        position: { x: 250, y: 400 },
-        data: { 
-          label: 'Text Output', 
-          format: 'markdown' 
-        }
-      }
-    ];
-
-    const initialEdges: Edge[] = [
-      {
-        id: 'e1-2',
-        source: 'input-1',
-        target: 'gpt-1',
-        type: 'smoothstep',
-        animated: true,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      },
-      {
-        id: 'e2-3',
-        source: 'gpt-1',
-        target: 'output-1',
-        type: 'smoothstep',
-        animated: true,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      }
-    ];
-    
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-  }, [setNodes, setEdges]);
+    // Load blank template by default
+    handleTemplateSelect('blank');
+  }, [handleTemplateSelect]);
   
   // Handle connecting nodes
   const onConnect = useCallback(
@@ -293,6 +355,269 @@ export default function EnhancedBuilder() {
     setNodes((nodes) => nodes.concat(newNode));
   };
   
+  // Helper function to determine if we should show properties panel
+  const renderPropertiesPanel = () => {
+    if (!selectedNode) return null;
+    
+    return (
+      <div className="w-80 border-l bg-background overflow-y-auto flex-shrink-0 shadow-sm">
+        <div className="p-4 border-b flex justify-between items-center">
+          <h3 className="font-medium text-lg">Node Properties</h3>
+          <X 
+            className="h-5 w-5 text-gray-500 cursor-pointer" 
+            onClick={() => setSelectedNode(null)} 
+          />
+        </div>
+        
+        <div className="p-4 space-y-4">
+          {selectedNode.type === 'inputNode' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Label</label>
+                <Input
+                  value={(selectedNode.data as any).label || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        label: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Node Label"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Placeholder Text</label>
+                <Input
+                  value={(selectedNode.data as any).placeholder || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        placeholder: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Enter placeholder text..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  value={(selectedNode.data as any).description || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        description: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Describe this input..."
+                  className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm min-h-[80px]"
+                />
+              </div>
+            </>
+          )}
+          
+          {selectedNode.type === 'gptNode' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Label</label>
+                <Input
+                  value={(selectedNode.data as any).label || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        label: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Node Label"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Model</label>
+                <Select
+                  value={(selectedNode.data as any).model || 'gpt-4o'}
+                  onValueChange={(value) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        model: value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                    <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+                    <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                    <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">System Prompt</label>
+                <textarea
+                  value={(selectedNode.data as any).systemPrompt || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        systemPrompt: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Enter system instructions..."
+                  className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm min-h-[100px]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <label className="text-sm font-medium">Temperature: {(selectedNode.data as any).temperature || 0.7}</label>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={(selectedNode.data as any).temperature || 0.7}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        temperature: parseFloat(e.target.value)
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>More Precise</span>
+                  <span>More Creative</span>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Max Tokens</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="4000"
+                  value={(selectedNode.data as any).maxTokens || 1000}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        maxTokens: parseInt(e.target.value)
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                />
+              </div>
+            </>
+          )}
+          
+          {selectedNode.type === 'outputNode' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Label</label>
+                <Input
+                  value={(selectedNode.data as any).label || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        label: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Node Label"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Output Format</label>
+                <Select
+                  value={(selectedNode.data as any).format || 'markdown'}
+                  onValueChange={(value) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        format: value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="plaintext">Plain Text</SelectItem>
+                    <SelectItem value="markdown">Markdown</SelectItem>
+                    <SelectItem value="html">HTML</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       {/* Header */}
@@ -327,7 +652,37 @@ export default function EnhancedBuilder() {
             className="h-9 border-none shadow-none focus-visible:ring-0 p-0 text-lg font-medium"
           />
         </div>
-        <div className="flex space-x-2">
+        
+        <div className="flex items-center space-x-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center">
+                <LayoutTemplate className="mr-1 h-4 w-4" />
+                Templates
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => handleTemplateSelect('blank')}>
+                Blank Agent
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTemplateSelect('blog-writer')}>
+                Blog Writer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTemplateSelect('social-media')}>
+                Social Media Assistant
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTemplateSelect('faq-responder')}>
+                FAQ Responder
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTemplateSelect('data-summarizer')}>
+                Data Summarizer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTemplateSelect('research-assistant')}>
+                Research Assistant
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button 
             variant="outline" 
             size="sm"
@@ -338,6 +693,7 @@ export default function EnhancedBuilder() {
             <Save className="mr-1 h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
+          
           <Button
             size="sm"
             onClick={handleDeploy}
@@ -462,6 +818,9 @@ export default function EnhancedBuilder() {
             </ReactFlow>
           </div>
         </ReactFlowProvider>
+        
+        {/* Right sidebar - Properties panel */}
+        {renderPropertiesPanel()}
       </div>
     </div>
   );
