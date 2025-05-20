@@ -95,11 +95,83 @@ export default function AgentBuilder() {
   useEffect(() => {
     // Load existing agent if ID is provided
     if (id && agent) {
+      console.log("Loading existing agent in EnhancedBuilder:", agent);
       setAgentName(agent.name);
       
       if (agent.flow_data) {
-        setNodes(agent.flow_data.nodes || []);
-        setEdges(agent.flow_data.edges || []);
+        console.log("Setting flow data in EnhancedBuilder:", agent.flow_data);
+        
+        try {
+          // Make sure we're working with the right data structure
+          let flowData = agent.flow_data;
+          
+          // If the flow data is a string, parse it
+          if (typeof flowData === 'string') {
+            flowData = JSON.parse(flowData);
+          }
+          
+          // Handle case where agent has no nodes or edges
+          const nodeArray = flowData.nodes || [];
+          const edgeArray = flowData.edges || [];
+          
+          // If we don't have any nodes and the user was expecting to edit an agent,
+          // let's add some default nodes to show something
+          if (nodeArray.length === 0) {
+            // Add default nodes for editing
+            const defaultNodes = [
+              {
+                id: 'input-edit-1',
+                type: 'inputNode',
+                position: { x: 250, y: 100 },
+                data: { 
+                  label: 'Text Input', 
+                  placeholder: 'Enter your text...', 
+                  description: 'User input'
+                }
+              },
+              {
+                id: 'output-edit-1',
+                type: 'outputNode',
+                position: { x: 250, y: 250 },
+                data: { 
+                  label: 'Text Output',
+                  format: 'plaintext'
+                }
+              }
+            ];
+            
+            const defaultEdges = [
+              {
+                id: 'e-edit-1',
+                source: 'input-edit-1',
+                target: 'output-edit-1',
+                type: 'smoothstep',
+                animated: true,
+                markerEnd: {
+                  type: MarkerType.ArrowClosed,
+                },
+              }
+            ];
+            
+            setNodes(defaultNodes);
+            setEdges(defaultEdges);
+          } else {
+            // Use the existing nodes and edges
+            setNodes(nodeArray);
+            setEdges(edgeArray);
+          }
+          
+          console.log("Successfully set nodes and edges for editing");
+        } catch (error) {
+          console.error("Error setting up agent for editing:", error);
+          // Fallback to empty state
+          setNodes([]);
+          setEdges([]);
+        }
+      } else {
+        console.warn("Agent has no flow_data");
+        setNodes([]);
+        setEdges([]);
       }
       return;
     }
@@ -110,6 +182,7 @@ export default function AgentBuilder() {
     if (templateId) {
       const template = getTemplateById(templateId);
       if (template) {
+        console.log("Loading template:", template);
         setNodes(template.nodes);
         setEdges(template.edges);
         localStorage.removeItem('selectedTemplate');
@@ -121,7 +194,7 @@ export default function AgentBuilder() {
     const isBlankTemplate = localStorage.getItem('blankTemplate') === 'true';
     if (isBlankTemplate) {
       // Start with an empty canvas - no pre-placed nodes
-      // This way users will only see components when they drag them onto the canvas
+      console.log("Starting with blank template in EnhancedBuilder");
       setNodes([]);
       setEdges([]);
       localStorage.removeItem('blankTemplate');

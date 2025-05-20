@@ -87,7 +87,7 @@ export default function AgentBuilder() {
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
   // Get agent data from API
-  const { data: agent, isLoading: isLoadingAgent } = useAgent(id);
+  const { agent, isLoading: isLoadingAgent } = useAgent(id);
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
   
@@ -101,29 +101,150 @@ export default function AgentBuilder() {
       if (agent.flow_data) {
         console.log("Setting flow data:", agent.flow_data);
         
-        // Ensure flow_data is properly parsed if it's a string
-        let flowData = agent.flow_data;
-        if (typeof flowData === 'string') {
-          try {
-            flowData = JSON.parse(flowData);
-          } catch (e) {
-            console.error("Failed to parse flow_data string:", e);
+        try {
+          // Ensure flow_data is properly parsed if it's a string
+          let flowData = agent.flow_data;
+          if (typeof flowData === 'string') {
+            try {
+              flowData = JSON.parse(flowData);
+            } catch (e) {
+              console.error("Failed to parse flow_data string:", e);
+            }
           }
+          
+          // Handle case where agent has no nodes or edges
+          const nodeArray = flowData.nodes || [];
+          const edgeArray = flowData.edges || [];
+          
+          // If we don't have any nodes and the user was expecting to edit an agent,
+          // let's add some default nodes to show something
+          if (nodeArray.length === 0) {
+            // Add default nodes for editing
+            const defaultNodes = [
+              {
+                id: 'input-edit-1',
+                type: 'inputNode',
+                position: { x: 250, y: 100 },
+                data: { 
+                  label: 'Text Input', 
+                  placeholder: 'Enter your text...', 
+                  description: 'User input'
+                }
+              },
+              {
+                id: 'output-edit-1',
+                type: 'outputNode',
+                position: { x: 250, y: 250 },
+                data: { 
+                  label: 'Text Output',
+                  format: 'plaintext'
+                }
+              }
+            ];
+            
+            const defaultEdges = [
+              {
+                id: 'e-edit-1',
+                source: 'input-edit-1',
+                target: 'output-edit-1',
+                type: 'smoothstep',
+                animated: true,
+                markerEnd: {
+                  type: MarkerType.ArrowClosed,
+                },
+              }
+            ];
+            
+            setNodes(defaultNodes);
+            setEdges(defaultEdges);
+          } else {
+            // Use the existing nodes and edges
+            setNodes(nodeArray);
+            setEdges(edgeArray);
+          }
+          
+          console.log("Successfully set nodes and edges for editing");
+        } catch (error) {
+          console.error("Error setting up agent for editing:", error);
+          // Fallback to default nodes if something went wrong
+          const defaultNodes = [
+            {
+              id: 'input-default-1',
+              type: 'inputNode',
+              position: { x: 250, y: 100 },
+              data: { 
+                label: 'Text Input', 
+                placeholder: 'Enter your text...', 
+                description: 'User input'
+              }
+            },
+            {
+              id: 'output-default-1',
+              type: 'outputNode',
+              position: { x: 250, y: 250 },
+              data: { 
+                label: 'Text Output',
+                format: 'plaintext'
+              }
+            }
+          ];
+          
+          const defaultEdges = [
+            {
+              id: 'e-default-1',
+              source: 'input-default-1',
+              target: 'output-default-1',
+              type: 'smoothstep',
+              animated: true,
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+              },
+            }
+          ];
+          
+          setNodes(defaultNodes);
+          setEdges(defaultEdges);
         }
-        
-        const nodeArray = Array.isArray(flowData.nodes) ? flowData.nodes : [];
-        const edgeArray = Array.isArray(flowData.edges) ? flowData.edges : [];
-        
-        setNodes(nodeArray);
-        setEdges(edgeArray);
-        
-        // Log what was actually set
-        console.log("Set nodes:", nodeArray);
-        console.log("Set edges:", edgeArray);
       } else {
-        console.warn("Agent has no flow_data");
-        setNodes([]);
-        setEdges([]);
+        console.warn("Agent has no flow_data, setting up default components");
+        // Fallback to default nodes and edges
+        const defaultNodes = [
+          {
+            id: 'input-default-1',
+            type: 'inputNode',
+            position: { x: 250, y: 100 },
+            data: { 
+              label: 'Text Input', 
+              placeholder: 'Enter your text...', 
+              description: 'User input'
+            }
+          },
+          {
+            id: 'output-default-1',
+            type: 'outputNode',
+            position: { x: 250, y: 250 },
+            data: { 
+              label: 'Text Output',
+              format: 'plaintext'
+            }
+          }
+        ];
+        
+        const defaultEdges = [
+          {
+            id: 'e-default-1',
+            source: 'input-default-1',
+            target: 'output-default-1',
+            type: 'smoothstep',
+            animated: true,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+            },
+          }
+        ];
+        
+        setNodes(defaultNodes);
+        setEdges(defaultEdges);
       }
       return;
     }
