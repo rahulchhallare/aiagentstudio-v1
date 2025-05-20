@@ -44,12 +44,16 @@ import {
 import InputNode from '@/components/builder/nodes/InputNode';
 import GPTNode from '@/components/builder/nodes/GPTNode';
 import OutputNode from '@/components/builder/nodes/OutputNode';
+import APINode from '@/components/builder/nodes/APINode';
+import LogicNode from '@/components/builder/nodes/LogicNode';
 
 // Define node types
 const nodeTypes = {
   inputNode: InputNode,
   gptNode: GPTNode,
   outputNode: OutputNode,
+  apiNode: APINode,
+  logicNode: LogicNode,
 };
 
 export default function EnhancedBuilder() {
@@ -336,6 +340,48 @@ export default function EnhancedBuilder() {
     setNodes((nodes) => nodes.concat(newNode));
   };
   
+  const addAPINode = () => {
+    if (!reactFlowInstance) return;
+    
+    const newNode: Node = {
+      id: `apiNode-${Date.now()}`,
+      type: 'apiNode',
+      position: { 
+        x: Math.random() * 300 + 300, 
+        y: Math.random() * 300 + 150 
+      },
+      data: { 
+        label: 'API Connector',
+        endpoint: 'https://api.example.com',
+        method: 'GET',
+        headers: '{}',
+        body: '{}'
+      }
+    };
+    
+    setNodes((nodes) => nodes.concat(newNode));
+  };
+  
+  const addLogicNode = () => {
+    if (!reactFlowInstance) return;
+    
+    const newNode: Node = {
+      id: `logicNode-${Date.now()}`,
+      type: 'logicNode',
+      position: { 
+        x: Math.random() * 300 + 250, 
+        y: Math.random() * 300 + 200 
+      },
+      data: { 
+        label: 'Condition',
+        condition: 'input.length > 0',
+        description: 'Logic branch based on condition'
+      }
+    };
+    
+    setNodes((nodes) => nodes.concat(newNode));
+  };
+  
   const addOutputNode = () => {
     if (!reactFlowInstance) return;
     
@@ -613,6 +659,209 @@ export default function EnhancedBuilder() {
               </div>
             </>
           )}
+
+          {selectedNode.type === 'apiNode' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Label</label>
+                <Input
+                  value={(selectedNode.data as any).label || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        label: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Node Label"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Endpoint URL</label>
+                <Input
+                  value={(selectedNode.data as any).endpoint || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        endpoint: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="https://api.example.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Method</label>
+                <Select
+                  value={(selectedNode.data as any).method || 'GET'}
+                  onValueChange={(value) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        method: value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GET">GET</SelectItem>
+                    <SelectItem value="POST">POST</SelectItem>
+                    <SelectItem value="PUT">PUT</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Headers (JSON)</label>
+                <textarea
+                  value={(selectedNode.data as any).headers || '{}'}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        headers: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder='{"Content-Type": "application/json"}'
+                  className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm min-h-[80px] font-mono"
+                />
+              </div>
+              
+              {(selectedNode.data as any).method !== 'GET' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Request Body (JSON)</label>
+                  <textarea
+                    value={(selectedNode.data as any).body || '{}'}
+                    onChange={(e) => {
+                      const updatedNode = {
+                        ...selectedNode,
+                        data: {
+                          ...selectedNode.data,
+                          body: e.target.value
+                        }
+                      };
+                      setNodes((nds) =>
+                        nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                      );
+                    }}
+                    placeholder='{"key": "value"}'
+                    className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm min-h-[80px] font-mono"
+                  />
+                </div>
+              )}
+            </>
+          )}
+          
+          {selectedNode.type === 'logicNode' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Label</label>
+                <Input
+                  value={(selectedNode.data as any).label || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        label: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Node Label"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  value={(selectedNode.data as any).description || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        description: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="Describe this logic branch..."
+                  className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm min-h-[80px]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Condition</label>
+                <textarea
+                  value={(selectedNode.data as any).condition || ''}
+                  onChange={(e) => {
+                    const updatedNode = {
+                      ...selectedNode,
+                      data: {
+                        ...selectedNode.data,
+                        condition: e.target.value
+                      }
+                    };
+                    setNodes((nds) =>
+                      nds.map((n) => (n.id === selectedNode.id ? updatedNode : n))
+                    );
+                  }}
+                  placeholder="input.length > 0"
+                  className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm min-h-[80px] font-mono"
+                />
+              </div>
+              
+              <div className="mt-4 pt-4 border-t flex justify-between">
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-medium text-green-600 mb-1">True output</span>
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-medium text-red-600 mb-1">False output</span>
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -757,6 +1006,48 @@ export default function EnhancedBuilder() {
                 <div>
                   <div className="font-medium text-sm">GPT Block</div>
                   <div className="text-xs text-green-500">AI text generation</div>
+                </div>
+              </div>
+              
+              <div className="text-sm font-medium text-muted-foreground mb-2 mt-4">Integration</div>
+              <div 
+                className="p-3 bg-indigo-50 border border-indigo-200 text-indigo-600 rounded-lg cursor-pointer hover:shadow-sm transition-shadow flex items-center"
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('application/reactflow', 'apiNode');
+                  event.dataTransfer.effectAllowed = 'move';
+                }}
+                onClick={addAPINode}
+              >
+                <div className="w-8 h-8 bg-indigo-100 rounded-md flex items-center justify-center mr-3">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-medium text-sm">API Block</div>
+                  <div className="text-xs text-indigo-500">External API call</div>
+                </div>
+              </div>
+              
+              <div className="text-sm font-medium text-muted-foreground mb-2 mt-4">Logic</div>
+              <div 
+                className="p-3 bg-amber-50 border border-amber-200 text-amber-600 rounded-lg cursor-pointer hover:shadow-sm transition-shadow flex items-center"
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('application/reactflow', 'logicNode');
+                  event.dataTransfer.effectAllowed = 'move';
+                }}
+                onClick={addLogicNode}
+              >
+                <div className="w-8 h-8 bg-amber-100 rounded-md flex items-center justify-center mr-3">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 3v12h10l-4-4m0 8l4-4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-medium text-sm">Logic Block</div>
+                  <div className="text-xs text-amber-500">Conditional branching</div>
                 </div>
               </div>
               
