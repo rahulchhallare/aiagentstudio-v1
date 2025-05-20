@@ -38,18 +38,30 @@ import { getDefaultLayout, getSimpleLayout, getLogicLayout, getAPILayout } from 
 
 // Import node components
 import InputNode from '@/components/builder/nodes/InputNode';
+import FileInputNode from '@/components/builder/nodes/FileInputNode';
+import ImageInputNode from '@/components/builder/nodes/ImageInputNode';
+import WebhookInputNode from '@/components/builder/nodes/WebhookInputNode';
 import GPTNode from '@/components/builder/nodes/GPTNode';
-import OutputNode from '@/components/builder/nodes/OutputNode';
 import APINode from '@/components/builder/nodes/APINode';
 import LogicNode from '@/components/builder/nodes/LogicNode';
+import OutputNode from '@/components/builder/nodes/OutputNode';
+import ImageOutputNode from '@/components/builder/nodes/ImageOutputNode';
+import EmailNode from '@/components/builder/nodes/EmailNode';
+import NotificationNode from '@/components/builder/nodes/NotificationNode';
 
 // Define node types
 const nodeTypes = {
   inputNode: InputNode,
+  fileInputNode: FileInputNode,
+  imageInputNode: ImageInputNode,
+  webhookInputNode: WebhookInputNode,
   gptNode: GPTNode,
-  outputNode: OutputNode,
   apiNode: APINode,
   logicNode: LogicNode,
+  outputNode: OutputNode,
+  imageOutputNode: ImageOutputNode,
+  emailNode: EmailNode,
+  notificationNode: NotificationNode,
 };
 
 export default function EnhancedBuilder() {
