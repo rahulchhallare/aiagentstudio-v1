@@ -16,6 +16,12 @@ import {
   dataSummarizerTemplate, 
   researchAssistantTemplate 
 } from '@/lib/templates';
+import {
+  getDefaultLayout,
+  getSimpleLayout,
+  getLogicLayout,
+  getAPILayout
+} from '@/lib/initialLayouts';
 
 interface TemplatesPanelProps {
   onSelectTemplate: (template: FlowData) => void;
