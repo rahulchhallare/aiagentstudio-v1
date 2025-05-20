@@ -65,7 +65,10 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const username = `${values.firstName.toLowerCase()}${values.lastName.toLowerCase()}`;
+      // Create a more user-friendly username by combining first and last name
+      // but ensure it's unique by adding a timestamp
+      const timestamp = new Date().getTime();
+      const username = `${values.firstName.toLowerCase()}${values.lastName.toLowerCase()}${timestamp}`;
       
       await register({
         username,
