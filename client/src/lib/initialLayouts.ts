@@ -1,64 +1,11 @@
 import { MarkerType } from 'reactflow';
 import { FlowData } from './types';
 
-// Default layout for a blank agent with pre-connected components
+// Default layout for a blank agent - empty canvas for drag-and-drop workflow
 export const getDefaultLayout = (): FlowData => {
   return {
-    nodes: [
-      {
-        id: 'input-default',
-        type: 'inputNode',
-        position: { x: 250, y: 80 },
-        data: { 
-          label: 'Text Input', 
-          placeholder: 'Enter your question...', 
-          description: 'Type your query here' 
-        }
-      },
-      {
-        id: 'gpt-default',
-        type: 'gptNode',
-        position: { x: 250, y: 250 },
-        data: { 
-          label: 'GPT-4 Processor',
-          model: 'gpt-4o',
-          systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
-          temperature: 0.7,
-          maxTokens: 1000
-        }
-      },
-      {
-        id: 'output-default',
-        type: 'outputNode',
-        position: { x: 250, y: 430 },
-        data: { 
-          label: 'Text Output', 
-          format: 'markdown' 
-        }
-      }
-    ],
-    edges: [
-      {
-        id: 'e-input-gpt',
-        source: 'input-default',
-        target: 'gpt-default',
-        type: 'smoothstep',
-        animated: true,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      },
-      {
-        id: 'e-gpt-output',
-        source: 'gpt-default',
-        target: 'output-default',
-        type: 'smoothstep',
-        animated: true,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      }
-    ]
+    nodes: [],
+    edges: []
   };
 };
 
