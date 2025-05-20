@@ -250,6 +250,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate and deploy a test agent (for demo purposes)
+  app.post("/api/test-agent/create", async (req: Request, res: Response) => {
+    try {
+      // Import the test agent creation function
+      const { createTestAgent } = await import('./test-agent');
+
+      // Create a flow for the test agent
+      const flow_data = createTestAgent();
+      
+      // Generate a readable deploy ID
+      const deployId = "test-agent-" + Math.floor(1000 + Math.random() * 9000);
+      
+      // Create a deploy URL using the hostname from the request
+      const host = req.get('host') || 'aiagent-studio.ai';
+      const deployUrl = `https://${host}/agent/${deployId}`;
+      
+      // Create a test agent in the database
+      const agent = await storage.createAgent({
+        user_id: 1, // Demo user ID
+        name: "Content Creation Assistant",
+        description: "A helpful AI assistant that can generate creative content based on your prompts.",
+        flow_data,
+        is_active: true,
+        deploy_id: deployId,
+        deploy_url: deployUrl
+      });
+      
+      return res.status(201).json({
+        message: "Test agent created successfully",
+        agent: {
+          id: agent.id,
+          name: agent.name,
+          description: agent.description,
+          deploy_id: deployId,
+          deploy_url: deployUrl
+        }
+      });
+    } catch (error) {
+      console.error("Error creating test agent:", error);
+      return res.status(500).json({ message: "Failed to create test agent" });
+    }
+  });
+
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
     try {
