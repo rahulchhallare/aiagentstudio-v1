@@ -28,7 +28,19 @@ export function useAgents(userId?: number) {
 export function useAgent(id?: string | number) {
   const { data, isLoading, error } = useQuery<Agent>({
     queryKey: [`/api/agents/${id}`],
+    queryFn: async ({ signal }) => {
+      if (!id) throw new Error('Agent ID is required');
+      
+      const response = await fetch(`/api/agents/${id}`, { 
+        signal, 
+        credentials: 'include' 
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch agent');
+      return response.json();
+    },
     enabled: !!id,
+    retry: 1,
   });
 
   return {

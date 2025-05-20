@@ -95,11 +95,35 @@ export default function AgentBuilder() {
   useEffect(() => {
     // Load existing agent if ID is provided
     if (id && agent) {
+      console.log("Loading existing agent:", agent);
       setAgentName(agent.name);
       
       if (agent.flow_data) {
-        setNodes(agent.flow_data.nodes || []);
-        setEdges(agent.flow_data.edges || []);
+        console.log("Setting flow data:", agent.flow_data);
+        
+        // Ensure flow_data is properly parsed if it's a string
+        let flowData = agent.flow_data;
+        if (typeof flowData === 'string') {
+          try {
+            flowData = JSON.parse(flowData);
+          } catch (e) {
+            console.error("Failed to parse flow_data string:", e);
+          }
+        }
+        
+        const nodeArray = Array.isArray(flowData.nodes) ? flowData.nodes : [];
+        const edgeArray = Array.isArray(flowData.edges) ? flowData.edges : [];
+        
+        setNodes(nodeArray);
+        setEdges(edgeArray);
+        
+        // Log what was actually set
+        console.log("Set nodes:", nodeArray);
+        console.log("Set edges:", edgeArray);
+      } else {
+        console.warn("Agent has no flow_data");
+        setNodes([]);
+        setEdges([]);
       }
       return;
     }
@@ -110,6 +134,7 @@ export default function AgentBuilder() {
     if (templateId) {
       const template = getTemplateById(templateId);
       if (template) {
+        console.log("Loading template:", template);
         setNodes(template.nodes);
         setEdges(template.edges);
         localStorage.removeItem('selectedTemplate');
@@ -121,7 +146,7 @@ export default function AgentBuilder() {
     const isBlankTemplate = localStorage.getItem('blankTemplate') === 'true';
     if (isBlankTemplate) {
       // Start with an empty canvas - no pre-placed nodes
-      // This way users will only see components when they drag them onto the canvas
+      console.log("Starting with blank template");
       setNodes([]);
       setEdges([]);
       localStorage.removeItem('blankTemplate');
