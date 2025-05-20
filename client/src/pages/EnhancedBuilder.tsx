@@ -17,7 +17,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Rocket, ChevronLeft, X, PanelLeft, LayoutTemplate } from 'lucide-react';
+import { Save, Rocket, ChevronLeft, X, PanelLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -26,12 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import TemplatesPanel from '@/components/builder/TemplatesPanel';
 import { 
   blogWriterTemplate, 
   socialMediaTemplate, 
@@ -247,6 +242,20 @@ export default function EnhancedBuilder() {
           systemPrompt: 'You are a helpful assistant.',
           temperature: 0.7,
           maxTokens: 1000
+        };
+      } else if (type === 'apiNode') {
+        newNode.data = { 
+          label: 'API Block',
+          endpoint: 'https://api.example.com',
+          method: 'GET',
+          headers: '{}',
+          body: '{}'
+        };
+      } else if (type === 'logicNode') {
+        newNode.data = { 
+          label: 'Logic Block',
+          condition: 'input.length > 0',
+          description: 'Logic branch based on condition'
         };
       } else if (type === 'outputNode') {
         newNode.data = { 
@@ -903,34 +912,7 @@ export default function EnhancedBuilder() {
         </div>
         
         <div className="flex items-center space-x-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center">
-                <LayoutTemplate className="mr-1 h-4 w-4" />
-                Templates
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => handleTemplateSelect('blank')}>
-                Blank Agent
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTemplateSelect('blog-writer')}>
-                Blog Writer
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTemplateSelect('social-media')}>
-                Social Media Assistant
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTemplateSelect('faq-responder')}>
-                FAQ Responder
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTemplateSelect('data-summarizer')}>
-                Data Summarizer
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTemplateSelect('research-assistant')}>
-                Research Assistant
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <TemplatesPanel onSelectTemplate={loadTemplate} />
           
           <Button 
             variant="outline" 
@@ -946,7 +928,7 @@ export default function EnhancedBuilder() {
           <Button
             size="sm"
             onClick={handleDeploy}
-            className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="flex items-center bg-indigo-600 hover:bg-indigo-700"
           >
             <Rocket className="mr-1 h-4 w-4" />
             Deploy
