@@ -29,9 +29,15 @@ export function useAuth() {
   }, []);
 
   // Login function
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       const response = await apiRequest('POST', '/api/auth/login', { email, password });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Authentication failed');
+      }
+      
       const userData = await response.json();
       
       // Store user data
@@ -40,15 +46,21 @@ export function useAuth() {
       
       return userData;
     } catch (error: any) {
-      const message = error instanceof Error ? error.message : 'Authentication failed';
-      throw new Error(message);
+      console.error('Login error details:', error);
+      throw error;
     }
   };
 
   // Register function
-  const register = async (userData: Omit<InsertUser, 'password'> & { password: string }): Promise<User> => {
+  const register = async (userData: Omit<InsertUser, 'password'> & { password: string }): Promise<User | null> => {
     try {
       const response = await apiRequest('POST', '/api/auth/register', userData);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Registration failed');
+      }
+      
       const newUser = await response.json();
       
       // Store user data
@@ -57,8 +69,8 @@ export function useAuth() {
       
       return newUser;
     } catch (error: any) {
-      const message = error instanceof Error ? error.message : 'Registration failed';
-      throw new Error(message);
+      console.error('Registration error details:', error);
+      throw error;
     }
   };
 

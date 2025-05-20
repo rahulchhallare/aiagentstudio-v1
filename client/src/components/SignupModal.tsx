@@ -70,26 +70,28 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
       const timestamp = new Date().getTime();
       const username = `${values.firstName.toLowerCase()}${values.lastName.toLowerCase()}${timestamp}`;
       
-      await register({
+      const user = await register({
         username,
         email: values.email,
         password: values.password,
         avatar_url: '',
       });
       
-      toast({
-        title: "Account created successfully",
-        description: "Welcome to AIagentStudio.ai",
-      });
-      
-      onClose();
-      navigate('/dashboard');
-    } catch (error) {
+      if (user) {
+        toast({
+          title: "Account created successfully",
+          description: "Welcome to AIagentStudio.ai",
+        });
+        
+        onClose();
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
       console.error('Registration error:', error);
       
       toast({
         title: "Registration failed",
-        description: "This email might already be registered. Please try a different one or log in.",
+        description: error.message || "This email might already be registered. Please try a different one or log in.",
         variant: "destructive",
       });
     } finally {

@@ -56,15 +56,17 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await login(values.email, values.password);
+      const user = await login(values.email, values.password);
       
-      toast({
-        title: "Login successful",
-        description: "Welcome back to AIagentStudio.ai",
-      });
-      
-      onClose();
-      navigate('/dashboard');
+      if (user) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to AIagentStudio.ai",
+        });
+        
+        onClose();
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       
