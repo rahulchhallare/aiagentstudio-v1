@@ -36,6 +36,19 @@ export class MemStorage implements IStorage {
     this.userIdCounter = 1;
     this.agentIdCounter = 1;
     this.waitlistIdCounter = 1;
+    
+    // Create a test user for development
+    const testUser: User = {
+      id: this.userIdCounter++,
+      username: "testuser",
+      email: "test@example.com",
+      password: "Password123",
+      avatar_url: "",
+      created_at: new Date()
+    };
+    this.users.set(testUser.id, testUser);
+    
+    console.log("Created test user:", { email: testUser.email, password: "Password123" });
   }
 
   // User operations
