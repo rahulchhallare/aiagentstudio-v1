@@ -193,8 +193,8 @@ export default function CanvasHome() {
     // Store flag in localStorage to indicate blank template
     localStorage.setItem('blankTemplate', 'true');
     
-    // Navigate to our simpler builder with pre-loaded components
-    navigate('/simple-builder');
+    // Navigate to our builder page
+    navigate('/builder');
   };
 
   return (

@@ -430,7 +430,12 @@ export default function AgentBuilder() {
         {/* Main content - ReactFlow canvas */}
         <div className="flex-1 flex overflow-hidden">
           <ReactFlowProvider>
-            <div className="flex-1 h-full" ref={reactFlowWrapper}>
+            <div 
+              className="flex-1 h-full" 
+              ref={reactFlowWrapper}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+            >
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -439,10 +444,9 @@ export default function AgentBuilder() {
                 onConnect={onConnect}
                 onInit={setReactFlowInstance}
                 nodeTypes={nodeTypes}
-                onDragOver={onDragOver}
-                onDrop={onDrop}
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
+                deleteKeyCode="Delete"
                 fitView
               >
                 <Background gap={12} size={1} />

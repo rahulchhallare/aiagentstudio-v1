@@ -248,6 +248,17 @@ export default function NodePanel() {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
+    // Add opacity to make it clear something is being dragged
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.style.opacity = '0.4';
+    }
+  };
+  
+  const onDragEnd = (event: React.DragEvent) => {
+    // Reset opacity after dragging
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.style.opacity = '1';
+    }
   };
 
   return (
@@ -284,6 +295,7 @@ export default function NodePanel() {
                     className={`p-2 ${getNodeColor(node.color)} border rounded-lg cursor-grab flex flex-col items-center text-center`} 
                     draggable 
                     onDragStart={(event) => onDragStart(event, node.type)}
+                    onDragEnd={onDragEnd}
                   >
                     <div className={`w-8 h-8 ${getIconBgColor(node.color)} rounded-full flex items-center justify-center mb-1`}>
                       {node.icon}
@@ -307,6 +319,7 @@ export default function NodePanel() {
                     className={`p-3 ${getNodeColor(node.color)} border border-opacity-80 rounded-lg cursor-grab flex items-center hover:shadow-sm transition-shadow`} 
                     draggable 
                     onDragStart={(event) => onDragStart(event, node.type)}
+                    onDragEnd={onDragEnd}
                   >
                     <div className={`w-8 h-8 ${getIconBgColor(node.color)} rounded-md flex items-center justify-center mr-3 flex-shrink-0`}>
                       {node.icon}
