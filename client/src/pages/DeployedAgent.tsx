@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2, Send, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import type { Agent, FlowData } from '@/lib/types';
+import type { FlowData } from '@/lib/types';
 
 export default function DeployedAgent() {
   const { deployId } = useParams();
@@ -17,8 +17,16 @@ export default function DeployedAgent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
+  // Define a type for the agent data structure
+  interface DeployedAgentData {
+    id: number;
+    name?: string;
+    description?: string;
+    flow_data: FlowData;
+  }
+  
   // Fetch the deployed agent information
-  const { data: agent, isLoading, error } = useQuery({
+  const { data: agent, isLoading, error } = useQuery<DeployedAgentData>({
     queryKey: [`/api/agent/${deployId}`],
     enabled: !!deployId,
   });
@@ -35,13 +43,13 @@ export default function DeployedAgent() {
     if (agent && !isLoading && messages.length === 0) {
       setMessages([{
         role: 'assistant',
-        content: `👋 Hello! I'm ${agent.name}. How can I help you today?`
+        content: `👋 Hello! I'm ${agent.name || 'AI Agent'}. How can I help you today?`
       }]);
     }
   }, [agent, isLoading, messages.length]);
 
   const processUserInput = async (input: string) => {
-    if (!input.trim() || !agent) return;
+    if (!input.trim() || !agent || !deployId) return;
     
     // Add user message to conversation
     setMessages(prev => [...prev, {
@@ -50,50 +58,34 @@ export default function DeployedAgent() {
     }]);
     
     setIsProcessing(true);
+    setUserInput('');
     
     try {
-      // Find the first input and output nodes from the flow
-      const flowData = agent.flow_data as FlowData;
-      const inputNode = flowData.nodes.find(node => node.type.includes('input'));
-      const outputNode = flowData.nodes.find(node => node.type.includes('output'));
-      const processingNodes = flowData.nodes.filter(node => 
-        node.type.includes('gpt') || 
-        node.type.includes('transform') || 
-        node.type.includes('bot'));
+      // Call our execute API endpoint to run the agent flow
+      const response = await apiRequest(`/api/agent/${deployId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input })
+      });
       
-      // If we don't have required nodes, show an error
-      if (!inputNode || !processingNodes.length || !outputNode) {
-        throw new Error('This agent does not have a complete workflow (missing input, processing, or output nodes)');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to execute agent flow');
       }
       
-      // Get the main processing node (ideally the most connected one)
-      const mainProcessingNode = processingNodes[0];
+      const result = await response.json();
       
-      // Simulate processing - this would be replaced with actual API calls
-      // that process the user input through the agent's nodes
-      setTimeout(() => {
-        // Get the system prompt from the processing node
-        const systemPrompt = mainProcessingNode.data.systemPrompt || 
-          'You are a helpful assistant. Provide concise and accurate responses.';
-        
-        // Example response (in a real implementation, this would be the result of the API call)
-        const response = `I've processed your request: "${input}" based on the following system instructions: "${systemPrompt}"
-        
-This is a simulated response. In a fully implemented system, this would be the actual result from running your input through the GPT model with the agent's configuration.
-
-For visualization purposes, your message went through:
-1. Input Node: ${inputNode.data.label || 'Input'}
-2. Processing Node: ${mainProcessingNode.data.label || 'Processing'}
-3. Output Node: ${outputNode.data.label || 'Output'}`;
-        
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: response
-        }]);
-        
-        setIsProcessing(false);
-      }, 1500);
+      if (!result.success) {
+        throw new Error(result.error || 'Agent execution failed');
+      }
       
+      // Add the AI response to the conversation
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: result.output || 'I apologize, but I was unable to generate a response.'
+      }]);
     } catch (error) {
       console.error('Error processing input:', error);
       toast({
@@ -101,10 +93,15 @@ For visualization purposes, your message went through:
         description: error instanceof Error ? error.message : 'Failed to process your request',
         variant: 'destructive'
       });
+      
+      // Add error message to conversation
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'I encountered an error while processing your request. Please try again later.'
+      }]);
+    } finally {
       setIsProcessing(false);
     }
-    
-    setUserInput('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -140,9 +137,9 @@ For visualization purposes, your message went through:
         <div className="container mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-              {agent.name || 'AI Agent'}
+              {agent && agent.name ? agent.name : 'AI Agent'}
             </h1>
-            {agent.description && (
+            {agent && agent.description && (
               <p className="text-sm text-muted-foreground">{agent.description}</p>
             )}
           </div>

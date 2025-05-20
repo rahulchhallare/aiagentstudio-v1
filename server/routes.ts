@@ -211,6 +211,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Execute agent with user input - this makes the AI agents real and functional
+  app.post("/api/agent/:deployId/execute", async (req: Request, res: Response) => {
+    try {
+      const { deployId } = req.params;
+      const { input } = req.body;
+      
+      if (!input) {
+        return res.status(400).json({ message: "Input is required" });
+      }
+      
+      const agent = await storage.getAgentByDeployId(deployId);
+      
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      if (!agent.is_active) {
+        return res.status(403).json({ message: "Agent is not currently active" });
+      }
+      
+      // Execute the agent's flow with the provided input
+      const flowData = flowDataSchema.parse(agent.flow_data);
+      const result = await executeFlow(flowData, input);
+      
+      // Return the execution result
+      return res.json({ 
+        success: !result.error,
+        output: result.data,
+        error: result.error
+      });
+    } catch (error) {
+      console.error("Error executing agent:", error);
+      return res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Unknown error executing agent" 
+      });
+    }
+  });
+
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
     try {
