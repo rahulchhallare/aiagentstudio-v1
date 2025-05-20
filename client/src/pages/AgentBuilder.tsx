@@ -120,66 +120,10 @@ export default function AgentBuilder() {
     // If starting with blank template
     const isBlankTemplate = localStorage.getItem('blankTemplate') === 'true';
     if (isBlankTemplate) {
-      // Create default nodes for blank template
-      const initialNodes: Node[] = [
-        {
-          id: 'input-1',
-          type: 'inputNode',
-          position: { x: 250, y: 100 },
-          data: { 
-            label: 'Text Input', 
-            placeholder: 'Enter your question...', 
-            description: 'Type your query here' 
-          }
-        },
-        {
-          id: 'gpt-1',
-          type: 'gptNode',
-          position: { x: 250, y: 250 },
-          data: { 
-            label: 'GPT-4 Processor',
-            model: 'gpt-4o',
-            systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
-            temperature: 0.7,
-            maxTokens: 1000
-          }
-        },
-        {
-          id: 'output-1',
-          type: 'outputNode',
-          position: { x: 250, y: 400 },
-          data: { 
-            label: 'Text Output', 
-            format: 'markdown' 
-          }
-        }
-      ];
-
-      const initialEdges: Edge[] = [
-        {
-          id: 'e1-2',
-          source: 'input-1',
-          target: 'gpt-1',
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-          },
-        },
-        {
-          id: 'e2-3',
-          source: 'gpt-1',
-          target: 'output-1',
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-          },
-        }
-      ];
-      
-      setNodes(initialNodes);
-      setEdges(initialEdges);
+      // Start with an empty canvas - no pre-placed nodes
+      // This way users will only see components when they drag them onto the canvas
+      setNodes([]);
+      setEdges([]);
       localStorage.removeItem('blankTemplate');
     }
   }, [id, agent, setNodes, setEdges]);
