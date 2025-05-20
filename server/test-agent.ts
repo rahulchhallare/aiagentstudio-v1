@@ -53,6 +53,11 @@ export function createTestAgent(): FlowData {
 
   return {
     nodes: [inputNode, gptNode, outputNode],
-    edges: [edgeInputToGpt, edgeGptToOutput]
+    edges: [edgeInputToGpt, edgeGptToOutput],
+    viewport: {
+      x: 0,
+      y: 0,
+      zoom: 1
+    }
   };
 }

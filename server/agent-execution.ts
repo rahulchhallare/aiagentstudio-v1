@@ -13,10 +13,14 @@ interface NodeOutput {
 // Execute a flow using the configured nodes and connections
 export async function executeFlow(flowData: FlowData, userInput: string): Promise<NodeOutput> {
   try {
+    if (!flowData || !flowData.nodes || !flowData.edges) {
+      throw new Error("Invalid flow data structure");
+    }
+    
     const { nodes, edges } = flowData;
     
     // Find the input node (typically the first node)
-    const inputNode = nodes.find(node => node.type?.includes('input'));
+    const inputNode = nodes.find(node => node.type && node.type.includes('input'));
     if (!inputNode) {
       throw new Error("No input node found in the flow");
     }

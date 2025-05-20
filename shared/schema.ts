@@ -62,7 +62,7 @@ export const flowDataSchema = z.object({
         x: z.number(),
         y: z.number(),
       }),
-      data: z.record(z.any()),
+      data: z.record(z.any()).optional().default({}),
     })
   ),
   edges: z.array(
@@ -74,6 +74,11 @@ export const flowDataSchema = z.object({
       targetHandle: z.string().optional(),
     })
   ),
+  viewport: z.object({
+    x: z.number(),
+    y: z.number(),
+    zoom: z.number(),
+  }).optional(),
 });
 
 // Types
