@@ -21,6 +21,7 @@ import Pricing from "@/pages/Pricing";
 import Documentation from "@/pages/Documentation";
 import Profile from "@/pages/Profile";
 import DeployedAgent from "@/pages/DeployedAgent";
+import AgentTester from "@/pages/AgentTester";
 import Header from "@/components/Header";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/documentation" component={Documentation} />
       <Route path="/agent/:deployId" component={DeployedAgent} />
+      <Route path="/agent-tester" component={AgentTester} />
       <Route component={NotFound} />
     </Switch>
   );
