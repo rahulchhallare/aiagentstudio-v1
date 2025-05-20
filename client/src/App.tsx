@@ -22,6 +22,7 @@ import Documentation from "@/pages/Documentation";
 import Profile from "@/pages/Profile";
 import DeployedAgent from "@/pages/DeployedAgent";
 import AgentTester from "@/pages/AgentTester";
+import SimpleTest from "@/pages/SimpleTest";
 import Header from "@/components/Header";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/documentation" component={Documentation} />
       <Route path="/agent/:deployId" component={DeployedAgent} />
       <Route path="/agent-tester" component={AgentTester} />
+      <Route path="/simple-test" component={SimpleTest} />
       <Route component={NotFound} />
     </Switch>
   );

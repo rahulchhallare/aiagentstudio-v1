@@ -250,6 +250,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct test endpoint for OpenAI - a simplified way to test the AI integration
+  app.post("/api/direct-test", async (req: Request, res: Response) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ success: false, error: "Prompt is required" });
+      }
+      
+      // Import the simplified test execution function
+      const { testOpenAIExecution } = await import('./test-execution');
+      
+      // Execute the test directly
+      const result = await testOpenAIExecution(prompt);
+      return res.json(result);
+    } catch (error) {
+      console.error("Error in direct test:", error);
+      return res.status(500).json({ 
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error in direct test" 
+      });
+    }
+  });
+
   // Generate and deploy a test agent (for demo purposes)
   app.post("/api/test-agent/create", async (req: Request, res: Response) => {
     try {
