@@ -29,63 +29,10 @@ const nodeTypes = {
   outputNode: OutputNode,
 };
 
-// Node and edge template data for a basic agent
-const initialNodes: Node[] = [
-  {
-    id: 'input-1',
-    type: 'inputNode',
-    position: { x: 250, y: 100 },
-    data: { 
-      label: 'Text Input', 
-      placeholder: 'Enter your question...', 
-      description: 'Type your query here' 
-    }
-  },
-  {
-    id: 'gpt-1',
-    type: 'gptNode',
-    position: { x: 250, y: 250 },
-    data: { 
-      label: 'GPT-4 Processor',
-      model: 'gpt-4o',
-      systemPrompt: 'You are a helpful assistant that provides accurate and concise answers.',
-      temperature: 0.7,
-      maxTokens: 1000
-    }
-  },
-  {
-    id: 'output-1',
-    type: 'outputNode',
-    position: { x: 250, y: 400 },
-    data: { 
-      label: 'Text Output', 
-      format: 'markdown' 
-    }
-  }
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: 'input-1',
-    target: 'gpt-1',
-    type: 'smoothstep',
-    animated: true,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-  },
-  {
-    id: 'e2-3',
-    source: 'gpt-1',
-    target: 'output-1',
-    type: 'smoothstep',
-    animated: true,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-  }
-];
+// Start with empty canvas - user will need to drag and drop components
+// This ensures components only appear when explicitly added by the user
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
 export default function SimpleBuilder() {
   const [, navigate] = useLocation();
