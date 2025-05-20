@@ -64,13 +64,10 @@ export default function TemplatesPanel({ onSelectTemplate }: TemplatesPanelProps
     {
       id: 'blank',
       title: 'Blank Canvas',
-      description: 'Start from scratch with an empty canvas',
+      description: 'Start from scratch with a simple template',
       category: 'Essentials',
       isPopular: true,
-      template: {
-        nodes: [],
-        edges: []
-      }
+      template: getDefaultLayout()
     },
     {
       id: 'blog-writer',
@@ -108,6 +105,35 @@ export default function TemplatesPanel({ onSelectTemplate }: TemplatesPanelProps
       description: 'Help with research and information gathering',
       category: 'Research',
       template: researchAssistantTemplate()
+    },
+    {
+      id: 'simple-assistant',
+      title: 'Simple Assistant',
+      description: 'Basic question and answer AI assistant',
+      category: 'Essentials',
+      template: getDefaultLayout()
+    },
+    {
+      id: 'logic-based',
+      title: 'Logic-Based Agent',
+      description: 'Agent with conditional branching based on user input',
+      category: 'Advanced',
+      isNew: true,
+      template: getLogicLayout()
+    },
+    {
+      id: 'api-integration',
+      title: 'API Integration',
+      description: 'Connect to external APIs and process the responses',
+      category: 'Advanced',
+      template: getAPILayout()
+    },
+    {
+      id: 'simple-io',
+      title: 'Input-Output Only',
+      description: 'Minimal template with just input and output nodes',
+      category: 'Essentials',
+      template: getSimpleLayout()
     }
   ];
   
