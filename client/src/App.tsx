@@ -10,6 +10,7 @@ import CanvasHome from "@/pages/CanvasHome";
 import Dashboard from "@/pages/Dashboard";
 import AgentBuilder from "@/pages/AgentBuilder";
 import SimpleBuilder from "@/pages/SimpleBuilder";
+import EnhancedBuilder from "@/pages/EnhancedBuilder";
 import Agents from "@/pages/Agents";
 import Templates from "@/pages/Templates";
 import Settings from "@/pages/Settings";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/builder" component={AgentBuilder} />
       <Route path="/builder/:id" component={AgentBuilder} />
       <Route path="/simple-builder" component={SimpleBuilder} />
+      <Route path="/enhanced-builder" component={EnhancedBuilder} />
       <Route path="/agents" component={Agents} />
       <Route path="/templates" component={Templates} />
       <Route path="/settings" component={Settings} />
