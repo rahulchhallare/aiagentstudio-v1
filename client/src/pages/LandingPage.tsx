@@ -30,7 +30,7 @@ export default function LandingPage() {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center">
               <div className="md:w-1/2 md:pr-12 mb-10 md:mb-0">
-                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
                   Build AI Agents <span className="text-primary-600">Without Code</span>
                 </h1>
                 <p className="text-xl text-gray-600 mb-8">
