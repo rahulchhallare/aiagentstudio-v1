@@ -23,7 +23,7 @@ import Profile from "@/pages/Profile";
 import DeployedAgent from "@/pages/DeployedAgent";
 import AgentTester from "@/pages/AgentTester";
 import SimpleTest from "@/pages/SimpleTest";
-import Header from "@/components/Header";
+import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
 import { useState } from "react";
@@ -66,7 +66,7 @@ function App() {
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider>
             <div className="min-h-screen flex flex-col">
-              <Header 
+              <CanvasHeader 
                 onLoginClick={() => setIsLoginModalOpen(true)}
                 onSignupClick={() => setIsSignupModalOpen(true)}
               />
