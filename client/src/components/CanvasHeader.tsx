@@ -20,7 +20,7 @@ interface CanvasHeaderProps {
 export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAuthenticated = !!user;
   
   return (
@@ -107,8 +107,11 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
                     <Link href="/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/api/logout">Logout</Link>
+                  <DropdownMenuItem onSelect={() => {
+                    logout();
+                    window.location.href = '/';
+                  }}>
+                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
