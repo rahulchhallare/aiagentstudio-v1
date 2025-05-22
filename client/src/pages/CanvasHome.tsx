@@ -199,11 +199,6 @@ export default function CanvasHome() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
-      {/* Custom Header with login/signup options */}
-      <CanvasHeader 
-        onLoginClick={() => setIsLoginModalOpen(true)}
-        onSignupClick={() => setIsSignupModalOpen(true)}
-      />
       
       {/* Login/Signup Modals */}
       <LoginModal 
