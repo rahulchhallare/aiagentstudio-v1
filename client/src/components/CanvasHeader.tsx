@@ -109,7 +109,6 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => {
                     logout();
-                    window.location.href = '/';
                   }}>
                     Logout
                   </DropdownMenuItem>

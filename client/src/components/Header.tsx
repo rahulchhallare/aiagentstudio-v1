@@ -126,9 +126,6 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   logout();
-                  if (isLandingPage) {
-                    window.location.reload();
-                  }
                 }}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
                 </DropdownMenuItem>
