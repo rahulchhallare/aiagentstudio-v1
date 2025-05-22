@@ -44,7 +44,7 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
               <path d="M19.5 17a2.5 2.5 0 0 0 0 -5" />
             </svg>
             <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              AIagentStudio
+              AIAgentStudio
             </span>
           </Link>
         </div>
