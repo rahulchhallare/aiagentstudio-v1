@@ -67,12 +67,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all users
-  app.get("/api/users", async (req: Request, res: Response) => {
-    try {
-      const users = await storage.getAllUsers();
+  // app.get("/api/users", async (req: Request, res: Response) => {
+  //   try {
+  //     const users = await storage.getAllUsers();
       
 //   Remove passwords from response for //security
-      const usersWithoutPasswords = users.map(({ password, ...user }) =);
+      // const usersWithoutPasswords = users.map(({ password, ...user }) =);
       
       return res.status(200).json(usersWithoutPasswords);
     } catch (error) {
