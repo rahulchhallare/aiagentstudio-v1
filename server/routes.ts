@@ -317,6 +317,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to view all users (for development)
+  app.get("/api/debug/users", async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      
+      // Remove passwords from response for security
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      
+      return res.status(200).json(usersWithoutPasswords);
+    } catch (error) {
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
     try {

@@ -7,7 +7,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Agent operations
   getAgent(id: number): Promise<Agent | undefined>;
   getAgentsByUserId(userId: number): Promise<Agent[]>;
@@ -15,7 +15,7 @@ export interface IStorage {
   createAgent(agent: InsertAgent): Promise<Agent>;
   updateAgent(id: number, agent: Partial<InsertAgent>): Promise<Agent | undefined>;
   deleteAgent(id: number): Promise<boolean>;
-  
+
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
@@ -36,7 +36,7 @@ export class MemStorage implements IStorage {
     this.userIdCounter = 1;
     this.agentIdCounter = 1;
     this.waitlistIdCounter = 1;
-    
+
     // Create a test user for development
     const testUser: User = {
       id: this.userIdCounter++,
@@ -47,7 +47,7 @@ export class MemStorage implements IStorage {
       created_at: new Date()
     };
     this.users.set(testUser.id, testUser);
-    
+
     console.log("Created test user:", { email: testUser.email, password: "Password123" });
   }
 
@@ -90,7 +90,7 @@ export class MemStorage implements IStorage {
       (agent) => agent.user_id === userId
     );
   }
-  
+
   async getAgentByDeployId(deployId: string): Promise<Agent | undefined> {
     return Array.from(this.agents.values()).find(
       (agent) => agent.deploy_id === deployId
@@ -145,6 +145,10 @@ export class MemStorage implements IStorage {
 
   async getWaitlistEntries(): Promise<Waitlist[]> {
     return Array.from(this.waitlist.values());
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
 }
 
