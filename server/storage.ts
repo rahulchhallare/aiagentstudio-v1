@@ -257,14 +257,22 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createAgent(insertAgent: InsertAgent): Promise<Agent> {
-    const { data, error } = await this.supabase
-      .from('agents')
-      .insert(insertAgent)
-      .select()
-      .single();
-    
-    if (error) throw new Error(error.message);
-    return data;
+    try {
+      const { data, error } = await this.supabase
+        .from('agents')
+        .insert(insertAgent)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase agent creation error:', error);
+        throw new Error(error.message);
+      }
+      return data;
+    } catch (err) {
+      console.error('Agent creation failed:', err);
+      throw err;
+    }
   }
 
   async updateAgent(id: number, agentData: Partial<InsertAgent>): Promise<Agent | undefined> {

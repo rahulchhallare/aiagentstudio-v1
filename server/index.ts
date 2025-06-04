@@ -64,7 +64,21 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, (err?: Error) => {
+    if (err) {
+      console.error(`Failed to start server on port ${port}:`, err);
+      process.exit(1);
+    }
     log(`serving on port ${port}`);
+  });
+
+  // Handle server errors
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Please try a different port or stop the existing process.`);
+      process.exit(1);
+    } else {
+      console.error('Server error:', err);
+    }
   });
 })();
