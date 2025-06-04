@@ -153,4 +153,171 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { createClient } from '@supabase/supabase-js';
+
+export class SupabaseStorage implements IStorage {
+  private supabase;
+
+  constructor() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase credentials not found in environment variables');
+    }
+    
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    return data;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+    
+    if (error) return undefined;
+    return data;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error) return undefined;
+    return data;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const { data, error } = await this.supabase
+      .from('users')
+      .insert(insertUser)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const { data, error } = await this.supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw new Error(error.message);
+    return data || [];
+  }
+
+  async getAgent(id: number): Promise<Agent | undefined> {
+    const { data, error } = await this.supabase
+      .from('agents')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    return data;
+  }
+
+  async getAgentsByUserId(userId: number): Promise<Agent[]> {
+    const { data, error } = await this.supabase
+      .from('agents')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) return [];
+    return data || [];
+  }
+
+  async getAgentByDeployId(deployId: string): Promise<Agent | undefined> {
+    const { data, error } = await this.supabase
+      .from('agents')
+      .select('*')
+      .eq('deploy_id', deployId)
+      .single();
+    
+    if (error) return undefined;
+    return data;
+  }
+
+  async createAgent(insertAgent: InsertAgent): Promise<Agent> {
+    const { data, error } = await this.supabase
+      .from('agents')
+      .insert(insertAgent)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async updateAgent(id: number, agentData: Partial<InsertAgent>): Promise<Agent | undefined> {
+    const { data, error } = await this.supabase
+      .from('agents')
+      .update({ ...agentData, updated_at: new Date() })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) return undefined;
+    return data;
+  }
+
+  async deleteAgent(id: number): Promise<boolean> {
+    const { error } = await this.supabase
+      .from('agents')
+      .delete()
+      .eq('id', id);
+    
+    return !error;
+  }
+
+  async addToWaitlist(insertWaitlist: InsertWaitlist): Promise<Waitlist> {
+    const { data, error } = await this.supabase
+      .from('waitlist')
+      .insert(insertWaitlist)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getWaitlistEntries(): Promise<Waitlist[]> {
+    const { data, error } = await this.supabase
+      .from('waitlist')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) return [];
+    return data || [];
+  }
+}
+
+// Use Supabase storage if credentials are available, otherwise fallback to MemStorage
+let storage: IStorage;
+try {
+  storage = new SupabaseStorage();
+  console.log('Using Supabase storage');
+} catch (error) {
+  storage = new MemStorage();
+  console.log('Using local memory storage - Supabase credentials not found');
+}
+
+export { storage };
