@@ -57,6 +57,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all users
+  app.get("/api/users", async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      
+      // Remove passwords from response for security
+      const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+      
+      return res.status(200).json(usersWithoutPasswords);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Agent routes
   app.get("/api/agents", async (req: Request, res: Response) => {
     try {
