@@ -102,7 +102,7 @@ export default function SimpleNodePanel({ addNode }: { addNode: (type: string) =
                 <div className="text-xs text-green-500">Hugging Face inference</div>
               </div>
             </div>
-            
+
             <div 
               className="p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg cursor-pointer hover:shadow-sm transition-shadow flex items-center"
               draggable
@@ -186,7 +186,7 @@ export default function SimpleNodePanel({ addNode }: { addNode: (type: string) =
                 <div className="text-xs text-purple-500">Display text results</div>
               </div>
             </div>
-                    
+
             <div 
               className="p-3 bg-purple-50 border border-purple-200 text-purple-600 rounded-lg cursor-pointer hover:shadow-sm transition-shadow flex items-center"
               draggable
