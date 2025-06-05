@@ -167,17 +167,16 @@ async function processNode(
           }
 
           // If we have a token, try to use the HF API
-          // Use more reliable models that are known to work
+          // Use more reliable models that are known to work with HF Inference API
           const reliableModels = [
-            'microsoft/DialoGPT-medium',
-            'microsoft/DialoGPT-small',
+            'bigscience/bloom-560m',
+            'distilgpt2',
             'gpt2',
-            'EleutherAI/gpt-j-6B',
-            'facebook/blenderbot-400M-distill',
-            'microsoft/GODEL-v1_1-base-seq2seq'
+            'microsoft/DialoGPT-small',
+            'facebook/blenderbot-400M-distill'
           ];
 
-          const modelToUse = reliableModels.includes(model) ? model : 'microsoft/DialoGPT-medium';
+          const modelToUse = reliableModels.includes(model) ? model : 'bigscience/bloom-560m';
 
           console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
 
@@ -209,7 +208,7 @@ async function processNode(
               console.log(`Model ${modelToUse} not available (${response.status}), trying fallback models`);
 
               // Try with the most reliable fallback models in order
-              const fallbackModels = ['microsoft/DialoGPT-small', 'gpt2', 'facebook/blenderbot-400M-distill'];
+              const fallbackModels = ['bigscience/bloom-560m', 'distilgpt2', 'gpt2'];
               
               for (const fallbackModel of fallbackModels) {
                 try {
