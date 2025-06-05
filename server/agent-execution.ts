@@ -171,7 +171,7 @@ async function processNode(
         const combinedInput = inputData.join("\n");
         
         // Make API request
-        const endpoint = node.data?.endpoint || "";
+        const endpoint = String(node.data?.endpoint || "");
         const method = node.data?.method || "GET";
         const headers = node.data?.headers ? JSON.parse(node.data.headers) : {};
         
@@ -211,7 +211,7 @@ async function processNode(
         const combinedInput = inputData.join("\n");
         
         // Evaluate condition
-        const condition = node.data?.condition || "";
+        const condition = String(node.data?.condition || "");
         
         if (!condition) {
           throw new Error("Logic condition not specified");
