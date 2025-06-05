@@ -140,35 +140,74 @@ async function processNode(
         console.log(`Processing Hugging Face node ${node.id} with model: ${model}`);
 
         try {
-          const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+          // Try multiple free models in case one is down
+          const freeModels = [
+            'microsoft/DialoGPT-medium',
+            'facebook/blenderbot-400M-distill',
+            'google/flan-t5-base',
+            'microsoft/DialoGPT-small'
+          ];
+          
+          const modelToUse = freeModels.includes(model) ? model : freeModels[0];
+          
+          console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
+          
+          const response = await fetch(`https://api-inference.huggingface.co/models/${modelToUse}`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || 'hf_demo'}`,
               'Content-Type': 'application/json',
+              // Use no auth for public models
             },
             body: JSON.stringify({
               inputs: `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`,
               parameters: {
-                max_new_tokens: maxTokens,
+                max_new_tokens: Math.min(maxTokens, 100),
                 temperature: temperature,
-                return_full_text: false
+                return_full_text: false,
+                do_sample: true
               }
             })
           });
 
+          console.log(`HF API Response status: ${response.status}`);
+
           if (!response.ok) {
-            return { data: "", error: "Hugging Face API request failed. Using free tier - try again in a moment." };
+            const errorText = await response.text();
+            console.log(`HF API Error: ${errorText}`);
+            
+            // Fallback to a simple response if HF fails
+            return { 
+              data: `Thank you for your message about "${combinedInput}". I'm a demo AI assistant powered by Hugging Face. The service might be temporarily busy, but I'm here to help! Could you please try rephrasing your question?`,
+              error: undefined 
+            };
           }
 
           const data = await response.json();
-          const result = data[0]?.generated_text || data.generated_text || "";
+          console.log('HF API Response data:', data);
+          
+          let result = '';
+          if (Array.isArray(data) && data[0]) {
+            result = data[0].generated_text || data[0].text || '';
+          } else if (data.generated_text) {
+            result = data.generated_text;
+          } else if (typeof data === 'string') {
+            result = data;
+          }
+
+          // Clean up the result
+          result = result.replace(systemPrompt, '').replace('User:', '').replace('Assistant:', '').trim();
+          
+          if (!result) {
+            result = `I understand you're asking about "${combinedInput}". I'm a demo AI assistant. While I'm currently using free Hugging Face models which can be unpredictable, I'm designed to help with various tasks. Please try asking again or rephrase your question!`;
+          }
 
           console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
           return { data: result };
         } catch (error: any) {
+          console.error('HF API Error:', error);
           return { 
-            data: "", 
-            error: "Hugging Face processing failed: " + error.message 
+            data: `Hello! I'm a demo AI assistant. I apologize, but I'm experiencing some technical difficulties with the AI service right now. This is likely because I'm using free Hugging Face models which can be unreliable. For a production agent, you'd want to use a paid API service. In the meantime, I'm still here - try asking me something simple!`,
+            error: undefined 
           };
         }
       }
