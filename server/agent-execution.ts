@@ -169,15 +169,15 @@ async function processNode(
           // If we have a token, try to use the HF API
           // Use more reliable models that are known to work
           const reliableModels = [
-            'deepseek-ai/DeepSeek-R1-0528',
-            'ByteDance-Seed/BAGEL-7B-MoT',
-            'google/gemma-3n-E4B-it-litert-preview',
-            'nvidia/parakeet-tdt-0.6b-v2',
-            'mistralai/Devstral-Small-2505',
-            'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
+            'microsoft/DialoGPT-medium',
+            'microsoft/DialoGPT-small',
+            'gpt2',
+            'EleutherAI/gpt-j-6B',
+            'facebook/blenderbot-400M-distill',
+            'microsoft/GODEL-v1_1-base-seq2seq'
           ];
 
-          const modelToUse = reliableModels.includes(model) ? model : 'deepseek-ai/DeepSeek-R1-0528';
+          const modelToUse = reliableModels.includes(model) ? model : 'microsoft/DialoGPT-medium';
 
           console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
 
@@ -205,40 +205,49 @@ async function processNode(
             console.log(`HF API Error: ${response.status} - ${errorText}`);
 
             // Handle specific error cases
-            if (response.status === 404) {
-              console.log(`Model ${modelToUse} not found, trying fallback model`);
+            if (response.status === 404 || response.status === 503) {
+              console.log(`Model ${modelToUse} not available (${response.status}), trying fallback models`);
 
               // Try with the most reliable fallback models in order
-              const fallbackModels = ['ByteDance-Seed/BAGEL-7B-MoT', 'nvidia/parakeet-tdt-0.6b-v2', 'mistralai/Devstral-Small-2505'];
-              const fallbackModel = fallbackModels[0]; // Select the first fallback model
+              const fallbackModels = ['microsoft/DialoGPT-small', 'gpt2', 'facebook/blenderbot-400M-distill'];
+              
+              for (const fallbackModel of fallbackModels) {
+                try {
+                  console.log(`Trying fallback model: ${fallbackModel}`);
+                  
+                  const fallbackResponse = await fetch(`https://api-inference.huggingface.co/models/${fallbackModel}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${hfToken}`
+                    },
+                    body: JSON.stringify({
+                      inputs: combinedInput,
+                      parameters: {
+                        max_length: Math.min(maxTokens + combinedInput.length, 200),
+                        temperature: temperature,
+                        return_full_text: false
+                      }
+                    })
+                  });
 
-              const fallbackResponse = await fetch(`https://api-inference.huggingface.co/models/${fallbackModel}`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${hfToken}`
-                },
-                body: JSON.stringify({
-                  inputs: combinedInput,
-                  parameters: {
-                    max_length: Math.min(maxTokens + combinedInput.length, 200),
-                    temperature: temperature,
-                    return_full_text: false
+                  if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    let result = '';
+                    if (Array.isArray(fallbackData) && fallbackData[0]) {
+                      result = fallbackData[0].generated_text || '';
+                    } else if (fallbackData.generated_text) {
+                      result = fallbackData.generated_text;
+                    }
+
+                    if (result && result.length > 10) {
+                      console.log(`Successfully used fallback model: ${fallbackModel}`);
+                      return { data: result };
+                    }
                   }
-                })
-              });
-
-              if (fallbackResponse.ok) {
-                const fallbackData = await fallbackResponse.json();
-                let result = '';
-                if (Array.isArray(fallbackData) && fallbackData[0]) {
-                  result = fallbackData[0].generated_text || '';
-                } else if (fallbackData.generated_text) {
-                  result = fallbackData.generated_text;
-                }
-
-                if (result && result.length > 10) {
-                  return { data: result };
+                } catch (fallbackError) {
+                  console.log(`Fallback model ${fallbackModel} also failed, trying next...`);
+                  continue;
                 }
               }
             }
