@@ -36,26 +36,39 @@ export default function DeployModal({
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Check if the agent has required nodes
-  const hasInputNode = flowData.nodes.some(node => node.type?.includes('input'));
-  const hasProcessingNode = flowData.nodes.some(node => 
-    node.type?.includes('gpt') || 
-    node.type?.includes('transform') || 
-    node.type?.includes('bot'));
-  const hasOutputNode = flowData.nodes.some(node => node.type?.includes('output'));
-  
-  const isValid = hasInputNode && hasProcessingNode && hasOutputNode;
+  const nodes = flowData.nodes;
+
+  // Check for required node types
+  const hasInput = nodes.some(node => 
+    node.type?.includes('input') || node.type === 'inputNode'
+  );
+
+  const hasProcessing = nodes.some(node => 
+    node.type === 'gptNode' || 
+    node.type === 'hfInferenceNode' ||
+    node.type === 'huggingFaceNode' ||
+    node.type === 'ollamaNode' ||
+    node.type === 'apiNode' || 
+    node.type === 'logicNode'
+  );
+
+  const hasOutput = nodes.some(node => 
+    node.type === 'outputNode' || 
+    node.type?.includes('output')
+  );
+
+  const isValid = hasInput && hasProcessing && hasOutput;
 
   const handleDeploy = async () => {
     if (!isValid) return;
-    
+
     setIsDeploying(true);
-    
+
     try {
       // Prepare the API request
       const url = agentId ? `/api/agents/${agentId}` : '/api/agents';
       const method = agentId ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -68,21 +81,21 @@ export default function DeployModal({
         }),
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to deploy agent');
       }
-      
+
       const data = await response.json();
-      
+
       // Show success toast and set the deployment URL
       if (data.deploy_url) {
         setDeployUrl(data.deploy_url);
       }
-      
+
       // Callback to refresh agent data
       onDeploy();
-      
+
     } catch (error) {
       console.error('Deployment error:', error);
       toast({
@@ -132,28 +145,32 @@ export default function DeployModal({
               <div className="space-y-2">
                 <h3 className="text-sm font-medium">Deployment Requirements</h3>
                 <ul className="text-sm space-y-1">
-                  <li className={`flex items-center ${hasInputNode ? 'text-green-600' : 'text-red-600'}`}>
-                    {hasInputNode ? <Check className="h-4 w-4 mr-2" /> : <span className="h-4 w-4 mr-2">✗</span>}
+                  <li className={`flex items-center ${hasInput ? 'text-green-600' : 'text-red-600'}`}>
+                    {hasInput ? <Check className="h-4 w-4 mr-2" /> : <span className="h-4 w-4 mr-2">✗</span>}
                     Input node
                   </li>
-                  <li className={`flex items-center ${hasProcessingNode ? 'text-green-600' : 'text-red-600'}`}>
-                    {hasProcessingNode ? <Check className="h-4 w-4 mr-2" /> : <span className="h-4 w-4 mr-2">✗</span>}
-                    Processing node (GPT, Transformation, etc.)
-                  </li>
-                  <li className={`flex items-center ${hasOutputNode ? 'text-green-600' : 'text-red-600'}`}>
-                    {hasOutputNode ? <Check className="h-4 w-4 mr-2" /> : <span className="h-4 w-4 mr-2">✗</span>}
+                  <li className={`flex items-center`}>
+                  {hasProcessing ? (
+                    <Check className="h-4 w-4 text-green-500 mr-2" />
+                  ) : (
+                    <span className="h-4 w-4 mr-2">✗</span>
+                  )}
+                  <span>Processing node (GPT, Hugging Face, Ollama, etc.)</span>
+                </li>
+                  <li className={`flex items-center ${hasOutput ? 'text-green-600' : 'text-red-600'}`}>
+                    {hasOutput ? <Check className="h-4 w-4 mr-2" /> : <span className="h-4 w-4 mr-2">✗</span>}
                     Output node
                   </li>
                 </ul>
               </div>
-              
+
               {!isValid && (
                 <div className="text-sm text-red-600 rounded-md bg-red-50 p-3">
                   Your agent needs at least one input node, one processing node, and one output node to be deployed.
                 </div>
               )}
             </div>
-            
+
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={handleClose}>
                 Cancel
@@ -196,7 +213,7 @@ export default function DeployModal({
                   </Button>
                 </div>
               </div>
-              
+
               <div>
                 <Button 
                   asChild 
@@ -209,7 +226,7 @@ export default function DeployModal({
                 </Button>
               </div>
             </div>
-            
+
             <DialogFooter>
               <Button variant="outline" onClick={handleClose}>
                 Close
