@@ -62,13 +62,11 @@ export default function DeployedAgent() {
     
     try {
       // Call our execute API endpoint to run the agent flow
-      const response = await apiRequest(`/api/agent/${deployId}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ input })
-      });
+      const response = await apiRequest(
+        'POST',
+        `/api/agent/${deployId}/execute`,
+        { input }
+      );
       
       if (!response.ok) {
         const errorData = await response.json();
