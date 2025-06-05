@@ -16,18 +16,18 @@ export async function executeFlow(flowData: FlowData, userInput: string): Promis
     if (!flowData || !flowData.nodes || !flowData.edges) {
       throw new Error("Invalid flow data structure");
     }
-    
+
     const { nodes, edges } = flowData;
-    
+
     // Find all input nodes
     const inputNodes = nodes.filter(node => node.type && node.type.includes('input'));
     if (inputNodes.length === 0) {
       throw new Error("No input nodes found in the flow");
     }
-    
+
     // Initialize node outputs
     const nodeOutputs = new Map<string, NodeOutput>();
-    
+
     // Set initial inputs - for blog writer, we expect the first input to be the main topic
     // and subsequent inputs to be additional context
     inputNodes.forEach((node, index) => {
@@ -40,34 +40,34 @@ export async function executeFlow(flowData: FlowData, userInput: string): Promis
         nodeOutputs.set(node.id, { data: defaultValue });
       }
     });
-    
+
     // Create a topological sort of nodes to process them in the correct order
     const processedNodes = new Set<string>();
     const nodeQueue: string[] = [...inputNodes.map(node => node.id)];
-    
+
     // Process nodes layer by layer
     while (nodeQueue.length > 0) {
       const currentNodeId = nodeQueue.shift();
       if (!currentNodeId || processedNodes.has(currentNodeId)) continue;
-      
+
       const currentNode = nodes.find(node => node.id === currentNodeId);
       if (!currentNode) continue;
-      
+
       // Check if all prerequisites are met (all incoming nodes are processed)
       const incomingEdges = edges.filter(edge => edge.target === currentNodeId);
       const allPrereqsMet = incomingEdges.every(edge => processedNodes.has(edge.source));
-      
+
       if (!allPrereqsMet && !inputNodes.some(node => node.id === currentNodeId)) {
         // Put back at end of queue if prerequisites not met
         nodeQueue.push(currentNodeId);
         continue;
       }
-      
+
       // Process the current node
       const nodeOutput = await processNode(currentNode, nodeOutputs, flowData);
       nodeOutputs.set(currentNodeId, nodeOutput);
       processedNodes.add(currentNodeId);
-      
+
       // Add connected target nodes to the queue
       const outgoingEdges = edges.filter(edge => edge.source === currentNodeId);
       for (const edge of outgoingEdges) {
@@ -76,13 +76,13 @@ export async function executeFlow(flowData: FlowData, userInput: string): Promis
         }
       }
     }
-    
+
     // Find the output node
     const outputNode = nodes.find(node => node.type === 'outputNode');
     if (!outputNode || !nodeOutputs.has(outputNode.id)) {
       throw new Error("No output was generated from the flow");
     }
-    
+
     return nodeOutputs.get(outputNode.id) as NodeOutput;
   } catch (error) {
     console.error("Error executing flow:", error);
@@ -101,7 +101,7 @@ async function processNode(
 ): Promise<NodeOutput> {
   try {
     const { edges } = flowData;
-    
+
     switch (node.type) {
       case 'inputNode':
       case 'fileInputNode':
@@ -110,12 +110,12 @@ async function processNode(
         // Input nodes return their existing output (already set during initialization)
         const existingOutput = nodeOutputs.get(node.id);
         return existingOutput || { data: "" };
-        
+
       case 'gptNode': {
         // Get input data from connected nodes
         const inputData: string[] = [];
         const incomingEdges = edges.filter(edge => edge.target === node.id);
-        
+
         for (const edge of incomingEdges) {
           const sourceOutput = nodeOutputs.get(edge.source);
           if (sourceOutput && sourceOutput.data) {
@@ -125,60 +125,96 @@ async function processNode(
             inputData.push(`${label}: ${sourceOutput.data}`);
           }
         }
-        
+
         const combinedInput = inputData.join("\n\n");
-        
+
         if (!combinedInput.trim()) {
           return { data: "", error: "No input provided to GPT node" };
         }
-        
+
         // Process with GPT
         const systemPrompt = node.data?.systemPrompt || "You are a helpful assistant.";
         const model = node.data?.model || "gpt-4o";
         const temperature = node.data?.temperature || 0.7;
         const maxTokens = node.data?.maxTokens || 1000;
-        
+
         console.log(`Processing GPT node ${node.id} with input:`, combinedInput);
-        
-        const response = await openai.chat.completions.create({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: combinedInput }
-          ],
-          temperature,
-          max_tokens: maxTokens,
-        });
-        
-        const result = response.choices[0].message.content || "";
-        console.log(`GPT node ${node.id} response:`, result.substring(0, 200) + "...");
-        
-        return { data: result };
+
+        try {
+          // Retry logic for quota exceeded errors
+          let retries = 3;
+          let delay = 1000; // Start with 1 second delay
+
+          while (retries > 0) {
+            try {
+              const response = await openai.chat.completions.create({
+                model,
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: combinedInput }
+                ],
+                temperature,
+                max_tokens: maxTokens,
+              });
+
+              const result = response.choices[0].message.content || "";
+              console.log(`GPT node ${node.id} response:`, result.substring(0, 200) + "...");
+
+              return { data: result };
+            } catch (error: any) {
+              if (error.status === 429) {
+                retries--;
+                if (retries > 0) {
+                  console.log(`Quota exceeded, retrying in ${delay}ms...`);
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                  delay *= 2; // Exponential backoff
+                  continue;
+                } else {
+                  return { 
+                    data: "", 
+                    error: "OpenAI quota exceeded after retries. Please check your billing and usage limits at platform.openai.com/account/billing. Ensure you have added a payment method and increased usage limits." 
+                  };
+                }
+              }
+              throw error;
+            }
+          }
+
+          return { data: "", error: "Max retries exceeded" };
+        } catch (error: any) {
+          if (error.status === 429) {
+            return { 
+              data: "", 
+              error: "OpenAI quota exceeded. Please check your billing and usage limits at platform.openai.com/account/billing" 
+            };
+          }
+          throw error;
+        }
       }
-      
+
       case 'apiNode': {
         // Get input data from connected nodes
         const inputData: string[] = [];
         const incomingEdges = edges.filter(edge => edge.target === node.id);
-        
+
         for (const edge of incomingEdges) {
           const sourceOutput = nodeOutputs.get(edge.source);
           if (sourceOutput && sourceOutput.data) {
             inputData.push(sourceOutput.data);
           }
         }
-        
+
         const combinedInput = inputData.join("\n");
-        
+
         // Make API request
         const endpoint = String(node.data?.endpoint || "");
         const method = node.data?.method || "GET";
         const headers = node.data?.headers ? JSON.parse(node.data.headers) : {};
-        
+
         if (!endpoint) {
           throw new Error("API endpoint not specified");
         }
-        
+
         const options: RequestInit = {
           method,
           headers: {
@@ -186,37 +222,37 @@ async function processNode(
             ...headers
           }
         };
-        
+
         if (method !== "GET" && method !== "HEAD") {
           options.body = JSON.stringify({ query: combinedInput });
         }
-        
+
         const response = await fetch(endpoint, options);
         const data = await response.json();
         return { data: JSON.stringify(data) };
       }
-      
+
       case 'logicNode': {
         // Get input data from connected nodes
         const inputData: string[] = [];
         const incomingEdges = edges.filter(edge => edge.target === node.id);
-        
+
         for (const edge of incomingEdges) {
           const sourceOutput = nodeOutputs.get(edge.source);
           if (sourceOutput && sourceOutput.data) {
             inputData.push(sourceOutput.data);
           }
         }
-        
+
         const combinedInput = inputData.join("\n");
-        
+
         // Evaluate condition
         const condition = String(node.data?.condition || "");
-        
+
         if (!condition) {
           throw new Error("Logic condition not specified");
         }
-        
+
         // Create a safe evaluation environment
         const input = combinedInput;
         const result = new Function('input', `
@@ -226,10 +262,10 @@ async function processNode(
             return false;
           }
         `)(input);
-        
+
         return { data: result ? "true" : "false" };
       }
-      
+
       case 'outputNode':
       case 'imageOutputNode':
       case 'emailNode':
@@ -237,18 +273,18 @@ async function processNode(
         // Get input data from connected nodes
         const inputData: string[] = [];
         const incomingEdges = edges.filter(edge => edge.target === node.id);
-        
+
         for (const edge of incomingEdges) {
           const sourceOutput = nodeOutputs.get(edge.source);
           if (sourceOutput && sourceOutput.data) {
             inputData.push(sourceOutput.data);
           }
         }
-        
+
         const combinedInput = inputData.join("\n");
         return { data: combinedInput };
       }
-        
+
       default:
         throw new Error(`Unsupported node type: ${node.type}`);
     }
