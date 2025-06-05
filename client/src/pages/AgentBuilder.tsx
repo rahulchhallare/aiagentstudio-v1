@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Save, Rocket, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import NodePanel from '@/components/builder/NodePanel';
+import SimpleNodePanel from '@/components/builder/SimpleNodePanel';
 import PropertiesPanel from '@/components/builder/PropertiesPanel';
 import DeployModal from '@/components/builder/DeployModal';
 import { FlowData } from '@/lib/types';
@@ -69,19 +69,19 @@ export default function AgentBuilder() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
   const isMobile = useIsMobile();
-  
+
   // Agent state
   const [agentName, setAgentName] = useState('Untitled Agent');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
-  
+
   // ReactFlow state
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  
+
   // Auth modals
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
@@ -90,17 +90,17 @@ export default function AgentBuilder() {
   const { agent, isLoading: isLoadingAgent } = useAgent(id);
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
-  
+
   // Load agent or template data
   useEffect(() => {
     // Load existing agent if ID is provided
     if (id && agent) {
       console.log("Loading existing agent:", agent);
       setAgentName(agent.name);
-      
+
       if (agent.flow_data) {
         console.log("Setting flow data:", agent.flow_data);
-        
+
         try {
           // Ensure flow_data is properly parsed if it's a string
           let flowData = agent.flow_data;
@@ -111,11 +111,11 @@ export default function AgentBuilder() {
               console.error("Failed to parse flow_data string:", e);
             }
           }
-          
+
           // Handle case where agent has no nodes or edges
           const nodeArray = flowData.nodes || [];
           const edgeArray = flowData.edges || [];
-          
+
           // If we don't have any nodes and the user was expecting to edit an agent,
           // let's add some default nodes to show something
           if (nodeArray.length === 0) {
@@ -141,7 +141,7 @@ export default function AgentBuilder() {
                 }
               }
             ];
-            
+
             const defaultEdges = [
               {
                 id: 'e-edit-1',
@@ -154,7 +154,7 @@ export default function AgentBuilder() {
                 },
               }
             ];
-            
+
             setNodes(defaultNodes);
             setEdges(defaultEdges);
           } else {
@@ -162,7 +162,7 @@ export default function AgentBuilder() {
             setNodes(nodeArray);
             setEdges(edgeArray);
           }
-          
+
           console.log("Successfully set nodes and edges for editing");
         } catch (error) {
           console.error("Error setting up agent for editing:", error);
@@ -188,7 +188,7 @@ export default function AgentBuilder() {
               }
             }
           ];
-          
+
           const defaultEdges = [
             {
               id: 'e-default-1',
@@ -201,7 +201,7 @@ export default function AgentBuilder() {
               },
             }
           ];
-          
+
           setNodes(defaultNodes);
           setEdges(defaultEdges);
         }
@@ -229,7 +229,7 @@ export default function AgentBuilder() {
             }
           }
         ];
-        
+
         const defaultEdges = [
           {
             id: 'e-default-1',
@@ -242,16 +242,16 @@ export default function AgentBuilder() {
             },
           }
         ];
-        
+
         setNodes(defaultNodes);
         setEdges(defaultEdges);
       }
       return;
     }
-    
+
     // Otherwise, check for template
     const templateId = localStorage.getItem('selectedTemplate');
-    
+
     if (templateId) {
       const template = getTemplateById(templateId);
       if (template) {
@@ -262,7 +262,7 @@ export default function AgentBuilder() {
         return;
       }
     }
-    
+
     // If starting with blank template
     const isBlankTemplate = localStorage.getItem('blankTemplate') === 'true';
     if (isBlankTemplate) {
@@ -273,7 +273,7 @@ export default function AgentBuilder() {
       localStorage.removeItem('blankTemplate');
     }
   }, [id, agent, setNodes, setEdges]);
-  
+
   // Handle connecting nodes
   const onConnect = useCallback(
     (params: Connection) => {
@@ -290,38 +290,38 @@ export default function AgentBuilder() {
     },
     [setEdges]
   );
-  
+
   // Handle node drag over
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
-  
+
   // Handle node drop
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
-      
+
       if (!reactFlowWrapper.current || !reactFlowInstance) return;
-      
+
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const nodeType = event.dataTransfer.getData('application/reactflow');
-      
+
       // Check if the dropped element is valid
       if (!nodeType) return;
-      
+
       const position = reactFlowInstance.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
-      
+
       let newNode: Node = {
         id: `${nodeType}-${Date.now()}`,
         type: nodeType,
         position,
         data: {}
       };
-      
+
       // Set appropriate data based on node type
       if (nodeType === 'inputNode') {
         newNode.data = { 
@@ -343,22 +343,22 @@ export default function AgentBuilder() {
           format: 'markdown'
         };
       }
-      
+
       setNodes((nds) => nds.concat(newNode));
     },
     [reactFlowInstance, setNodes]
   );
-  
+
   // Handle node click
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
   }, []);
-  
+
   // Handle background click to deselect nodes
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
   }, []);
-  
+
   // Update node properties
   const updateNode = useCallback((updatedNode: Node) => {
     setNodes((nds) =>
@@ -370,24 +370,24 @@ export default function AgentBuilder() {
       })
     );
   }, [setNodes]);
-  
+
   // Save agent
   const handleSave = async () => {
     if (authLoading) return;
-    
+
     if (!user) {
       // Prompt login if not authenticated
       setIsLoginModalOpen(true);
       return;
     }
-    
+
     if (!reactFlowInstance) return;
-    
+
     setIsSaving(true);
-    
+
     try {
       const flowData: FlowData = reactFlowInstance.toObject();
-      
+
       if (id && agent) {
         // Update existing agent
         await updateAgent.mutateAsync({
@@ -398,7 +398,7 @@ export default function AgentBuilder() {
           is_active: true,
           user_id: user.id
         });
-        
+
         toast({
           title: 'Agent Updated',
           description: 'Your agent has been updated successfully.',
@@ -412,12 +412,12 @@ export default function AgentBuilder() {
           is_active: true,
           user_id: user.id
         });
-        
+
         toast({
           title: 'Agent Saved',
           description: 'Your agent has been saved successfully.',
         });
-        
+
         // Navigate to the new agent
         navigate(`/builder/${newAgent.id}`);
       }
@@ -431,38 +431,38 @@ export default function AgentBuilder() {
       setIsSaving(false);
     }
   };
-  
+
   // Deploy agent
   const handleDeploy = () => {
     if (authLoading) return;
-    
+
     if (!user) {
       // Prompt login if not authenticated
       setIsLoginModalOpen(true);
       return;
     }
-    
+
     if (!reactFlowInstance) return;
-    
+
     const flowData: FlowData = reactFlowInstance.toObject();
     setIsDeploying(true);
   };
-  
+
   // Auth modal handlers
   const handleLoginClick = () => {
     setIsSignupModalOpen(false);
     setIsLoginModalOpen(true);
   };
-  
+
   const handleSignupClick = () => {
     setIsLoginModalOpen(false);
     setIsSignupModalOpen(true);
   };
-  
+
   const handleDeployClose = () => {
     setIsDeploying(false);
   };
-  
+
   const handleDeployConfirm = () => {
     setIsDeploying(false);
     toast({
@@ -470,7 +470,7 @@ export default function AgentBuilder() {
       description: 'Your agent has been deployed successfully.',
     });
   };
-  
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       {/* Header */}
@@ -526,13 +526,13 @@ export default function AgentBuilder() {
           </Button>
         </div>
       </div>
-      
+
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar - Components panel */}
         <div className="w-72 border-r bg-background overflow-y-auto flex-shrink-0 shadow-sm">
-          <NodePanel />
+          <SimpleNodePanel />
         </div>
-        
+
         {/* Main content - ReactFlow canvas */}
         <div className="flex-1 flex overflow-hidden">
           <ReactFlowProvider>
@@ -567,7 +567,7 @@ export default function AgentBuilder() {
             </div>
           </ReactFlowProvider>
         </div>
-        
+
         {/* Right sidebar - Properties panel */}
         {selectedNode && (
           <div className="w-80 border-l bg-background overflow-y-auto flex-shrink-0 shadow-sm">
@@ -575,20 +575,20 @@ export default function AgentBuilder() {
           </div>
         )}
       </div>
-      
+
       {/* Auth Modals */}
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)}
         onSignupClick={handleSignupClick}
       />
-      
+
       <SignupModal
         isOpen={isSignupModalOpen}
         onClose={() => setIsSignupModalOpen(false)}
         onLoginClick={handleLoginClick}
       />
-      
+
       {/* Deploy Modal */}
       {isDeploying && (
         <DeployModal
