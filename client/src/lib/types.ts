@@ -89,3 +89,19 @@ export interface OutputNodeData {
   label?: string;
   format?: 'plaintext' | 'markdown' | 'html';
 }
+
+export type NodeType = 
+  | 'inputNode' 
+  | 'outputNode' 
+  | 'gptNode' 
+  | 'huggingFaceNode'
+  | 'hfInferenceNode'
+  | 'ollamaNode'
+  | 'apiNode'
+  | 'emailNode'
+  | 'webhookInputNode'
+  | 'fileInputNode'
+  | 'imageInputNode'
+  | 'imageOutputNode'
+  | 'logicNode'
+  | 'notificationNode';

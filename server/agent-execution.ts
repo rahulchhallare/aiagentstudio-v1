@@ -111,7 +111,8 @@ async function processNode(
         const existingOutput = nodeOutputs.get(node.id);
         return existingOutput || { data: "" };
 
-      case 'huggingFaceNode': {
+      case 'huggingFaceNode':
+      case 'hfInferenceNode': {
         // Get input data from connected nodes
         const inputData: string[] = [];
         const incomingEdges = edges.filter(edge => edge.target === node.id);

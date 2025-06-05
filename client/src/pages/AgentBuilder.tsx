@@ -47,20 +47,23 @@ import OutputNode from '@/components/builder/nodes/OutputNode';
 import ImageOutputNode from '@/components/builder/nodes/ImageOutputNode';
 import EmailNode from '@/components/builder/nodes/EmailNode';
 import NotificationNode from '@/components/builder/nodes/NotificationNode';
+import HuggingFaceNode from '@/components/builder/nodes/HuggingFaceNode';
 
 // Define node types
 const nodeTypes = {
   inputNode: InputNode,
-  fileInputNode: FileInputNode,
-  imageInputNode: ImageInputNode,
-  webhookInputNode: WebhookInputNode,
+  outputNode: OutputNode,
   gptNode: GPTNode,
+  huggingFaceNode: HuggingFaceNode,
+  hfInferenceNode: HuggingFaceNode,
   ollamaNode: OllamaNode,
   apiNode: APINode,
-  logicNode: LogicNode,
-  outputNode: OutputNode,
-  imageOutputNode: ImageOutputNode,
   emailNode: EmailNode,
+  webhookInputNode: WebhookInputNode,
+  fileInputNode: FileInputNode,
+  imageInputNode: ImageInputNode,
+  imageOutputNode: ImageOutputNode,
+  logicNode: LogicNode,
   notificationNode: NotificationNode,
 };
 

@@ -58,6 +58,10 @@ export default function PropertiesPanel({ selectedNode, updateNode }: Properties
       return renderOllamaNodeProperties(selectedNode.data as OllamaNodeData, handleChange);
     } else if (selectedNode.type === 'outputNode') {
       return renderOutputNodeProperties(selectedNode.data as OutputNodeData, handleChange);
+    } else if (selectedNode.type === 'huggingFaceNode') {
+      return renderHuggingFaceNodeProperties(selectedNode.data as HuggingFaceNodeData, handleChange);
+    } else if (selectedNode.type === 'hfInferenceNode') {
+      return renderHuggingFaceNodeProperties(selectedNode.data as HuggingFaceNodeData, handleChange);
     }
 
     return <div className="p-4">No properties available for this node type.</div>;
@@ -124,7 +128,7 @@ function renderInputNodeProperties(data: InputNodeData, handleChange: (key: stri
   );
 }
 
-function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange: (key: string, value: any) => void) {
+function renderHuggingFaceNodeProperties(data: any, handleChange: (key: string, value: any) => void) {
   return (
     <div className="p-4 space-y-4">
       <div className="space-y-2">
