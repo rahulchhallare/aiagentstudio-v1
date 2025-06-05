@@ -138,6 +138,8 @@ async function processNode(
         const maxTokens = node.data?.maxTokens || 1000;
 
         console.log(`Processing Hugging Face node ${node.id} with model: ${model}`);
+        console.log(`Input data length: ${combinedInput.length} characters`);
+        console.log(`System prompt: ${systemPrompt.substring(0, 100)}...`);
 
         try {
           // Check if we have a Hugging Face API token
@@ -178,7 +180,7 @@ async function processNode(
             body: JSON.stringify({
               inputs: `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`,
               parameters: {
-                max_new_tokens: Math.min(maxTokens, 100),
+                max_new_tokens: Math.min(maxTokens, 500),
                 temperature: temperature,
                 return_full_text: false,
                 do_sample: true
@@ -208,13 +210,27 @@ async function processNode(
             result = data.generated_text;
           } else if (typeof data === 'string') {
             result = data;
+          } else {
+            console.log('Unexpected HF API response format:', data);
+            return { 
+              data: "", 
+              error: "Unexpected response format from Hugging Face API" 
+            };
           }
 
-          // Clean up the result
-          result = result.replace(systemPrompt, '').replace('User:', '').replace('Assistant:', '').trim();
+          // Clean up the result - remove the original prompt
+          const originalPrompt = `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`;
+          result = result.replace(originalPrompt, '').trim();
           
-          if (!result) {
-            result = `I understand you're asking about "${combinedInput}". Thank you for trying out this AI agent demo!`;
+          // Remove any remaining prompt artifacts
+          result = result.replace(/^(System:|User:|Assistant:)/gi, '').trim();
+          
+          if (!result || result.length < 10) {
+            console.log('Generated result too short or empty:', result);
+            return { 
+              data: "", 
+              error: "Hugging Face model generated an empty or very short response. Try a different model or check if the model is available." 
+            };
           }
 
           console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
