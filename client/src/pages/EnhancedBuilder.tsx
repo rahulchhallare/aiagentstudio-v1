@@ -40,6 +40,8 @@ import FileInputNode from '@/components/builder/nodes/FileInputNode';
 import ImageInputNode from '@/components/builder/nodes/ImageInputNode';
 import WebhookInputNode from '@/components/builder/nodes/WebhookInputNode';
 import GPTNode from '@/components/builder/nodes/GPTNode';
+import HuggingFaceNode from '@/components/builder/nodes/HuggingFaceNode';
+import OllamaNode from '@/components/builder/nodes/OllamaNode';
 import APINode from '@/components/builder/nodes/APINode';
 import LogicNode from '@/components/builder/nodes/LogicNode';
 import OutputNode from '@/components/builder/nodes/OutputNode';
