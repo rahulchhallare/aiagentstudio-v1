@@ -1,4 +1,3 @@
-
 import { Handle, Position } from 'reactflow';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap } from 'lucide-react';
@@ -13,6 +12,11 @@ interface HuggingFaceNodeProps {
 const HuggingFaceNode = ({ data, selected, id }: HuggingFaceNodeProps) => {
   return (
     <Card className={`w-[280px] shadow-md ${selected ? 'ring-2 ring-purple-500' : ''}`}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!bg-purple-500 !border-2 !border-white !w-3 !h-3"
+      />
       <CardHeader className="bg-purple-50 py-2 px-4 flex flex-row items-center gap-2 border-b">
         <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
           <Zap className="h-5 w-5 text-purple-600" />
@@ -46,28 +50,9 @@ const HuggingFaceNode = ({ data, selected, id }: HuggingFaceNodeProps) => {
         </div>
       </CardContent>
       <Handle
-        type="target"
-        position={Position.Top}
-        id="input"
-        style={{ 
-          top: -8, 
-          background: '#9333ea',
-          width: 12,
-          height: 12,
-          border: '2px solid white'
-        }}
-      />
-      <Handle
         type="source"
-        position={Position.Bottom}
-        id="output"
-        style={{ 
-          bottom: -8, 
-          background: '#9333ea',
-          width: 12,
-          height: 12,
-          border: '2px solid white'
-        }}
+        position={Position.Right}
+        className="!bg-purple-500 !border-2 !border-white !w-3 !h-3"
       />
     </Card>
   );
