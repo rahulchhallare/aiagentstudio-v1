@@ -49,7 +49,8 @@ export const blogWriterTemplate = (): FlowData => {
         label: 'Target Audience',
         placeholder: 'Who is the target audience?',
         description: 'Define who the blog post is written for',
-        required: false
+        required: false,
+        defaultValue: 'General audience'
       }
     },
     {

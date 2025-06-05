@@ -233,6 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { deployId } = req.params;
         const { input } = req.body;
 
+        console.log(`Executing agent ${deployId} with input:`, input);
+
         if (!input) {
           return res.status(400).json({ message: "Input is required" });
         }
@@ -249,9 +251,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: "Agent is not currently active" });
         }
 
-        // Execute the agent's flow with the provided input
+        // Parse and validate the flow data
         const flowData = flowDataSchema.parse(agent.flow_data);
+        console.log(`Flow data parsed successfully for agent ${deployId}`);
+        console.log(`Nodes: ${flowData.nodes.length}, Edges: ${flowData.edges.length}`);
+
+        // Execute the agent's flow with the provided input
         const result = await executeFlow(flowData, input);
+
+        console.log(`Agent execution completed:`, {
+          success: !result.error,
+          hasOutput: !!result.data,
+          error: result.error
+        });
 
         // Return the execution result
         return res.json({

@@ -19,46 +19,65 @@ export async function executeFlow(flowData: FlowData, userInput: string): Promis
     
     const { nodes, edges } = flowData;
     
-    // Find the input node (typically the first node)
-    const inputNode = nodes.find(node => node.type && node.type.includes('input'));
-    if (!inputNode) {
-      throw new Error("No input node found in the flow");
+    // Find all input nodes
+    const inputNodes = nodes.filter(node => node.type && node.type.includes('input'));
+    if (inputNodes.length === 0) {
+      throw new Error("No input nodes found in the flow");
     }
     
-    // Initialize node outputs (each node will produce output that subsequent nodes can use)
+    // Initialize node outputs
     const nodeOutputs = new Map<string, NodeOutput>();
     
-    // Set the initial input
-    nodeOutputs.set(inputNode.id, { data: userInput });
+    // Set initial inputs - for blog writer, we expect the first input to be the main topic
+    // and subsequent inputs to be additional context
+    inputNodes.forEach((node, index) => {
+      if (index === 0) {
+        // Primary input gets the user input
+        nodeOutputs.set(node.id, { data: userInput });
+      } else {
+        // Secondary inputs might be empty or have default values
+        const defaultValue = node.data?.defaultValue || "";
+        nodeOutputs.set(node.id, { data: defaultValue });
+      }
+    });
     
-    // Create a list of nodes to process (start with the input node)
+    // Create a topological sort of nodes to process them in the correct order
     const processedNodes = new Set<string>();
-    const nodesToProcess: string[] = [inputNode.id];
+    const nodeQueue: string[] = [...inputNodes.map(node => node.id)];
     
-    // Process nodes in order based on connections
-    while (nodesToProcess.length > 0) {
-      const currentNodeId = nodesToProcess.shift();
+    // Process nodes layer by layer
+    while (nodeQueue.length > 0) {
+      const currentNodeId = nodeQueue.shift();
       if (!currentNodeId || processedNodes.has(currentNodeId)) continue;
       
       const currentNode = nodes.find(node => node.id === currentNodeId);
       if (!currentNode) continue;
+      
+      // Check if all prerequisites are met (all incoming nodes are processed)
+      const incomingEdges = edges.filter(edge => edge.target === currentNodeId);
+      const allPrereqsMet = incomingEdges.every(edge => processedNodes.has(edge.source));
+      
+      if (!allPrereqsMet && !inputNodes.some(node => node.id === currentNodeId)) {
+        // Put back at end of queue if prerequisites not met
+        nodeQueue.push(currentNodeId);
+        continue;
+      }
       
       // Process the current node
       const nodeOutput = await processNode(currentNode, nodeOutputs, flowData);
       nodeOutputs.set(currentNodeId, nodeOutput);
       processedNodes.add(currentNodeId);
       
-      // Find connected nodes to process next
+      // Add connected target nodes to the queue
       const outgoingEdges = edges.filter(edge => edge.source === currentNodeId);
       for (const edge of outgoingEdges) {
-        // Add target nodes to the processing queue
-        if (!processedNodes.has(edge.target)) {
-          nodesToProcess.push(edge.target);
+        if (!processedNodes.has(edge.target) && !nodeQueue.includes(edge.target)) {
+          nodeQueue.push(edge.target);
         }
       }
     }
     
-    // Find the output node (typically the last node)
+    // Find the output node
     const outputNode = nodes.find(node => node.type === 'outputNode');
     if (!outputNode || !nodeOutputs.has(outputNode.id)) {
       throw new Error("No output was generated from the flow");
@@ -83,34 +102,43 @@ async function processNode(
   try {
     const { edges } = flowData;
     
-    // Get input data from connected nodes
-    const inputData: string[] = [];
-    const incomingEdges = edges.filter(edge => edge.target === node.id);
-    
-    for (const edge of incomingEdges) {
-      const sourceOutput = nodeOutputs.get(edge.source);
-      if (sourceOutput) {
-        inputData.push(sourceOutput.data);
-      }
-    }
-    
-    const combinedInput = inputData.join("\n");
-    
     switch (node.type) {
       case 'inputNode':
       case 'fileInputNode':
       case 'imageInputNode':
       case 'webhookInputNode':
-        // Input nodes don't transform data, they just pass it through
-        // Their output was already set when we initialized nodeOutputs
-        return { data: combinedInput || "" };
+        // Input nodes return their existing output (already set during initialization)
+        const existingOutput = nodeOutputs.get(node.id);
+        return existingOutput || { data: "" };
         
       case 'gptNode': {
+        // Get input data from connected nodes
+        const inputData: string[] = [];
+        const incomingEdges = edges.filter(edge => edge.target === node.id);
+        
+        for (const edge of incomingEdges) {
+          const sourceOutput = nodeOutputs.get(edge.source);
+          if (sourceOutput && sourceOutput.data) {
+            // Label the input based on the source node type/name
+            const sourceNode = flowData.nodes.find(n => n.id === edge.source);
+            const label = sourceNode?.data?.label || sourceNode?.type || "Input";
+            inputData.push(`${label}: ${sourceOutput.data}`);
+          }
+        }
+        
+        const combinedInput = inputData.join("\n\n");
+        
+        if (!combinedInput.trim()) {
+          return { data: "", error: "No input provided to GPT node" };
+        }
+        
         // Process with GPT
         const systemPrompt = node.data?.systemPrompt || "You are a helpful assistant.";
-        const model = node.data?.model || "gpt-4o"; // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        const model = node.data?.model || "gpt-4o";
         const temperature = node.data?.temperature || 0.7;
         const maxTokens = node.data?.maxTokens || 1000;
+        
+        console.log(`Processing GPT node ${node.id} with input:`, combinedInput);
         
         const response = await openai.chat.completions.create({
           model,
@@ -122,10 +150,26 @@ async function processNode(
           max_tokens: maxTokens,
         });
         
-        return { data: response.choices[0].message.content || "" };
+        const result = response.choices[0].message.content || "";
+        console.log(`GPT node ${node.id} response:`, result.substring(0, 200) + "...");
+        
+        return { data: result };
       }
       
       case 'apiNode': {
+        // Get input data from connected nodes
+        const inputData: string[] = [];
+        const incomingEdges = edges.filter(edge => edge.target === node.id);
+        
+        for (const edge of incomingEdges) {
+          const sourceOutput = nodeOutputs.get(edge.source);
+          if (sourceOutput && sourceOutput.data) {
+            inputData.push(sourceOutput.data);
+          }
+        }
+        
+        const combinedInput = inputData.join("\n");
+        
         // Make API request
         const endpoint = node.data?.endpoint || "";
         const method = node.data?.method || "GET";
@@ -153,6 +197,19 @@ async function processNode(
       }
       
       case 'logicNode': {
+        // Get input data from connected nodes
+        const inputData: string[] = [];
+        const incomingEdges = edges.filter(edge => edge.target === node.id);
+        
+        for (const edge of incomingEdges) {
+          const sourceOutput = nodeOutputs.get(edge.source);
+          if (sourceOutput && sourceOutput.data) {
+            inputData.push(sourceOutput.data);
+          }
+        }
+        
+        const combinedInput = inputData.join("\n");
+        
         // Evaluate condition
         const condition = node.data?.condition || "";
         
@@ -176,9 +233,21 @@ async function processNode(
       case 'outputNode':
       case 'imageOutputNode':
       case 'emailNode':
-      case 'notificationNode':
-        // Output nodes also pass through data
+      case 'notificationNode': {
+        // Get input data from connected nodes
+        const inputData: string[] = [];
+        const incomingEdges = edges.filter(edge => edge.target === node.id);
+        
+        for (const edge of incomingEdges) {
+          const sourceOutput = nodeOutputs.get(edge.source);
+          if (sourceOutput && sourceOutput.data) {
+            inputData.push(sourceOutput.data);
+          }
+        }
+        
+        const combinedInput = inputData.join("\n");
         return { data: combinedInput };
+      }
         
       default:
         throw new Error(`Unsupported node type: ${node.type}`);
