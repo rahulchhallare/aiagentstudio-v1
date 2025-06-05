@@ -59,6 +59,32 @@ export interface GPTNodeData {
   maxTokens?: number;
 }
 
+export interface HuggingFaceNodeData {
+  label?: string;
+  model?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  apiKey?: string;
+}
+
+export interface OllamaNodeData {
+  label?: string;
+  model?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  endpoint?: string;
+}
+
+export interface GeminiNodeData {
+  label?: string;
+  model?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  apiKey?: string;
+}
+
 export interface OutputNodeData {
   label?: string;
   format?: 'plaintext' | 'markdown' | 'html';

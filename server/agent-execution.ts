@@ -111,6 +111,127 @@ async function processNode(
         const existingOutput = nodeOutputs.get(node.id);
         return existingOutput || { data: "" };
 
+      case 'huggingFaceNode': {
+        // Get input data from connected nodes
+        const inputData: string[] = [];
+        const incomingEdges = edges.filter(edge => edge.target === node.id);
+
+        for (const edge of incomingEdges) {
+          const sourceOutput = nodeOutputs.get(edge.source);
+          if (sourceOutput && sourceOutput.data) {
+            const sourceNode = flowData.nodes.find(n => n.id === edge.source);
+            const label = sourceNode?.data?.label || sourceNode?.type || "Input";
+            inputData.push(`${label}: ${sourceOutput.data}`);
+          }
+        }
+
+        const combinedInput = inputData.join("\n\n");
+
+        if (!combinedInput.trim()) {
+          return { data: "", error: "No input provided to Hugging Face node" };
+        }
+
+        const systemPrompt = node.data?.systemPrompt || "You are a helpful assistant.";
+        const model = node.data?.model || "microsoft/DialoGPT-medium";
+        const temperature = node.data?.temperature || 0.7;
+        const maxTokens = node.data?.maxTokens || 1000;
+
+        console.log(`Processing Hugging Face node ${node.id} with model: ${model}`);
+
+        try {
+          const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY || 'hf_demo'}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputs: `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`,
+              parameters: {
+                max_new_tokens: maxTokens,
+                temperature: temperature,
+                return_full_text: false
+              }
+            })
+          });
+
+          if (!response.ok) {
+            return { data: "", error: "Hugging Face API request failed. Using free tier - try again in a moment." };
+          }
+
+          const data = await response.json();
+          const result = data[0]?.generated_text || data.generated_text || "";
+          
+          console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
+          return { data: result };
+        } catch (error: any) {
+          return { 
+            data: "", 
+            error: "Hugging Face processing failed: " + error.message 
+          };
+        }
+      }
+
+      case 'ollamaNode': {
+        // Get input data from connected nodes
+        const inputData: string[] = [];
+        const incomingEdges = edges.filter(edge => edge.target === node.id);
+
+        for (const edge of incomingEdges) {
+          const sourceOutput = nodeOutputs.get(edge.source);
+          if (sourceOutput && sourceOutput.data) {
+            const sourceNode = flowData.nodes.find(n => n.id === edge.source);
+            const label = sourceNode?.data?.label || sourceNode?.type || "Input";
+            inputData.push(`${label}: ${sourceOutput.data}`);
+          }
+        }
+
+        const combinedInput = inputData.join("\n\n");
+
+        if (!combinedInput.trim()) {
+          return { data: "", error: "No input provided to Ollama node" };
+        }
+
+        const systemPrompt = node.data?.systemPrompt || "You are a helpful assistant.";
+        const model = node.data?.model || "llama2";
+        const temperature = node.data?.temperature || 0.7;
+        const endpoint = node.data?.endpoint || "http://localhost:11434";
+
+        console.log(`Processing Ollama node ${node.id} with model: ${model}`);
+
+        try {
+          const response = await fetch(`${endpoint}/api/generate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: model,
+              prompt: `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`,
+              stream: false,
+              options: {
+                temperature: temperature
+              }
+            })
+          });
+
+          if (!response.ok) {
+            return { data: "", error: "Ollama server not available. Make sure Ollama is running locally." };
+          }
+
+          const data = await response.json();
+          const result = data.response || "";
+          
+          console.log(`Ollama node ${node.id} response:`, result.substring(0, 200) + "...");
+          return { data: result };
+        } catch (error: any) {
+          return { 
+            data: "", 
+            error: "Ollama connection failed. Ensure Ollama is running on " + endpoint 
+          };
+        }
+      }
+
       case 'gptNode': {
         // Get input data from connected nodes
         const inputData: string[] = [];

@@ -110,6 +110,143 @@ function renderInputNodeProperties(data: InputNodeData, handleChange: (key: stri
   );
 }
 
+function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange: (key: string, value: any) => void) {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="label">Label</Label>
+        <Input
+          id="label"
+          value={data.label || ''}
+          onChange={(e) => handleChange('label', e.target.value)}
+          placeholder="Node Label"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="model">Model</Label>
+        <Select
+          value={data.model || 'microsoft/DialoGPT-medium'}
+          onValueChange={(value) => handleChange('model', value)}
+        >
+          <SelectTrigger id="model">
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="microsoft/DialoGPT-medium">DialoGPT Medium (Free)</SelectItem>
+            <SelectItem value="google/flan-t5-base">FLAN-T5 Base (Free)</SelectItem>
+            <SelectItem value="bigscience/bloom-560m">BLOOM 560M (Free)</SelectItem>
+            <SelectItem value="EleutherAI/gpt-neo-1.3B">GPT-Neo 1.3B (Free)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="systemPrompt">System Prompt</Label>
+        <Textarea
+          id="systemPrompt"
+          value={data.systemPrompt || ''}
+          onChange={(e) => handleChange('systemPrompt', e.target.value)}
+          placeholder="Enter system instructions..."
+          rows={3}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
+        <Slider
+          id="temperature"
+          min={0}
+          max={2}
+          step={0.1}
+          value={[data.temperature || 0.7]}
+          onValueChange={(value) => handleChange('temperature', value[0])}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="maxTokens">Max Tokens</Label>
+        <Input
+          id="maxTokens"
+          type="number"
+          value={data.maxTokens || 1000}
+          onChange={(e) => handleChange('maxTokens', parseInt(e.target.value) || 1000)}
+          min={1}
+          max={4000}
+        />
+      </div>
+    </div>
+  );
+}
+
+function renderOllamaNodeProperties(data: OllamaNodeData, handleChange: (key: string, value: any) => void) {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="label">Label</Label>
+        <Input
+          id="label"
+          value={data.label || ''}
+          onChange={(e) => handleChange('label', e.target.value)}
+          placeholder="Node Label"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="model">Model</Label>
+        <Select
+          value={data.model || 'llama2'}
+          onValueChange={(value) => handleChange('model', value)}
+        >
+          <SelectTrigger id="model">
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="llama2">Llama 2 (7B)</SelectItem>
+            <SelectItem value="llama2:13b">Llama 2 (13B)</SelectItem>
+            <SelectItem value="codellama">Code Llama</SelectItem>
+            <SelectItem value="mistral">Mistral</SelectItem>
+            <SelectItem value="gemma">Gemma</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="endpoint">Ollama Endpoint</Label>
+        <Input
+          id="endpoint"
+          value={data.endpoint || 'http://localhost:11434'}
+          onChange={(e) => handleChange('endpoint', e.target.value)}
+          placeholder="http://localhost:11434"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="systemPrompt">System Prompt</Label>
+        <Textarea
+          id="systemPrompt"
+          value={data.systemPrompt || ''}
+          onChange={(e) => handleChange('systemPrompt', e.target.value)}
+          placeholder="Enter system instructions..."
+          rows={3}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
+        <Slider
+          id="temperature"
+          min={0}
+          max={2}
+          step={0.1}
+          value={[data.temperature || 0.7]}
+          onValueChange={(value) => handleChange('temperature', value[0])}
+        />
+      </div>
+    </div>
+  );
+}
+
 function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, value: any) => void) {
   return (
     <div className="p-4 space-y-4">
