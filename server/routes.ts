@@ -332,9 +332,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a test agent in the database
       const agent = await storage.createAgent({
         user_id: 1, // Demo user ID
-        name: "Content Creation Assistant",
+        name: "Reliable Content Assistant",
         description:
-          "A helpful AI assistant that can generate creative content based on your prompts.",
+          "A helpful AI assistant using reliable Hugging Face models that can generate creative content based on your prompts.",
         flow_data,
         is_active: true,
         deploy_id: deployId,

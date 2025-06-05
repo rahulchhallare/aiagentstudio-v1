@@ -133,7 +133,7 @@ async function processNode(
         }
 
         const systemPrompt = node.data?.systemPrompt || "You are a helpful assistant.";
-        const model = node.data?.model || "microsoft/DialoGPT-medium";
+        const model = node.data?.model || "gpt2";
         const temperature = node.data?.temperature || 0.7;
         const maxTokens = node.data?.maxTokens || 1000;
 
