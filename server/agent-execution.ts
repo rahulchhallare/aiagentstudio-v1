@@ -192,11 +192,48 @@ async function processNode(
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.log(`HF API Error: ${errorText}`);
+            console.log(`HF API Error: ${response.status} - ${errorText}`);
+            
+            // Handle specific error cases
+            if (response.status === 404) {
+              console.log(`Model ${modelToUse} not found, trying fallback model`);
+              
+              // Try with a different model that's more likely to be available
+              const fallbackModel = 'gpt2';
+              const fallbackResponse = await fetch(`https://api-inference.huggingface.co/models/${fallbackModel}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${hfToken}`
+                },
+                body: JSON.stringify({
+                  inputs: combinedInput,
+                  parameters: {
+                    max_length: Math.min(maxTokens + combinedInput.length, 200),
+                    temperature: temperature,
+                    return_full_text: false
+                  }
+                })
+              });
+              
+              if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                let result = '';
+                if (Array.isArray(fallbackData) && fallbackData[0]) {
+                  result = fallbackData[0].generated_text || '';
+                } else if (fallbackData.generated_text) {
+                  result = fallbackData.generated_text;
+                }
+                
+                if (result && result.length > 10) {
+                  return { data: result };
+                }
+              }
+            }
             
             // Fallback to demo response
             return { 
-              data: `I understand you're asking about "${combinedInput}". I'm a demo AI assistant. The Hugging Face service is currently unavailable, but in a production environment, this would be connected to a robust AI model. How else can I help you?`
+              data: `I understand you're asking about "${combinedInput}". I'm a demo AI assistant. The Hugging Face model "${modelToUse}" is currently unavailable (${response.status}), but in a production environment, this would be connected to a robust AI model. How else can I help you?`
             };
           }
 
