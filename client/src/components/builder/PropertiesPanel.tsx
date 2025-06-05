@@ -151,11 +151,11 @@ function renderHuggingFaceNodeProperties(data: any, handleChange: (key: string, 
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="bigscience/bloom-560m">BLOOM 560M</SelectItem>
-            <SelectItem value="distilgpt2">DistilGPT-2</SelectItem>
-            <SelectItem value="gpt2">GPT-2</SelectItem>
+            <SelectItem value="microsoft/DialoGPT-medium">DialoGPT Medium (Recommended)</SelectItem>
             <SelectItem value="microsoft/DialoGPT-small">DialoGPT Small</SelectItem>
             <SelectItem value="facebook/blenderbot-400M-distill">BlenderBot 400M</SelectItem>
+            <SelectItem value="google/flan-t5-small">FLAN-T5 Small</SelectItem>
+            <SelectItem value="HuggingFaceH4/zephyr-7b-beta">Zephyr 7B Beta</SelectItem>
           </SelectContent>
         </Select>
       </div>
