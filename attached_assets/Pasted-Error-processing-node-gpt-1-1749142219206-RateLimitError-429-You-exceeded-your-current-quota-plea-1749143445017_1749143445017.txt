@@ -1,0 +1,35 @@
+Error processing node gpt-1-1749142219206: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/error.ts:96:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/core.ts:462:21)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/core.ts:526:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processNode (/home/runner/workspace/server/agent-execution.ts:143:26)
+    at async executeFlow (/home/runner/workspace/server/agent-execution.ts:67:26)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:260:24) {
+  status: 429,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '94b145e1993f85c5-BOM',
+    connection: 'keep-alive',
+    'content-length': '337',
+    'content-type': 'application/json; charset=utf-8',
+    date: 'Thu, 05 Jun 2025 17:08:37 GMT',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=euXXfCxkPkxBlA087AnN.dxINO4BxbWIDVzyBM3e0oU-1749143317-1.0.1.1-9XudzpCGcaW_bgZeL8lwaADrvEW3XjSAcz_9QibJG4K13i6j2We9gsptiNhX5EHAWif2.E2d.gU17BsQQfZ3O0p14iXnEdcDRAe0qnBfePg; path=/; expires=Thu, 05-Jun-25 17:38:37 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=TNLGjO5CAS31b95NS5pp1C9r9X_I26wTHOmAlJOEGkc-1749143317713-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    vary: 'Origin',
+    'x-content-type-options': 'nosniff',
+    'x-request-id': 'req_f2d0a0c5921ae91991633d1af859f903'
+  },
+  request_id: 'req_f2d0a0c5921ae91991633d1af859f903',
+  error: {
+    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+    type: 'insufficient_quota',
+    param: null,
+    code: 'insufficient_quota'
+  },
+  code: 'insufficient_quota',
+  param: null,
+  type: 'insufficient_quota'
+}
