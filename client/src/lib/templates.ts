@@ -54,27 +54,27 @@ export const blogWriterTemplate = (): FlowData => {
       }
     },
     {
-      id: 'ollama-1',
-      type: 'ollamaNode',
+      id: 'hf-1',
+      type: 'huggingFaceNode',
       position: { x: 250, y: 310 },
       data: {
         label: 'Outline Generator',
-        model: 'llama2',
-        endpoint: 'http://localhost:11434',
+        model: 'microsoft/DialoGPT-medium',
         systemPrompt: 'You are a professional content strategist who creates detailed blog post outlines. Based on the topic and target audience, create a comprehensive outline with main sections and bullet points for subsections.',
-        temperature: 0.7
+        temperature: 0.7,
+        maxTokens: 1000
       }
     },
     {
-      id: 'ollama-2',
-      type: 'ollamaNode',
+      id: 'hf-2',
+      type: 'huggingFaceNode',
       position: { x: 250, y: 440 },
       data: {
         label: 'Blog Post Writer',
-        model: 'llama2',
-        endpoint: 'http://localhost:11434',
+        model: 'microsoft/DialoGPT-medium',
         systemPrompt: 'You are a professional blog writer who creates engaging, informative content. Using the provided outline, write a complete blog post that is engaging, informative, and tailored to the target audience. Include a compelling introduction, well-structured body with headings and subheadings, and a conclusion with a call to action.',
-        temperature: 0.8
+        temperature: 0.8,
+        maxTokens: 2000
       }
     },
     {
@@ -92,7 +92,7 @@ export const blogWriterTemplate = (): FlowData => {
     {
       id: 'edge-1',
       source: 'input-1',
-      target: 'ollama-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -101,7 +101,7 @@ export const blogWriterTemplate = (): FlowData => {
     {
       id: 'edge-2',
       source: 'input-2',
-      target: 'ollama-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -109,8 +109,8 @@ export const blogWriterTemplate = (): FlowData => {
     },
     {
       id: 'edge-3',
-      source: 'ollama-1',
-      target: 'ollama-2',
+      source: 'hf-1',
+      target: 'hf-2',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -118,7 +118,7 @@ export const blogWriterTemplate = (): FlowData => {
     },
     {
       id: 'edge-4',
-      source: 'ollama-2',
+      source: 'hf-2',
       target: 'output-1',
       sourceHandle: 'output',
       targetHandle: 'input',
