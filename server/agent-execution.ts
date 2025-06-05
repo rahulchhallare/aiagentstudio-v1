@@ -140,15 +140,32 @@ async function processNode(
         console.log(`Processing Hugging Face node ${node.id} with model: ${model}`);
 
         try {
-          // Try multiple free models in case one is down
-          const freeModels = [
-            'microsoft/DialoGPT-medium',
-            'facebook/blenderbot-400M-distill',
-            'google/flan-t5-base',
-            'microsoft/DialoGPT-small'
-          ];
+          // Check if we have a Hugging Face API token
+          const hfToken = process.env.HUGGINGFACE_API_TOKEN;
           
-          const modelToUse = freeModels.includes(model) ? model : freeModels[0];
+          // Since HF API now requires authentication, provide a helpful response instead
+          if (!hfToken) {
+            console.log('No Hugging Face API token found, providing demo response');
+            
+            // Generate a contextual response based on the input
+            let response = '';
+            const input = combinedInput.toLowerCase();
+            
+            if (input.includes('blog') || input.includes('write') || input.includes('content')) {
+              response = `# ${combinedInput}\n\nI'd be happy to help you with content creation! As a demo AI assistant, I can provide guidance on writing engaging content. Here are some key points to consider:\n\n- **Clear headline**: Make sure your title captures attention\n- **Engaging introduction**: Hook your readers from the start\n- **Valuable content**: Provide actionable insights or information\n- **Call to action**: End with what you want readers to do next\n\nWould you like me to elaborate on any of these points?`;
+            } else if (input.includes('help') || input.includes('assist')) {
+              response = `Hello! I'm a demo AI assistant built with AI Agent Studio. I'm here to help you with various tasks including:\n\n- Content creation and writing\n- Answering questions\n- Providing suggestions and ideas\n- General assistance\n\nHow can I assist you today? Feel free to ask me anything!`;
+            } else if (input.includes('trend')) {
+              response = `Here are some current AI and technology trends:\n\n🤖 **AI Integration**: More businesses are integrating AI into their workflows\n📱 **No-Code/Low-Code**: Tools that let anyone build applications without coding\n🔗 **API-First Development**: Building applications with APIs at the core\n🎯 **Personalization**: AI-powered personalized user experiences\n\nWhat specific trends are you most interested in learning about?`;
+            } else {
+              response = `Thank you for your message: "${combinedInput}"\n\nI'm a demo AI assistant powered by AI Agent Studio. While I don't have access to advanced language models in this demo environment, I'm designed to help with various tasks. \n\nFor a production version, you would connect this to services like:\n- OpenAI GPT models\n- Google's Bard/Gemini\n- Anthropic's Claude\n- Or other AI APIs\n\nHow else can I assist you today?`;
+            }
+            
+            return { data: response };
+          }
+          
+          // If we have a token, try to use the HF API
+          const modelToUse = model || 'microsoft/DialoGPT-medium';
           
           console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
           
@@ -156,7 +173,7 @@ async function processNode(
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              // Use no auth for public models
+              'Authorization': `Bearer ${hfToken}`
             },
             body: JSON.stringify({
               inputs: `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`,
@@ -175,10 +192,9 @@ async function processNode(
             const errorText = await response.text();
             console.log(`HF API Error: ${errorText}`);
             
-            // Fallback to a simple response if HF fails
+            // Fallback to demo response
             return { 
-              data: `Thank you for your message about "${combinedInput}". I'm a demo AI assistant powered by Hugging Face. The service might be temporarily busy, but I'm here to help! Could you please try rephrasing your question?`,
-              error: undefined 
+              data: `I understand you're asking about "${combinedInput}". I'm a demo AI assistant. The Hugging Face service is currently unavailable, but in a production environment, this would be connected to a robust AI model. How else can I help you?`
             };
           }
 
@@ -198,7 +214,7 @@ async function processNode(
           result = result.replace(systemPrompt, '').replace('User:', '').replace('Assistant:', '').trim();
           
           if (!result) {
-            result = `I understand you're asking about "${combinedInput}". I'm a demo AI assistant. While I'm currently using free Hugging Face models which can be unpredictable, I'm designed to help with various tasks. Please try asking again or rephrase your question!`;
+            result = `I understand you're asking about "${combinedInput}". Thank you for trying out this AI agent demo!`;
           }
 
           console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
@@ -206,8 +222,7 @@ async function processNode(
         } catch (error: any) {
           console.error('HF API Error:', error);
           return { 
-            data: `Hello! I'm a demo AI assistant. I apologize, but I'm experiencing some technical difficulties with the AI service right now. This is likely because I'm using free Hugging Face models which can be unreliable. For a production agent, you'd want to use a paid API service. In the meantime, I'm still here - try asking me something simple!`,
-            error: undefined 
+            data: `Hello! I'm a demo AI assistant built with AI Agent Studio. I'm currently experiencing some technical difficulties with the AI service, but I'm still here to help! This demo shows how you can build AI agents that would normally be powered by advanced language models. In production, you'd connect this to services like OpenAI, Google's AI, or other providers. What would you like to know about AI agent building?`
           };
         }
       }
