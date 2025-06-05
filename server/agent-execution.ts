@@ -161,7 +161,7 @@ async function processNode(
 
           const data = await response.json();
           const result = data[0]?.generated_text || data.generated_text || "";
-          
+
           console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
           return { data: result };
         } catch (error: any) {
@@ -221,7 +221,7 @@ async function processNode(
 
           const data = await response.json();
           const result = data.response || "";
-          
+
           console.log(`Ollama node ${node.id} response:`, result.substring(0, 200) + "...");
           return { data: result };
         } catch (error: any) {
@@ -414,6 +414,151 @@ async function processNode(
     return { 
       data: null, 
       error: error instanceof Error ? error.message : "Unknown error processing node" 
+    };
+  }
+}
+
+async function executeGPTNode(node: any, inputs: string[]): Promise<{ data?: string; error?: string }> {
+  try {
+    console.log(`Executing GPT node with model: ${node.data.model}`);
+
+    // Get API key from environment
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      console.error('OpenAI API key not found in environment variables');
+      return { error: 'OpenAI API key not configured' };
+    }
+
+    // Prepare the input text
+    const inputText = inputs.join('\n\n');
+    console.log(`Input text length: ${inputText.length} characters`);
+
+    // Prepare messages for OpenAI API
+    const messages = [];
+
+    if (node.data.systemPrompt) {
+      messages.push({
+        role: 'system',
+        content: node.data.systemPrompt
+      });
+    }
+
+    messages.push({
+      role: 'user',
+      content: inputText
+    });
+
+    console.log(`Making OpenAI API request with ${messages.length} messages`);
+
+    // Make the API request to OpenAI
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: node.data.model || 'gpt-4o',
+        messages: messages,
+        temperature: node.data.temperature || 0.7,
+        max_tokens: node.data.maxTokens || 1000,
+      }),
+    });
+
+    console.log(`OpenAI API response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`OpenAI API error: ${response.status} - ${errorText}`);
+      return { error: `OpenAI API error: ${response.status} - ${errorText}` };
+    }
+
+    const result = await response.json();
+
+    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+      console.error('Invalid response format from OpenAI API:', result);
+      return { error: 'Invalid response format from OpenAI API' };
+    }
+
+    const output = result.choices[0].message.content;
+    console.log(`OpenAI API response received, output length: ${output.length} characters`);
+
+    return { data: output };
+  } catch (error) {
+    console.error('Error executing GPT node:', error);
+    return { 
+      error: error instanceof Error ? error.message : 'Unknown error in GPT node execution' 
+    };
+  }
+}
+
+async function executeOllamaNode(node: any, inputs: string[]): Promise<{ data?: string; error?: string }> {
+  try {
+    console.log(`Executing Ollama node with model: ${node.data.model}`);
+
+    // Prepare the input text
+    const inputText = inputs.join('\n\n');
+    console.log(`Input text length: ${inputText.length} characters`);
+
+    // Prepare the prompt for Ollama
+    let prompt = inputText;
+    if (node.data.systemPrompt) {
+      prompt = `${node.data.systemPrompt}\n\nUser: ${inputText}\n\nAssistant:`;
+    }
+
+    const endpoint = node.data.endpoint || 'http://localhost:11434';
+    const apiUrl = `${endpoint}/api/generate`;
+
+    console.log(`Making Ollama API request to: ${apiUrl}`);
+
+    // Make the API request to Ollama
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: node.data.model || 'llama2',
+        prompt: prompt,
+        stream: false,
+        options: {
+          temperature: node.data.temperature || 0.7,
+        },
+      }),
+    });
+
+    console.log(`Ollama API response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Ollama API error: ${response.status} - ${errorText}`);
+      return { error: `Ollama API error: ${response.status} - ${errorText}. Make sure Ollama is running on ${endpoint}` };
+    }
+
+    const result = await response.json();
+
+    if (!result.response) {
+      console.error('Invalid response format from Ollama API:', result);
+      return { error: 'Invalid response format from Ollama API' };
+    }
+
+    const output = result.response;
+    console.log(`Ollama API response received, output length: ${output.length} characters`);
+
+    return { data: output };
+  } catch (error) {
+    console.error('Error executing Ollama node:', error);
+
+    // Check if it's a connection error
+    if (error instanceof Error && (error.message.includes('ECONNREFUSED') || error.message.includes('fetch failed'))) {
+      return { 
+        error: `Cannot connect to Ollama server at ${node.data.endpoint || 'http://localhost:11434'}. Please make sure Ollama is installed and running.` 
+      };
+    }
+
+    return { 
+      error: error instanceof Error ? error.message : 'Unknown error in Ollama node execution' 
     };
   }
 }

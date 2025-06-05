@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Node } from 'reactflow';
-import { InputNodeData, GPTNodeData, OutputNodeData } from '@/lib/types';
+import { InputNodeData, GPTNodeData, OutputNodeData, OllamaNodeData } from '@/lib/types';
 import { X } from 'lucide-react';
 
 interface PropertiesPanelProps {
@@ -20,11 +20,11 @@ interface PropertiesPanelProps {
 
 export default function PropertiesPanel({ selectedNode, updateNode }: PropertiesPanelProps) {
   if (!selectedNode) return null;
-  
+
   // Generic handler for updating node data
   const handleChange = (key: string, value: any) => {
     if (!selectedNode) return;
-    
+
     const updatedNode = {
       ...selectedNode,
       data: {
@@ -32,30 +32,44 @@ export default function PropertiesPanel({ selectedNode, updateNode }: Properties
         [key]: value
       }
     };
-    
+
     updateNode(updatedNode);
   };
-  
+
+  const handleNodeDataChange = (key: string, value: any) => {
+    if (!selectedNode) return;
+
+    updateNode({
+      ...selectedNode,
+      data: {
+        ...selectedNode.data,
+        [key]: value,
+      },
+    });
+  };
+
   // Render properties based on node type
   const renderPropertiesPanel = () => {
     if (selectedNode.type === 'inputNode') {
       return renderInputNodeProperties(selectedNode.data as InputNodeData, handleChange);
     } else if (selectedNode.type === 'gptNode') {
       return renderGPTNodeProperties(selectedNode.data as GPTNodeData, handleChange);
+    } else if (selectedNode.type === 'ollamaNode') {
+      return renderOllamaNodeProperties(selectedNode.data as OllamaNodeData, handleChange);
     } else if (selectedNode.type === 'outputNode') {
       return renderOutputNodeProperties(selectedNode.data as OutputNodeData, handleChange);
     }
-    
+
     return <div className="p-4">No properties available for this node type.</div>;
   };
-  
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 border-b flex justify-between items-center">
         <h3 className="font-medium text-lg">Node Properties</h3>
         <X className="h-5 w-5 text-gray-500 cursor-pointer" onClick={() => updateNode({ ...selectedNode, selected: false })} />
       </div>
-      
+
       {renderPropertiesPanel()}
     </div>
   );
@@ -73,7 +87,7 @@ function renderInputNodeProperties(data: InputNodeData, handleChange: (key: stri
           placeholder="Node Label"
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="placeholder">Placeholder Text</Label>
         <Input
@@ -83,7 +97,7 @@ function renderInputNodeProperties(data: InputNodeData, handleChange: (key: stri
           placeholder="Enter placeholder text..."
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <Textarea
@@ -95,7 +109,7 @@ function renderInputNodeProperties(data: InputNodeData, handleChange: (key: stri
           rows={3}
         />
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <input
           type="checkbox"
@@ -122,7 +136,7 @@ function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange
           placeholder="Node Label"
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="model">Model</Label>
         <Select
@@ -140,7 +154,7 @@ function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="systemPrompt">System Prompt</Label>
         <Textarea
@@ -151,7 +165,7 @@ function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange
           rows={3}
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
         <Slider
@@ -163,7 +177,7 @@ function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange
           onValueChange={(value) => handleChange('temperature', value[0])}
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="maxTokens">Max Tokens</Label>
         <Input
@@ -173,74 +187,6 @@ function renderHuggingFaceNodeProperties(data: HuggingFaceNodeData, handleChange
           onChange={(e) => handleChange('maxTokens', parseInt(e.target.value) || 1000)}
           min={1}
           max={4000}
-        />
-      </div>
-    </div>
-  );
-}
-
-function renderOllamaNodeProperties(data: OllamaNodeData, handleChange: (key: string, value: any) => void) {
-  return (
-    <div className="p-4 space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="label">Label</Label>
-        <Input
-          id="label"
-          value={data.label || ''}
-          onChange={(e) => handleChange('label', e.target.value)}
-          placeholder="Node Label"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="model">Model</Label>
-        <Select
-          value={data.model || 'llama2'}
-          onValueChange={(value) => handleChange('model', value)}
-        >
-          <SelectTrigger id="model">
-            <SelectValue placeholder="Select model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="llama2">Llama 2 (7B)</SelectItem>
-            <SelectItem value="llama2:13b">Llama 2 (13B)</SelectItem>
-            <SelectItem value="codellama">Code Llama</SelectItem>
-            <SelectItem value="mistral">Mistral</SelectItem>
-            <SelectItem value="gemma">Gemma</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="endpoint">Ollama Endpoint</Label>
-        <Input
-          id="endpoint"
-          value={data.endpoint || 'http://localhost:11434'}
-          onChange={(e) => handleChange('endpoint', e.target.value)}
-          placeholder="http://localhost:11434"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="systemPrompt">System Prompt</Label>
-        <Textarea
-          id="systemPrompt"
-          value={data.systemPrompt || ''}
-          onChange={(e) => handleChange('systemPrompt', e.target.value)}
-          placeholder="Enter system instructions..."
-          rows={3}
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
-        <Slider
-          id="temperature"
-          min={0}
-          max={2}
-          step={0.1}
-          value={[data.temperature || 0.7]}
-          onValueChange={(value) => handleChange('temperature', value[0])}
         />
       </div>
     </div>
@@ -259,7 +205,7 @@ function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, 
           placeholder="Node Label"
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="model">Model</Label>
         <Select
@@ -278,7 +224,7 @@ function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, 
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="systemPrompt">System Prompt</Label>
         <Textarea
@@ -290,7 +236,7 @@ function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, 
           rows={4}
         />
       </div>
-      
+
       <div className="space-y-2">
         <div className="flex justify-between">
           <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
@@ -309,7 +255,7 @@ function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, 
           <span>More Creative</span>
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="maxTokens">Max Tokens</Label>
         <Input
@@ -319,6 +265,74 @@ function renderGPTNodeProperties(data: GPTNodeData, handleChange: (key: string, 
           max={4000}
           value={data.maxTokens || 1000}
           onChange={(e) => handleChange('maxTokens', parseInt(e.target.value, 10))}
+        />
+      </div>
+    </div>
+  );
+}
+
+function renderOllamaNodeProperties(data: OllamaNodeData, handleChange: (key: string, value: any) => void) {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="label">Label</Label>
+        <Input
+          id="label"
+          value={data.label || ''}
+          onChange={(e) => handleChange('label', e.target.value)}
+          placeholder="Node Label"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="model">Model</Label>
+        <Select
+          value={data.model || 'llama2'}
+          onValueChange={(value) => handleChange('model', value)}
+        >
+          <SelectTrigger id="model">
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="llama2">Llama 2</SelectItem>
+            <SelectItem value="codellama">Code Llama</SelectItem>
+            <SelectItem value="mistral">Mistral</SelectItem>
+            <SelectItem value="neural-chat">Neural Chat</SelectItem>
+            <SelectItem value="starling-lm">Starling</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="endpoint">Endpoint</Label>
+        <Input
+          id="endpoint"
+          value={data.endpoint || 'http://localhost:11434'}
+          onChange={(e) => handleChange('endpoint', e.target.value)}
+          placeholder="http://localhost:11434"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="systemPrompt">System Prompt</Label>
+        <Textarea
+          id="systemPrompt"
+          value={data.systemPrompt || ''}
+          onChange={(e) => handleChange('systemPrompt', e.target.value)}
+          placeholder="Enter system instructions..."
+          className="min-h-24"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="temperature">Temperature: {data.temperature || 0.7}</Label>
+        <Slider
+          id="temperature"
+          min={0}
+          max={1}
+          step={0.1}
+          value={[data.temperature || 0.7]}
+          onValueChange={(value) => handleChange('temperature', value[0])}
         />
       </div>
     </div>
@@ -337,7 +351,7 @@ function renderOutputNodeProperties(data: OutputNodeData, handleChange: (key: st
           placeholder="Node Label"
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="format">Output Format</Label>
         <Select
