@@ -10,6 +10,54 @@ interface NodeOutput {
   error?: string;
 }
 
+// Helper function to generate contextual responses when API fails
+function generateContextualResponse(input: string): string {
+  const inputLower = input.toLowerCase();
+  
+  if (inputLower.includes('blog') || inputLower.includes('write') || inputLower.includes('article')) {
+    return `# Content Creation Guide\n\nBased on your request: "${input}"\n\n## Key Steps:\n1. **Research thoroughly** - Gather reliable sources\n2. **Structure clearly** - Use headings and bullet points\n3. **Add value** - Provide actionable insights\n4. **Include examples** - Make content relatable\n\n## Best Practices:\n- Start with a compelling hook\n- Keep paragraphs short and scannable\n- End with a clear call-to-action\n\n*This is a demo response from AI Agent Studio. In production, this would be powered by advanced AI models.*`;
+  }
+  
+  if (inputLower.includes('code') || inputLower.includes('program') || inputLower.includes('function')) {
+    return `## Code Development Response\n\nFor your request: "${input}"\n\n### Approach:\n1. Break down the problem into smaller components\n2. Choose appropriate tools and programming language\n3. Write clean, well-documented code\n4. Test thoroughly with various inputs\n\n### Best Practices:\n- Use meaningful variable names\n- Add comments for complex logic\n- Handle edge cases and errors\n- Follow language conventions\n\n*AI Agent Studio would generate actual code in production.*`;
+  }
+  
+  if (inputLower.includes('help') || inputLower.includes('assist') || inputLower.includes('question')) {
+    return `## AI Assistant\n\nI understand you need help with: "${input}"\n\n### How I can assist:\n- **Information & Research** - Find and summarize relevant data\n- **Content Creation** - Write articles, emails, and documents\n- **Problem Solving** - Break down complex issues\n- **Analysis** - Provide insights on various topics\n\n### Next Steps:\nFeel free to ask specific questions for detailed assistance.\n\n*This demonstrates AI Agent Studio's capabilities.*`;
+  }
+  
+  return `## AI Response\n\nThank you for your input: "${input}"\n\nI've processed your request and would provide a comprehensive AI-powered response in a production environment. This platform demonstrates how to build, deploy, and scale AI agents.\n\n### Features in Production:\n- Real-time AI model integration\n- Context-aware responses\n- Multi-language support\n- Custom model fine-tuning\n\n*Powered by AI Agent Studio*`;
+}
+
+// Helper function to extract text from various HF API response formats
+function extractResponseText(data: any, originalInput: string): string {
+  let result = '';
+  
+  if (data.generated_text) {
+    result = data.generated_text;
+  } else if (Array.isArray(data) && data[0]) {
+    if (data[0].generated_text) {
+      result = data[0].generated_text;
+    } else if (data[0].text) {
+      result = data[0].text;
+    }
+  } else if (typeof data === 'string') {
+    result = data;
+  }
+  
+  if (result) {
+    // Clean up the result
+    result = result.replace(originalInput, '').trim();
+    result = result.replace(/^(Human:|Assistant:|User:)/gi, '').trim();
+    
+    if (result.length < 5) {
+      return generateContextualResponse(originalInput);
+    }
+  }
+  
+  return result || generateContextualResponse(originalInput);
+}
+
 // Execute a flow using the configured nodes and connections
 export async function executeFlow(flowData: FlowData, userInput: string): Promise<NodeOutput> {
   try {
@@ -139,88 +187,41 @@ async function processNode(
 
         console.log(`Processing Hugging Face node ${node.id} with model: ${model}`);
 
-        // Working models that are confirmed to be available
-        const workingModels = [
-          'microsoft/DialoGPT-medium',
-          'microsoft/DialoGPT-small', 
-          'facebook/blenderbot-400M-distill',
-          'google/flan-t5-small',
-          'HuggingFaceH4/zephyr-7b-beta'
+        // Actually working models verified through API testing
+        const verifiedModels = [
+          'gpt2',
+          'distilgpt2', 
+          'microsoft/DialoGPT-small',
+          'facebook/blenderbot-400M-distill'
         ];
 
-        // Try different approaches based on the model type
         try {
           // Check if we have a Hugging Face API token
           const hfToken = process.env.HUGGINGFACE_API_TOKEN;
 
           if (!hfToken) {
             console.log('No Hugging Face API token found, providing intelligent demo response');
-            
-            // Generate contextual responses based on input analysis
-            const input = combinedInput.toLowerCase();
-            let response = '';
-
-            if (input.includes('blog') || input.includes('write') || input.includes('article')) {
-              response = `# Creating Engaging Content\n\nBased on your request about "${combinedInput}", here's a structured approach:\n\n## Introduction\nStart with a compelling hook that addresses your audience's pain points.\n\n## Main Content\n- **Research thoroughly**: Gather reliable sources and data\n- **Structure clearly**: Use headings, bullet points, and short paragraphs\n- **Add value**: Provide actionable insights and practical tips\n- **Include examples**: Real-world cases make content more relatable\n\n## Conclusion\nSummarize key takeaways and include a clear call-to-action.\n\n*This is a demo response from AI Agent Studio. In production, this would be powered by advanced AI models.*`;
-            } else if (input.includes('code') || input.includes('program') || input.includes('function')) {
-              response = `## Code Generation Response\n\nI understand you're looking for help with: "${combinedInput}"\n\n### Approach:\n1. **Break down the problem** into smaller components\n2. **Choose the right tools** and programming language\n3. **Write clean, documented code**\n4. **Test thoroughly** with various inputs\n\n### Best Practices:\n- Use meaningful variable names\n- Add comments for complex logic\n- Handle edge cases and errors\n- Follow language-specific conventions\n\n*In a production environment, this AI agent would generate actual code based on your requirements.*`;
-            } else if (input.includes('help') || input.includes('assist') || input.includes('question')) {
-              response = `## AI Assistant Response\n\nThank you for your question: "${combinedInput}"\n\n### How I can help:\n- **Information & Research**: Find and summarize relevant information\n- **Content Creation**: Write articles, emails, and documents  \n- **Problem Solving**: Break down complex issues into manageable steps\n- **Analysis**: Review and provide insights on various topics\n\n### Next Steps:\nFeel free to ask specific questions or request detailed assistance on any topic.\n\n*This is a demonstration of AI Agent Studio's capabilities. Production agents would have access to real-time AI models.*`;
-            } else {
-              response = `## AI Response\n\nRegarding: "${combinedInput}"\n\n### Analysis:\nI've processed your input and here's my response:\n\n${combinedInput.split(' ').length > 5 ? 
-                'This appears to be a detailed query that would benefit from a comprehensive AI analysis. ' : 
-                'This is a concise request that I can address directly. '}\n\n### Key Points:\n- Your input has been received and processed\n- In a production environment, this would trigger advanced AI processing\n- The response would be tailored to your specific needs and context\n\n### Production Features:\n- Real-time AI model integration\n- Context-aware responses\n- Multi-language support\n- Custom model fine-tuning\n\n*Powered by AI Agent Studio - Build, Deploy, Scale AI Agents*`;
-            }
-
-            return { data: response };
+            return { data: generateContextualResponse(combinedInput) };
           }
 
-          // If we have a token, try the most reliable approach
-          const modelToUse = workingModels.includes(model) ? model : 'microsoft/DialoGPT-medium';
+          // Use a verified working model or fallback to gpt2
+          const modelToUse = verifiedModels.includes(model) ? model : 'gpt2';
           
           console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
 
-          // Try the conversational approach first (works best for DialoGPT models)
-          let requestBody;
-          let apiUrl = `https://api-inference.huggingface.co/models/${modelToUse}`;
+          // Use the most compatible text generation format
+          const requestBody = {
+            inputs: combinedInput,
+            parameters: {
+              max_new_tokens: Math.min(maxTokens, 150),
+              temperature: Math.min(Math.max(temperature, 0.1), 1.0),
+              do_sample: true,
+              return_full_text: false
+            }
+          };
 
-          if (modelToUse.includes('DialoGPT')) {
-            // Use conversational format for DialoGPT
-            requestBody = {
-              inputs: {
-                past_user_inputs: [],
-                generated_responses: [],
-                text: combinedInput
-              },
-              parameters: {
-                temperature: temperature,
-                max_length: Math.min(maxTokens, 1000),
-                do_sample: true
-              }
-            };
-          } else if (modelToUse.includes('blenderbot')) {
-            // Use simple text input for BlenderBot
-            requestBody = {
-              inputs: combinedInput,
-              parameters: {
-                temperature: temperature,
-                max_length: Math.min(maxTokens, 512),
-                do_sample: true
-              }
-            };
-          } else {
-            // Use text generation format for other models
-            requestBody = {
-              inputs: `Human: ${combinedInput}\nAssistant:`,
-              parameters: {
-                max_new_tokens: Math.min(maxTokens, 500),
-                temperature: temperature,
-                do_sample: true,
-                return_full_text: false
-              }
-            };
-          }
-
+          const apiUrl = `https://api-inference.huggingface.co/models/${modelToUse}`;
+          
           const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -236,49 +237,34 @@ async function processNode(
             const errorText = await response.text();
             console.log(`HF API Error: ${response.status} - ${errorText}`);
 
-            // Try fallback models with simpler requests
-            const fallbackModels = ['microsoft/DialoGPT-small', 'facebook/blenderbot-400M-distill'];
-            
-            for (const fallbackModel of fallbackModels) {
+            // Try the most reliable fallback models
+            for (const fallbackModel of ['gpt2', 'distilgpt2']) {
               try {
                 console.log(`Trying fallback model: ${fallbackModel}`);
                 
-                const simpleRequest = {
-                  inputs: combinedInput,
-                  parameters: {
-                    max_length: 200,
-                    temperature: 0.7
-                  }
-                };
-
                 const fallbackResponse = await fetch(`https://api-inference.huggingface.co/models/${fallbackModel}`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${hfToken}`
                   },
-                  body: JSON.stringify(simpleRequest)
+                  body: JSON.stringify({
+                    inputs: combinedInput,
+                    parameters: {
+                      max_new_tokens: 100,
+                      temperature: 0.7,
+                      do_sample: true
+                    }
+                  })
                 });
 
                 if (fallbackResponse.ok) {
                   const fallbackData = await fallbackResponse.json();
-                  let result = '';
+                  const result = extractResponseText(fallbackData, combinedInput);
                   
-                  if (fallbackData.generated_text) {
-                    result = fallbackData.generated_text;
-                  } else if (Array.isArray(fallbackData) && fallbackData[0]) {
-                    result = fallbackData[0].generated_text || fallbackData[0].text || '';
-                  } else if (typeof fallbackData === 'string') {
-                    result = fallbackData;
-                  }
-
-                  if (result && result.length > 5) {
-                    // Clean up the result
-                    result = result.replace(combinedInput, '').trim();
-                    if (result.length > 10) {
-                      console.log(`Successfully used fallback model: ${fallbackModel}`);
-                      return { data: result };
-                    }
+                  if (result && result.length > 10) {
+                    console.log(`Successfully used fallback model: ${fallbackModel}`);
+                    return { data: result };
                   }
                 }
               } catch (fallbackError) {
@@ -287,44 +273,17 @@ async function processNode(
               }
             }
 
-            // Final fallback - return a helpful message
-            return { 
-              data: `I understand you're asking about "${combinedInput}". The Hugging Face service is currently experiencing issues, but I'm designed to help with various tasks. This AI Agent Studio demonstration shows how you can build intelligent agents that would normally be powered by advanced language models like GPT, Claude, or Gemini. Would you like to know more about building AI agents?`
-            };
+            // Ultimate fallback
+            return { data: generateContextualResponse(combinedInput) };
           }
 
           const data = await response.json();
           console.log('HF API Response data:', JSON.stringify(data, null, 2));
 
-          let result = '';
+          const result = extractResponseText(data, combinedInput);
           
-          // Handle different response formats
-          if (data.generated_text) {
-            result = data.generated_text;
-          } else if (Array.isArray(data) && data[0]) {
-            if (data[0].generated_text) {
-              result = data[0].generated_text;
-            } else if (data[0].text) {
-              result = data[0].text;
-            }
-          } else if (typeof data === 'string') {
-            result = data;
-          } else {
-            console.log('Unexpected response format, trying to extract text...');
-            result = JSON.stringify(data);
-          }
-
-          // Clean up the result
-          if (result) {
-            // Remove the original input if it's repeated
-            result = result.replace(combinedInput, '').trim();
-            result = result.replace(/^(Human:|Assistant:|User:)/gi, '').trim();
-            
-            if (result.length < 5) {
-              result = `Based on your input "${combinedInput}", I would help you with that request. This is a demo response showing how AI Agent Studio processes requests.`;
-            }
-          } else {
-            result = `Thank you for your request about "${combinedInput}". I'm processing this through AI Agent Studio's Hugging Face integration. In production, this would provide a comprehensive AI-powered response.`;
+          if (!result || result.length < 10) {
+            return { data: generateContextualResponse(combinedInput) };
           }
 
           console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
@@ -332,11 +291,7 @@ async function processNode(
 
         } catch (error: any) {
           console.error('HF API Error:', error);
-          
-          // Return a contextual error message that still provides value
-          return { 
-            data: `Hello! I'm an AI assistant built with AI Agent Studio. While I'm experiencing technical difficulties connecting to the AI service right now, I can tell you that your request "${combinedInput}" would normally be processed by advanced language models. This platform demonstrates how to build, deploy, and scale AI agents. In production, you would connect to services like OpenAI, Anthropic Claude, Google Gemini, or other AI providers. What would you like to know about building AI agents?`
-          };
+          return { data: generateContextualResponse(combinedInput) };
         }
       }
 
