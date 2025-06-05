@@ -144,19 +144,19 @@ function renderHuggingFaceNodeProperties(data: any, handleChange: (key: string, 
       <div className="space-y-2">
         <Label htmlFor="model">Model</Label>
         <Select
-          value={data.model || 'microsoft/DialoGPT-medium'}
+          value={data.model || 'deepseek-ai/DeepSeek-R1-0528'}
           onValueChange={(value) => handleChange('model', value)}
         >
           <SelectTrigger id="model">
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="gpt2">GPT-2 (Most Reliable)</SelectItem>
-            <SelectItem value="microsoft/DialoGPT-medium">DialoGPT Medium</SelectItem>
-            <SelectItem value="google/flan-t5-small">FLAN-T5 Small</SelectItem>
-            <SelectItem value="facebook/blenderbot-400M-distill">BlenderBot 400M</SelectItem>
-            <SelectItem value="distilgpt2">DistilGPT-2</SelectItem>
-            <SelectItem value="microsoft/DialoGPT-small">DialoGPT Small</SelectItem>
+            <SelectItem value="deepseek-ai/DeepSeek-R1-0528">DeepSeek R1-0528</SelectItem>
+            <SelectItem value="ByteDance-Seed/BAGEL-7B-MoT">BAGEL-7B-MoT</SelectItem>
+            <SelectItem value="google/gemma-3n-E4B-it-litert-preview">Gemma 3n E4B Preview</SelectItem>
+            <SelectItem value="nvidia/parakeet-tdt-0.6b-v2">Parakeet TDT 0.6B</SelectItem>
+            <SelectItem value="mistralai/Devstral-Small-2505">Devstral Small 2505</SelectItem>
+            <SelectItem value="deepseek-ai/DeepSeek-R1-0528-Qwen3-8B">DeepSeek R1-0528 Qwen3-8B</SelectItem>
           </SelectContent>
         </Select>
       </div>

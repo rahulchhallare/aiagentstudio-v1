@@ -144,15 +144,15 @@ async function processNode(
         try {
           // Check if we have a Hugging Face API token
           const hfToken = process.env.HUGGINGFACE_API_TOKEN;
-          
+
           // Since HF API now requires authentication, provide a helpful response instead
           if (!hfToken) {
             console.log('No Hugging Face API token found, providing demo response');
-            
+
             // Generate a contextual response based on the input
             let response = '';
             const input = combinedInput.toLowerCase();
-            
+
             if (input.includes('blog') || input.includes('write') || input.includes('content')) {
               response = `# ${combinedInput}\n\nI'd be happy to help you with content creation! As a demo AI assistant, I can provide guidance on writing engaging content. Here are some key points to consider:\n\n- **Clear headline**: Make sure your title captures attention\n- **Engaging introduction**: Hook your readers from the start\n- **Valuable content**: Provide actionable insights or information\n- **Call to action**: End with what you want readers to do next\n\nWould you like me to elaborate on any of these points?`;
             } else if (input.includes('help') || input.includes('assist')) {
@@ -162,15 +162,25 @@ async function processNode(
             } else {
               response = `Thank you for your message: "${combinedInput}"\n\nI'm a demo AI assistant powered by AI Agent Studio. While I don't have access to advanced language models in this demo environment, I'm designed to help with various tasks. \n\nFor a production version, you would connect this to services like:\n- OpenAI GPT models\n- Google's Bard/Gemini\n- Anthropic's Claude\n- Or other AI APIs\n\nHow else can I assist you today?`;
             }
-            
+
             return { data: response };
           }
-          
+
           // If we have a token, try to use the HF API
-          const modelToUse = model || 'microsoft/DialoGPT-medium';
-          
+          // Use more reliable models that are known to work
+          const reliableModels = [
+            'deepseek-ai/DeepSeek-R1-0528',
+            'ByteDance-Seed/BAGEL-7B-MoT',
+            'google/gemma-3n-E4B-it-litert-preview',
+            'nvidia/parakeet-tdt-0.6b-v2',
+            'mistralai/Devstral-Small-2505',
+            'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'
+          ];
+
+          const modelToUse = reliableModels.includes(model) ? model : 'deepseek-ai/DeepSeek-R1-0528';
+
           console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
-          
+
           const response = await fetch(`https://api-inference.huggingface.co/models/${modelToUse}`, {
             method: 'POST',
             headers: {
@@ -193,13 +203,15 @@ async function processNode(
           if (!response.ok) {
             const errorText = await response.text();
             console.log(`HF API Error: ${response.status} - ${errorText}`);
-            
+
             // Handle specific error cases
             if (response.status === 404) {
               console.log(`Model ${modelToUse} not found, trying fallback model`);
-              
-              // Try with a different model that's more likely to be available
-              const fallbackModel = 'gpt2';
+
+              // Try with the most reliable fallback models in order
+              const fallbackModels = ['ByteDance-Seed/BAGEL-7B-MoT', 'nvidia/parakeet-tdt-0.6b-v2', 'mistralai/Devstral-Small-2505'];
+              const fallbackModel = fallbackModels[0]; // Select the first fallback model
+
               const fallbackResponse = await fetch(`https://api-inference.huggingface.co/models/${fallbackModel}`, {
                 method: 'POST',
                 headers: {
@@ -215,7 +227,7 @@ async function processNode(
                   }
                 })
               });
-              
+
               if (fallbackResponse.ok) {
                 const fallbackData = await fallbackResponse.json();
                 let result = '';
@@ -224,13 +236,13 @@ async function processNode(
                 } else if (fallbackData.generated_text) {
                   result = fallbackData.generated_text;
                 }
-                
+
                 if (result && result.length > 10) {
                   return { data: result };
                 }
               }
             }
-            
+
             // Fallback to demo response
             return { 
               data: `I understand you're asking about "${combinedInput}". I'm a demo AI assistant. The Hugging Face model "${modelToUse}" is currently unavailable (${response.status}), but in a production environment, this would be connected to a robust AI model. How else can I help you?`
@@ -239,7 +251,7 @@ async function processNode(
 
           const data = await response.json();
           console.log('HF API Response data:', data);
-          
+
           let result = '';
           if (Array.isArray(data) && data[0]) {
             result = data[0].generated_text || data[0].text || '';
@@ -258,10 +270,10 @@ async function processNode(
           // Clean up the result - remove the original prompt
           const originalPrompt = `${systemPrompt}\n\nUser: ${combinedInput}\nAssistant:`;
           result = result.replace(originalPrompt, '').trim();
-          
+
           // Remove any remaining prompt artifacts
           result = result.replace(/^(System:|User:|Assistant:)/gi, '').trim();
-          
+
           if (!result || result.length < 10) {
             console.log('Generated result too short or empty:', result);
             return { 
