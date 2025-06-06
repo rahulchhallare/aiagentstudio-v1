@@ -188,9 +188,11 @@ async function processNode(
         console.log(`Processing AI node ${node.id} with model: ${model}`);
 
         try {
-          // Check for Groq API token first (free and reliable)
+          // Check for available API tokens
           const groqToken = process.env.GROQ_API_KEY;
+          const togetherToken = process.env.TOGETHER_API_KEY;
 
+          // Prioritize Groq if available, otherwise use Together AI
           if (groqToken) {
             console.log('Using Groq API for AI inference');
             
@@ -237,9 +239,7 @@ async function processNode(
             }
           }
 
-          // Fallback to Together API (also free)
-          const togetherToken = process.env.TOGETHER_API_KEY;
-          
+          // Use Together API (free and reliable)          
           if (togetherToken) {
             console.log('Using Together AI as fallback');
             
