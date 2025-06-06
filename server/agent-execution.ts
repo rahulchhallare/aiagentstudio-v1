@@ -241,45 +241,53 @@ async function processNode(
 
           // Use Together API (free and reliable)          
           if (togetherToken) {
-            console.log('Using Together AI as fallback');
+            console.log('Using Together AI for inference');
             
             const togetherModelMap: { [key: string]: string } = {
               'gpt2': 'meta-llama/Llama-2-7b-chat-hf',
-              'distilgpt2': 'meta-llama/Llama-2-7b-chat-hf',
-              'microsoft/DialoGPT-small': 'mistralai/Mixtral-8x7B-Instruct-v0.1',
-              'microsoft/DialoGPT-medium': 'mistralai/Mixtral-8x7B-Instruct-v0.1',
-              'facebook/blenderbot-400M-distill': 'meta-llama/Llama-2-7b-chat-hf'
+              'distilgpt2': 'meta-llama/Llama-2-7b-chat-hf', 
+              'microsoft/DialoGPT-small': 'meta-llama/Llama-2-7b-chat-hf',
+              'microsoft/DialoGPT-medium': 'meta-llama/Llama-2-7b-chat-hf',
+              'facebook/blenderbot-400M-distill': 'meta-llama/Llama-2-7b-chat-hf',
+              'llama3-8b-8192': 'meta-llama/Llama-2-7b-chat-hf',
+              'mixtral-8x7b-32768': 'mistralai/Mixtral-8x7B-Instruct-v0.1'
             };
 
             const togetherModel = togetherModelMap[model] || 'meta-llama/Llama-2-7b-chat-hf';
 
-            const response = await fetch('https://api.together.xyz/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${togetherToken}`
-              },
-              body: JSON.stringify({
-                model: togetherModel,
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  { role: 'user', content: combinedInput }
+            try {
+              const response = await fetch('https://api.together.xyz/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${togetherToken}`
+                },
+                body: JSON.stringify({
+                  model: togetherModel,
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: combinedInput }
                 ],
-                temperature: Math.min(Math.max(temperature, 0.1), 1.0),
-                max_tokens: Math.min(maxTokens, 4000)
-              })
-            });
+                  temperature: Math.min(Math.max(temperature, 0.1), 1.0),
+                  max_tokens: Math.min(maxTokens, 2048),
+                  stop: null
+                })
+              });
 
-            if (response.ok) {
-              const data = await response.json();
-              const result = data.choices[0]?.message?.content || '';
-              
-              if (result && result.length > 10) {
-                console.log(`Together AI successful, response length: ${result.length}`);
-                return { data: result };
+              if (response.ok) {
+                const data = await response.json();
+                const result = data.choices?.[0]?.message?.content || '';
+                
+                if (result && result.length > 10) {
+                  console.log(`Together AI successful, response length: ${result.length}`);
+                  return { data: result };
+                }
+              } else {
+                const errorText = await response.text();
+                console.log(`Together AI error: ${response.status} - ${errorText}`);
               }
-            } else {
-              console.log(`Together AI error: ${response.status}`);
+            } catch (error) {
+              console.log(`Together AI request failed:`, error);
             }
           }
 
