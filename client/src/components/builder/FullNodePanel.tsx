@@ -98,8 +98,8 @@ export default function SimpleNodePanel({ addNode }: { addNode: (type: string) =
                 <Brain className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <div className="font-medium text-sm">HF Inference API</div>
-                <div className="text-xs text-green-500">Hugging Face inference</div>
+                <div className="font-medium text-sm">Free AI Models</div>
+                <div className="text-xs text-green-500">Groq, Together AI</div>
               </div>
             </div>
 

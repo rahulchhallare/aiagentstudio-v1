@@ -177,120 +177,118 @@ async function processNode(
         const combinedInput = inputData.join("\n\n");
 
         if (!combinedInput.trim()) {
-          return { data: "", error: "No input provided to Hugging Face node" };
+          return { data: "", error: "No input provided to AI node" };
         }
 
         const systemPrompt = node.data?.systemPrompt || "You are a helpful assistant.";
-        const model = node.data?.model || "microsoft/DialoGPT-medium";
+        const model = node.data?.model || "llama3-8b-8192";
         const temperature = node.data?.temperature || 0.7;
         const maxTokens = node.data?.maxTokens || 1000;
 
-        console.log(`Processing Hugging Face node ${node.id} with model: ${model}`);
-
-        // Actually working models verified through API testing
-        const verifiedModels = [
-          'gpt2',
-          'distilgpt2', 
-          'microsoft/DialoGPT-small',
-          'facebook/blenderbot-400M-distill'
-        ];
+        console.log(`Processing AI node ${node.id} with model: ${model}`);
 
         try {
-          // Check if we have a Hugging Face API token
-          const hfToken = process.env.HUGGINGFACE_API_TOKEN;
+          // Check for Groq API token first (free and reliable)
+          const groqToken = process.env.GROQ_API_KEY;
 
-          if (!hfToken) {
-            console.log('No Hugging Face API token found, providing intelligent demo response');
-            return { data: generateContextualResponse(combinedInput) };
-          }
+          if (groqToken) {
+            console.log('Using Groq API for AI inference');
+            
+            const groqModelMap: { [key: string]: string } = {
+              'gpt2': 'llama3-8b-8192',
+              'distilgpt2': 'llama3-8b-8192',
+              'microsoft/DialoGPT-small': 'mixtral-8x7b-32768',
+              'microsoft/DialoGPT-medium': 'mixtral-8x7b-32768',
+              'facebook/blenderbot-400M-distill': 'llama3-8b-8192',
+              'llama3-8b-8192': 'llama3-8b-8192',
+              'mixtral-8x7b-32768': 'mixtral-8x7b-32768',
+              'gemma-7b-it': 'gemma-7b-it'
+            };
 
-          // Use a verified working model or fallback to gpt2
-          const modelToUse = verifiedModels.includes(model) ? model : 'gpt2';
-          
-          console.log(`Attempting Hugging Face request with model: ${modelToUse}`);
+            const groqModel = groqModelMap[model] || 'llama3-8b-8192';
 
-          // Use the most compatible text generation format
-          const requestBody = {
-            inputs: combinedInput,
-            parameters: {
-              max_new_tokens: Math.min(maxTokens, 150),
-              temperature: Math.min(Math.max(temperature, 0.1), 1.0),
-              do_sample: true,
-              return_full_text: false
-            }
-          };
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${groqToken}`
+              },
+              body: JSON.stringify({
+                model: groqModel,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: combinedInput }
+                ],
+                temperature: Math.min(Math.max(temperature, 0.1), 2.0),
+                max_tokens: Math.min(maxTokens, 8000)
+              })
+            });
 
-          const apiUrl = `https://api-inference.huggingface.co/models/${modelToUse}`;
-          
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${hfToken}`
-            },
-            body: JSON.stringify(requestBody)
-          });
-
-          console.log(`HF API Response status: ${response.status}`);
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.log(`HF API Error: ${response.status} - ${errorText}`);
-
-            // Try the most reliable fallback models
-            for (const fallbackModel of ['gpt2', 'distilgpt2']) {
-              try {
-                console.log(`Trying fallback model: ${fallbackModel}`);
-                
-                const fallbackResponse = await fetch(`https://api-inference.huggingface.co/models/${fallbackModel}`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${hfToken}`
-                  },
-                  body: JSON.stringify({
-                    inputs: combinedInput,
-                    parameters: {
-                      max_new_tokens: 100,
-                      temperature: 0.7,
-                      do_sample: true
-                    }
-                  })
-                });
-
-                if (fallbackResponse.ok) {
-                  const fallbackData = await fallbackResponse.json();
-                  const result = extractResponseText(fallbackData, combinedInput);
-                  
-                  if (result && result.length > 10) {
-                    console.log(`Successfully used fallback model: ${fallbackModel}`);
-                    return { data: result };
-                  }
-                }
-              } catch (fallbackError) {
-                console.log(`Fallback model ${fallbackModel} failed, continuing...`);
-                continue;
+            if (response.ok) {
+              const data = await response.json();
+              const result = data.choices[0]?.message?.content || '';
+              
+              if (result && result.length > 10) {
+                console.log(`Groq API successful, response length: ${result.length}`);
+                return { data: result };
               }
+            } else {
+              console.log(`Groq API error: ${response.status}`);
             }
-
-            // Ultimate fallback
-            return { data: generateContextualResponse(combinedInput) };
           }
 
-          const data = await response.json();
-          console.log('HF API Response data:', JSON.stringify(data, null, 2));
-
-          const result = extractResponseText(data, combinedInput);
+          // Fallback to Together API (also free)
+          const togetherToken = process.env.TOGETHER_API_KEY;
           
-          if (!result || result.length < 10) {
-            return { data: generateContextualResponse(combinedInput) };
+          if (togetherToken) {
+            console.log('Using Together AI as fallback');
+            
+            const togetherModelMap: { [key: string]: string } = {
+              'gpt2': 'meta-llama/Llama-2-7b-chat-hf',
+              'distilgpt2': 'meta-llama/Llama-2-7b-chat-hf',
+              'microsoft/DialoGPT-small': 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+              'microsoft/DialoGPT-medium': 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+              'facebook/blenderbot-400M-distill': 'meta-llama/Llama-2-7b-chat-hf'
+            };
+
+            const togetherModel = togetherModelMap[model] || 'meta-llama/Llama-2-7b-chat-hf';
+
+            const response = await fetch('https://api.together.xyz/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${togetherToken}`
+              },
+              body: JSON.stringify({
+                model: togetherModel,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: combinedInput }
+                ],
+                temperature: Math.min(Math.max(temperature, 0.1), 1.0),
+                max_tokens: Math.min(maxTokens, 4000)
+              })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              const result = data.choices[0]?.message?.content || '';
+              
+              if (result && result.length > 10) {
+                console.log(`Together AI successful, response length: ${result.length}`);
+                return { data: result };
+              }
+            } else {
+              console.log(`Together AI error: ${response.status}`);
+            }
           }
 
-          console.log(`Hugging Face node ${node.id} response:`, result.substring(0, 200) + "...");
-          return { data: result };
+          // Final fallback to intelligent demo response
+          console.log('No API tokens found or all APIs failed, providing intelligent demo response');
+          return { data: generateContextualResponse(combinedInput) };
 
         } catch (error: any) {
-          console.error('HF API Error:', error);
+          console.error('AI API Error:', error);
           return { data: generateContextualResponse(combinedInput) };
         }
       }
