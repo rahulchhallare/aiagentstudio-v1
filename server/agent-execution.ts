@@ -192,6 +192,11 @@ async function processNode(
           const groqToken = process.env.GROQ_API_KEY;
           const togetherToken = process.env.TOGETHER_API_KEY;
 
+          console.log('API Keys status:', {
+            groq: groqToken ? 'Available' : 'Missing',
+            together: togetherToken ? 'Available' : 'Missing'
+          });
+
           // Prioritize Groq if available, otherwise use Together AI
           if (groqToken) {
             console.log('Using Groq API for AI inference');
