@@ -244,16 +244,16 @@ async function processNode(
             console.log('Using Together AI for inference');
             
             const togetherModelMap: { [key: string]: string } = {
-              'gpt2': 'meta-llama/Llama-2-7b-chat-hf',
-              'distilgpt2': 'meta-llama/Llama-2-7b-chat-hf', 
-              'microsoft/DialoGPT-small': 'meta-llama/Llama-2-7b-chat-hf',
-              'microsoft/DialoGPT-medium': 'meta-llama/Llama-2-7b-chat-hf',
-              'facebook/blenderbot-400M-distill': 'meta-llama/Llama-2-7b-chat-hf',
-              'llama3-8b-8192': 'meta-llama/Llama-2-7b-chat-hf',
+              'gpt2': 'meta-llama/Llama-3-8b-chat-hf',
+              'distilgpt2': 'meta-llama/Llama-3-8b-chat-hf', 
+              'microsoft/DialoGPT-small': 'meta-llama/Llama-3-8b-chat-hf',
+              'microsoft/DialoGPT-medium': 'meta-llama/Llama-3-8b-chat-hf',
+              'facebook/blenderbot-400M-distill': 'meta-llama/Llama-3-8b-chat-hf',
+              'llama3-8b-8192': 'meta-llama/Llama-3-8b-chat-hf',
               'mixtral-8x7b-32768': 'mistralai/Mixtral-8x7B-Instruct-v0.1'
             };
 
-            const togetherModel = togetherModelMap[model] || 'meta-llama/Llama-2-7b-chat-hf';
+            const togetherModel = togetherModelMap[model] || 'meta-llama/Llama-3-8b-chat-hf';
 
             try {
               const response = await fetch('https://api.together.xyz/v1/chat/completions', {
