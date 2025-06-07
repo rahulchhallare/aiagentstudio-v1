@@ -10,13 +10,6 @@ export default function Templates() {
   const { user, isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/');
-    }
-  }, [user, authLoading, navigate]);
-
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -24,8 +17,6 @@ export default function Templates() {
       </div>
     );
   }
-
-  if (!user) return null;
 
   // Template categories
   const templateCategories = [
@@ -84,11 +75,11 @@ export default function Templates() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {/* Sidebar - only show if user is authenticated */}
+      {user && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
       
       {/* Main Content */}
-      <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 overflow-y-auto">
+      <div className={`flex-1 transition-all duration-300 overflow-y-auto ${user ? 'ml-0 lg:ml-64' : ''}`}>
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Agent Templates</h1>
@@ -110,12 +101,17 @@ export default function Templates() {
                       <Button 
                         className="w-full"
                         onClick={() => {
+                          if (!user) {
+                            // Redirect to welcome page for authentication
+                            navigate('/welcome');
+                            return;
+                          }
                           // Store template ID for the builder to load
                           localStorage.setItem('selectedTemplate', template.id);
                           navigate('/builder');
                         }}
                       >
-                        Use Template
+                        {user ? 'Use Template' : 'Login to Use Template'}
                       </Button>
                     </div>
                   ))}

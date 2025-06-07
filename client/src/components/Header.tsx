@@ -48,7 +48,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <span className="font-bold text-xl text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
           </Link>
         </div>
-        
+
         {/* Mobile menu button */}
         <div className="block sm:hidden">
           <Button
@@ -60,7 +60,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <Menu className="h-6 w-6" />
           </Button>
         </div>
-        
+
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
@@ -96,7 +96,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             </div>
           </div>
         )}
-        
+
         {/* User menu when authenticated */}
         {user && (
           <div className="flex items-center space-x-4">
@@ -107,7 +107,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             >
               <Bell className="h-5 w-5" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -115,7 +115,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
@@ -144,7 +144,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </div>
         )}
       </nav>
-      
+
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
@@ -164,7 +164,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <X className="h-6 w-6" />
             </Button>
           </div>
-          
+
           <div className="flex flex-col space-y-4 p-6">
             {isLandingPage && !user ? (
               <Fragment>
