@@ -69,9 +69,14 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link href="/dashboard" className="md:flex hidden">
+              <Link href="/agents" className="md:flex hidden">
                 <Button variant="outline" size="sm">
                   My Agents
+                </Button>
+              </Link>
+              <Link href="/templates" className="md:flex hidden">
+                <Button variant="ghost" size="sm">
+                  Templates
                 </Button>
               </Link>
               <DropdownMenu>

@@ -61,23 +61,13 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </Button>
         </div>
 
-        {/* Desktop navigation for landing page */}
-        {isLandingPage && !user && (
+        {/* Desktop navigation */}
+        {!user && (
           <div className="hidden sm:flex space-x-8">
             <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">Templates</Link>
-            <Link href="#features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
-            <Link href="#docs" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                const subscriptionSection = document.querySelector('.py-16.bg-gradient-to-br.from-purple-600');
-                subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-gray-600 hover:text-primary-600 font-medium px-0"
-            >
-              Subscribe
-            </Button>
+            <Link href="/features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
+            <Link href="/documentation" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
             <div className="flex space-x-4">
               <Button
                 variant="ghost"
@@ -167,31 +157,20 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </div>
 
           <div className="flex flex-col space-y-4 p-6">
-            {isLandingPage && !user ? (
+            {!user ? (
               <Fragment>
                 <Link href="/templates" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Templates
                 </Link>
-                <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                <Link href="/features" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Features
                 </Link>
-                <Link href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Pricing
                 </Link>
-                <Link href="#docs" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                <Link href="/documentation" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Documentation
                 </Link>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    const subscriptionSection = document.querySelector('.py-16.bg-gradient-to-br.from-purple-600');
-                    subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2 justify-start px-0"
-                >
-                  Subscribe
-                </Button>
                 <div className="pt-4 border-t border-gray-200">
                   <Button
                     variant="outline"
@@ -218,6 +197,12 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <Fragment>
                 <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Dashboard
+                </Link>
+                <Link href="/agents" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                  My Agents
+                </Link>
+                <Link href="/templates" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                  Templates
                 </Link>
                 <Link href="/builder" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Create Agent
