@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, Cpu, Network, Code, Sparkles, Zap, Lock, Globe } from "lucide-react";
-import { useLocation } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LoginModal from '@/components/LoginModal';
 import SignupModal from '@/components/SignupModal';
+import Footer from '@/components/Footer';
 
 export default function Features() {
   const [, navigate] = useLocation();
@@ -181,6 +180,7 @@ export default function Features() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

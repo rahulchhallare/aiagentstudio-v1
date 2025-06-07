@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
 import LoginModal from '@/components/LoginModal';
 import SignupModal from '@/components/SignupModal';
+import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, FileText, Zap, Database, MessageSquare, Brain, Star } from 'lucide-react';
@@ -237,6 +238,9 @@ export default function Templates() {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
