@@ -186,23 +186,10 @@ export default function Templates() {
               <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                 Start with a template or create your own agent from scratch using our intuitive visual builder.
               </p>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex justify-center">
                 <Button 
                   size="lg" 
-                  className="bg-primary-600 hover:bg-primary-700"
-                  onClick={() => {
-                    if (!user) {
-                      setIsLoginModalOpen(true);
-                      return;
-                    }
-                    navigate('/builder');
-                  }}
-                >
-                  {user ? 'Create Custom Agent' : 'Get Started'}
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   onClick={() => {
                     if (!user) {
                       setIsLoginModalOpen(true);
