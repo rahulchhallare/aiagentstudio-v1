@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
+import LoginModal from '@/components/LoginModal';
+import SignupModal from '@/components/SignupModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, FileText, Zap, Database, MessageSquare, Brain, Star } from 'lucide-react';
@@ -11,6 +13,8 @@ export default function Templates() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
   if (authLoading) {
     return (
@@ -86,6 +90,24 @@ export default function Templates() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Login/Signup Modals */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)}
+        onSignupClick={() => {
+          setIsLoginModalOpen(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
+      <SignupModal 
+        isOpen={isSignupModalOpen} 
+        onClose={() => setIsSignupModalOpen(false)}
+        onLoginClick={() => {
+          setIsSignupModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
+      />
+      
       {/* Sidebar - only show if user is authenticated */}
       {user && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
       
@@ -138,8 +160,8 @@ export default function Templates() {
                             if (!user) {
                               // Store template ID for after login
                               localStorage.setItem('selectedTemplate', template.id);
-                              // Redirect to welcome page for authentication
-                              navigate('/welcome');
+                              // Open login modal instead of redirecting
+                              setIsLoginModalOpen(true);
                               return;
                             }
                             // Store template ID for the builder to load
@@ -170,7 +192,7 @@ export default function Templates() {
                   className="bg-primary-600 hover:bg-primary-700"
                   onClick={() => {
                     if (!user) {
-                      navigate('/welcome');
+                      setIsLoginModalOpen(true);
                       return;
                     }
                     navigate('/builder');
