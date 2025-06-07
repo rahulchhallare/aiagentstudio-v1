@@ -5,13 +5,13 @@ import { FlowData } from './types';
 const createTemplateFlow = (nodes: Node[], edges: Edge[]): FlowData => {
   // Assign unique IDs to nodes and update edge references
   const nodeIdMap = new Map<string, string>();
-  
+
   const newNodes = nodes.map(node => {
     const newId = `${node.id}-${Date.now()}`;
     nodeIdMap.set(node.id, newId);
     return { ...node, id: newId };
   });
-  
+
   const newEdges = edges.map(edge => {
     return {
       ...edge,
@@ -20,7 +20,7 @@ const createTemplateFlow = (nodes: Node[], edges: Edge[]): FlowData => {
       target: nodeIdMap.get(edge.target) || edge.target
     };
   });
-  
+
   return {
     nodes: newNodes,
     edges: newEdges
@@ -87,7 +87,7 @@ export const blogWriterTemplate = (): FlowData => {
       }
     }
   ];
-  
+
   const edges: Edge[] = [
     {
       id: 'edge-1',
@@ -126,7 +126,7 @@ export const blogWriterTemplate = (): FlowData => {
       animated: true
     }
   ];
-  
+
   return createTemplateFlow(nodes, edges);
 };
 
@@ -156,12 +156,12 @@ export const socialMediaTemplate = (): FlowData => {
       }
     },
     {
-      id: 'gpt-1',
-      type: 'gptNode',
+      id: 'hf-1',
+      type: 'huggingFaceNode',
       position: { x: 250, y: 310 },
       data: {
         label: 'Social Media Generator',
-        model: 'gpt-4o',
+        model: 'microsoft/DialoGPT-medium',
         systemPrompt: 'You are a professional social media manager. Create engaging social media posts for the specified platforms about the given topic. Adjust the tone, length, and format to be optimal for each platform. For Twitter, keep under 280 characters. For LinkedIn, make it professional. For Instagram, make it visual and engaging with appropriate hashtags.',
         temperature: 0.8,
         maxTokens: 1000
@@ -177,12 +177,12 @@ export const socialMediaTemplate = (): FlowData => {
       }
     }
   ];
-  
+
   const edges: Edge[] = [
     {
       id: 'edge-1',
       source: 'input-1',
-      target: 'gpt-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -191,7 +191,7 @@ export const socialMediaTemplate = (): FlowData => {
     {
       id: 'edge-2',
       source: 'input-2',
-      target: 'gpt-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -199,7 +199,7 @@ export const socialMediaTemplate = (): FlowData => {
     },
     {
       id: 'edge-3',
-      source: 'gpt-1',
+      source: 'hf-1',
       target: 'output-1',
       sourceHandle: 'output',
       targetHandle: 'input',
@@ -207,7 +207,7 @@ export const socialMediaTemplate = (): FlowData => {
       animated: true
     }
   ];
-  
+
   return createTemplateFlow(nodes, edges);
 };
 
@@ -226,12 +226,12 @@ export const faqResponderTemplate = (): FlowData => {
       }
     },
     {
-      id: 'gpt-1',
-      type: 'gptNode',
+      id: 'hf-1',
+      type: 'huggingFaceNode',
       position: { x: 250, y: 180 },
       data: {
         label: 'FAQ Matcher',
-        model: 'gpt-4o',
+        model: 'microsoft/DialoGPT-medium',
         systemPrompt: 'You are a customer support assistant. Your role is to understand customer questions and provide helpful, accurate answers based on company knowledge. Maintain a friendly, professional tone and focus on addressing the customer\'s needs. If you\'re unsure about an answer, acknowledge that and suggest where the customer might find more information rather than inventing details.\n\nKnowledge Base:\n- Our return policy allows returns within 30 days of purchase with receipt\n- Free shipping on orders over $50\n- Products have a 1-year warranty against manufacturing defects\n- We ship to the US and Canada only\n- Customer support hours: Mon-Fri, 9am-5pm EST\n- Orders typically process in 1-2 business days\n- Subscription plans can be canceled anytime with no penalty',
         temperature: 0.3,
         maxTokens: 800
@@ -247,12 +247,12 @@ export const faqResponderTemplate = (): FlowData => {
       }
     }
   ];
-  
+
   const edges: Edge[] = [
     {
       id: 'edge-1',
       source: 'input-1',
-      target: 'gpt-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -260,7 +260,7 @@ export const faqResponderTemplate = (): FlowData => {
     },
     {
       id: 'edge-2',
-      source: 'gpt-1',
+      source: 'hf-1',
       target: 'output-1',
       sourceHandle: 'output',
       targetHandle: 'input',
@@ -268,7 +268,7 @@ export const faqResponderTemplate = (): FlowData => {
       animated: true
     }
   ];
-  
+
   return createTemplateFlow(nodes, edges);
 };
 
@@ -298,12 +298,12 @@ export const dataSummarizerTemplate = (): FlowData => {
       }
     },
     {
-      id: 'gpt-1',
-      type: 'gptNode',
+      id: 'hf-1',
+      type: 'huggingFaceNode',
       position: { x: 250, y: 310 },
       data: {
         label: 'Data Analyzer',
-        model: 'gpt-4o',
+        model: 'microsoft/DialoGPT-medium',
         systemPrompt: 'You are a data analysis expert. Analyze the provided structured data and create a comprehensive summary that highlights key patterns, trends, and insights. Focus on the aspects specified by the user. Present your analysis in a clear, organized format with sections for methodology, key findings, and recommendations if applicable.',
         temperature: 0.2,
         maxTokens: 1500
@@ -319,12 +319,12 @@ export const dataSummarizerTemplate = (): FlowData => {
       }
     }
   ];
-  
+
   const edges: Edge[] = [
     {
       id: 'edge-1',
       source: 'input-1',
-      target: 'gpt-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -333,7 +333,7 @@ export const dataSummarizerTemplate = (): FlowData => {
     {
       id: 'edge-2',
       source: 'input-2',
-      target: 'gpt-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -341,7 +341,7 @@ export const dataSummarizerTemplate = (): FlowData => {
     },
     {
       id: 'edge-3',
-      source: 'gpt-1',
+      source: 'hf-1',
       target: 'output-1',
       sourceHandle: 'output',
       targetHandle: 'input',
@@ -349,7 +349,7 @@ export const dataSummarizerTemplate = (): FlowData => {
       animated: true
     }
   ];
-  
+
   return createTemplateFlow(nodes, edges);
 };
 
@@ -401,7 +401,7 @@ export const researchAssistantTemplate = (): FlowData => {
       }
     }
   ];
-  
+
   const edges: Edge[] = [
     {
       id: 'edge-1',
@@ -431,7 +431,7 @@ export const researchAssistantTemplate = (): FlowData => {
       animated: true
     }
   ];
-  
+
   return createTemplateFlow(nodes, edges);
 };
 
@@ -450,7 +450,7 @@ export const ticketClassifierTemplate = (): FlowData => {
       }
     },
     {
-      id: 'gpt-1',
+      id: 'hf-1',
       type: 'gptNode',
       position: { x: 250, y: 180 },
       data: {
@@ -471,12 +471,12 @@ export const ticketClassifierTemplate = (): FlowData => {
       }
     }
   ];
-  
+
   const edges: Edge[] = [
     {
       id: 'edge-1',
       source: 'input-1',
-      target: 'gpt-1',
+      target: 'hf-1',
       sourceHandle: 'output',
       targetHandle: 'input',
       type: 'smoothstep',
@@ -484,7 +484,7 @@ export const ticketClassifierTemplate = (): FlowData => {
     },
     {
       id: 'edge-2',
-      source: 'gpt-1',
+      source: 'hf-1',
       target: 'output-1',
       sourceHandle: 'output',
       targetHandle: 'input',
@@ -492,7 +492,7 @@ export const ticketClassifierTemplate = (): FlowData => {
       animated: true
     }
   ];
-  
+
   return createTemplateFlow(nodes, edges);
 };
 
@@ -506,6 +506,6 @@ export const getTemplateById = (templateId: string): FlowData | null => {
     'dp-1': dataSummarizerTemplate,
     'dp-2': researchAssistantTemplate,
   };
-  
+
   return templates[templateId] ? templates[templateId]() : null;
 };
