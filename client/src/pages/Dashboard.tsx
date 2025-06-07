@@ -17,17 +17,17 @@ export default function Dashboard() {
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Redirect to welcome page if not authenticated
+  // Redirect to home page if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/welcome');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 
   // Additional check for immediate logout redirect
   useEffect(() => {
     if (!user && !authLoading) {
-      navigate('/welcome');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 
@@ -41,7 +41,7 @@ export default function Dashboard() {
 
   if (!user) {
     // Force redirect if user is not authenticated
-    navigate('/welcome');
+    navigate('/');
     return null;
   }
 

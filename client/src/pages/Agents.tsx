@@ -14,10 +14,10 @@ export default function Agents() {
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Redirect to welcome page if not authenticated
+  // Redirect to home page if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/welcome');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 
