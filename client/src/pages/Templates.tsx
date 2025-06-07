@@ -203,9 +203,15 @@ export default function Templates() {
                 <Button 
                   size="lg" 
                   variant="outline"
-                  onClick={() => navigate('#features')}
+                  onClick={() => {
+                    if (!user) {
+                      setIsLoginModalOpen(true);
+                      return;
+                    }
+                    navigate('/builder');
+                  }}
                 >
-                  View All Features
+                  Get Started Now
                 </Button>
               </div>
             </div>
