@@ -87,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('auth_user');
     
     // Force immediate navigation to home page
-    window.location.href = '/welcome';
+    window.location.href = '/';
   };
 
   return (

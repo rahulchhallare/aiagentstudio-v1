@@ -25,7 +25,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Check if we're on the landing page
-  const isLandingPage = location === '/';
+  const isLandingPage = false; // No longer needed since welcome page is removed
 
   // Listen for scroll events to add shadow to header when scrolled
   useEffect(() => {
