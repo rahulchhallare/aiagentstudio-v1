@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useLocation } from 'wouter';
 import { User, InsertUser } from '@/lib/types';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   // Check for existing user session on mount
@@ -90,10 +92,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       description: "You have been successfully logged out.",
     });
     
-    // Redirect to homepage
-    setTimeout(() => {
-      window.location.replace('/');
-    }, 500);
+    // Redirect to homepage immediately
+    navigate('/');
   };
 
   return (
