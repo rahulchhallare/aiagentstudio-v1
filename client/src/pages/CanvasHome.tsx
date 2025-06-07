@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CanvasHeader from '@/components/CanvasHeader';
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
+import Footer from '@/components/Footer';
 
 // Template card component
 interface TemplateCardProps {
@@ -431,6 +432,7 @@ export default function CanvasHome() {
           </Button>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
