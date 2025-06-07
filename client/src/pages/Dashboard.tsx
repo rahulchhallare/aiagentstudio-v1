@@ -24,6 +24,13 @@ export default function Dashboard() {
     }
   }, [user, authLoading, navigate]);
 
+  // Additional check for immediate logout redirect
+  useEffect(() => {
+    if (!user && !authLoading) {
+      navigate('/welcome');
+    }
+  }, [user, authLoading, navigate]);
+
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -32,7 +39,11 @@ export default function Dashboard() {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    // Force redirect if user is not authenticated
+    navigate('/welcome');
+    return null;
+  }
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
