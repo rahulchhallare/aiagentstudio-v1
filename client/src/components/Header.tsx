@@ -67,6 +67,16 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <Link href="#features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
             <Link href="#pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
             <Link href="#docs" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const subscriptionSection = document.querySelector('.py-16.bg-gradient-to-br.from-purple-600');
+                subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-gray-600 hover:text-primary-600 font-medium px-0"
+            >
+              Subscribe
+            </Button>
             <div className="flex space-x-4">
               <Button
                 variant="ghost"
@@ -167,6 +177,17 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 <Link href="#docs" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Documentation
                 </Link>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    const subscriptionSection = document.querySelector('.py-16.bg-gradient-to-br.from-purple-600');
+                    subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2 justify-start px-0"
+                >
+                  Subscribe
+                </Button>
                 <div className="pt-4 border-t border-gray-200">
                   <Button
                     variant="outline"
