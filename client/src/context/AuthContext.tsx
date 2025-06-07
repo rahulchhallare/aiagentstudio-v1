@@ -92,8 +92,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       description: "You have been successfully logged out.",
     });
     
-    // Redirect to homepage immediately
-    navigate('/');
+    // Force redirect to homepage
+    window.location.href = '/';
   };
 
   return (
