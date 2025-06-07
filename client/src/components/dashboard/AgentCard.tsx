@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Agent } from '@/lib/types';
-import { BarChart2, Edit, MoreHorizontal, Clock } from 'lucide-react';
+import { BarChart2, Edit, MoreHorizontal, Clock, ExternalLink, Copy } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryClient } from '@/lib/queryClient';
@@ -81,6 +81,17 @@ export default function AgentCard({ agent }: AgentCardProps) {
     setIsDeleteDialogOpen(true);
   };
 
+  // Handle copy deploy URL
+  const handleCopyUrl = () => {
+    if (agent.deploy_url) {
+      navigator.clipboard.writeText(agent.deploy_url);
+      toast({
+        title: 'Copied',
+        description: 'Deploy URL copied to clipboard',
+      });
+    }
+  };
+
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200">
@@ -108,6 +119,36 @@ export default function AgentCard({ agent }: AgentCardProps) {
             </div>
           </div>
           
+          {/* Deploy URL display for active agents */}
+          {agent.is_active && agent.deploy_url && (
+            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-green-800 mb-1">Deploy URL</p>
+                  <p className="text-xs text-green-600 truncate">{agent.deploy_url}</p>
+                </div>
+                <div className="flex space-x-1 ml-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs border-green-300 text-green-700 hover:bg-green-100"
+                    onClick={handleCopyUrl}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs border-green-300 text-green-700 hover:bg-green-100"
+                    onClick={() => window.open(agent.deploy_url, '_blank')}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
@@ -140,6 +181,12 @@ export default function AgentCard({ agent }: AgentCardProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
+                {agent.is_active && agent.deploy_url && (
+                  <DropdownMenuItem onClick={() => window.open(agent.deploy_url, '_blank')}>
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Open Agent
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleDelete} className="text-red-600">Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
