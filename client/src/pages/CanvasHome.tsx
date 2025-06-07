@@ -231,7 +231,17 @@ export default function CanvasHome() {
               </p>
             </div>
             <div className="space-x-4">
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" size="lg" onClick={handleCreateBlank}>
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
+                size="lg" 
+                onClick={() => {
+                  if (!user) {
+                    setIsLoginModalOpen(true);
+                    return;
+                  }
+                  handleCreateBlank();
+                }}
+              >
                 Create New Agent
               </Button>
               <Button variant="outline" size="lg">
@@ -409,7 +419,13 @@ export default function CanvasHome() {
           <Button 
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
             size="lg"
-            onClick={handleCreateBlank}
+            onClick={() => {
+              if (!user) {
+                setIsLoginModalOpen(true);
+                return;
+              }
+              handleCreateBlank();
+            }}
           >
             Get Started Now
           </Button>
