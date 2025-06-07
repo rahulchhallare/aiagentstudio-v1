@@ -86,16 +86,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Remove from localStorage
     localStorage.removeItem('auth_user');
     
-    // Immediate navigation to welcome page
-    navigate('/welcome');
-    
-    // Notify user after navigation
-    setTimeout(() => {
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-      });
-    }, 100);
+    // Force immediate navigation to home page
+    window.location.href = '/welcome';
   };
 
   return (
