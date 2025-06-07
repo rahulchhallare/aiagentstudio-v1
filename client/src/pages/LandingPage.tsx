@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import WaitlistForm from '@/components/WaitlistForm';
+import SubscriptionForm from '@/components/SubscriptionForm';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -559,15 +560,49 @@ export default function LandingPage() {
         </section>
 
         {/* CTA / Newsletter Section */}
-        <section className="py-16 bg-primary-900 text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-4">Join the AI Revolution</h2>
-              <p className="text-xl text-primary-100 mb-8">
-                Sign up for early access and be among the first to experience the power of visual AI agent building.
+        <section className="py-16 bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 text-white relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-4xl mx-auto text-center">
+              {/* Badge */}
+              <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-6 py-2 mb-8">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+                <span className="text-white font-medium">Join 10,000+ AI Enthusiasts</span>
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">Join the AI Revolution</h2>
+              <p className="text-xl md:text-2xl text-purple-100 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Get exclusive access to new templates, features, and AI insights delivered to your inbox.
               </p>
               
-              <WaitlistForm />
+              {/* Enhanced Subscription Form */}
+              <SubscriptionForm />
+              
+              <p className="text-purple-200 mt-6 text-sm">
+                ✨ Free forever • 🚀 No spam • 📧 Unsubscribe anytime
+              </p>
+              
+              {/* Social Proof */}
+              <div className="mt-12 flex flex-wrap justify-center items-center gap-8 opacity-80">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">10,000+</div>
+                  <div className="text-sm text-purple-200">Active Users</div>
+                </div>
+                <div className="hidden sm:block w-px h-8 bg-purple-300"></div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">50,000+</div>
+                  <div className="text-sm text-purple-200">Agents Created</div>
+                </div>
+                <div className="hidden sm:block w-px h-8 bg-purple-300"></div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">99.9%</div>
+                  <div className="text-sm text-purple-200">Uptime</div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
