@@ -64,6 +64,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
+            <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">Templates</Link>
             <Link href="#features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
             <Link href="#pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
             <Link href="#docs" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
@@ -168,6 +169,9 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <div className="flex flex-col space-y-4 p-6">
             {isLandingPage && !user ? (
               <Fragment>
+                <Link href="/templates" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                  Templates
+                </Link>
                 <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Features
                 </Link>
