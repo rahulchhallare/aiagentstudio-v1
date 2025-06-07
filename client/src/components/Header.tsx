@@ -1,6 +1,6 @@
 import { useState, useEffect, Fragment } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,

@@ -57,19 +57,22 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
     setIsLoading(true);
     try {
       const user = await login(values.email, values.password);
-      
+
       if (user) {
         toast({
           title: "Login successful",
           description: "Welcome back to AIagentStudio.ai",
         });
-        
+
         onClose();
-        navigate('/dashboard');
+        // Force a small delay to ensure state updates propagate
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }
     } catch (error) {
       console.error('Login error:', error);
-      
+
       toast({
         title: "Login failed",
         description: "Invalid email or password. Please try again.",
@@ -89,7 +92,7 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
             Enter your credentials to access your account
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -109,7 +112,7 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="password"
@@ -128,7 +131,7 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
                 </FormItem>
               )}
             />
-            
+
             <div className="flex items-center justify-between">
               <FormField
                 control={form.control}
@@ -146,12 +149,12 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
                   </FormItem>
                 )}
               />
-              
+
               <Button variant="link" className="text-sm p-0 h-auto" disabled={isLoading}>
                 Forgot password?
               </Button>
             </div>
-            
+
             <Button 
               type="submit" 
               className="w-full" 
@@ -161,12 +164,12 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
             </Button>
           </form>
         </Form>
-        
+
         <div className="relative flex items-center justify-center my-4">
           <div className="border-t border-gray-300 absolute w-full"></div>
           <div className="bg-white px-4 relative text-sm text-gray-500">or continue with</div>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-3">
           <Button variant="outline" className="flex justify-center" disabled={isLoading}>
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -199,7 +202,7 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
             </svg>
           </Button>
         </div>
-        
+
         <DialogFooter className="sm:justify-center">
           <p className="text-center text-sm text-gray-600">
             Don't have an account?{" "}

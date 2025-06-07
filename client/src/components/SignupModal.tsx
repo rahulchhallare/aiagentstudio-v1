@@ -69,26 +69,30 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
       // but ensure it's unique by adding a timestamp
       const timestamp = new Date().getTime();
       const username = `${values.firstName.toLowerCase()}${values.lastName.toLowerCase()}${timestamp}`;
-      
+
       const user = await register({
         username,
         email: values.email,
         password: values.password,
         avatar_url: '',
       });
-      
+
       if (user) {
         toast({
           title: "Account created successfully",
           description: "Welcome to AIagentStudio.ai",
         });
-        
+
         onClose();
+        // Force a small delay to ensure state updates propagate
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
         navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      
+
       toast({
         title: "Registration failed",
         description: error.message || "This email might already be registered. Please try a different one or log in.",
@@ -108,7 +112,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
             Join AIagentStudio.ai to start building your own AI agents
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -125,7 +129,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="lastName"
@@ -140,7 +144,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="email"
@@ -158,7 +162,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="password"
@@ -180,7 +184,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="terms"
@@ -209,7 +213,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
                 </FormItem>
               )}
             />
-            
+
             <Button 
               type="submit" 
               className="w-full" 
@@ -219,12 +223,12 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
             </Button>
           </form>
         </Form>
-        
+
         <div className="relative flex items-center justify-center my-4">
           <div className="border-t border-gray-300 absolute w-full"></div>
           <div className="bg-white px-4 relative text-sm text-gray-500">or continue with</div>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-3">
           <Button variant="outline" className="flex justify-center" disabled={isLoading}>
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -257,7 +261,7 @@ export default function SignupModal({ isOpen, onClose, onLoginClick }: SignupMod
             </svg>
           </Button>
         </div>
-        
+
         <DialogFooter className="sm:justify-center">
           <p className="text-center text-sm text-gray-600">
             Already have an account?{" "}
