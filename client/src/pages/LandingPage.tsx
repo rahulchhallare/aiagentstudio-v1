@@ -39,7 +39,7 @@ export default function LandingPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                   <Button
-                    onClick={() => document.getElementById('signup-button')?.click()}
+                    onClick={() => document.getElementById('login-button')?.click()}
                     className="h-auto px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white"
                     size="lg"
                   >
