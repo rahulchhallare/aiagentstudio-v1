@@ -16,10 +16,10 @@ export default function Settings() {
   const { user, isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Redirect to home if not authenticated
+  // Redirect to welcome page if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/');
+      navigate('/welcome');
     }
   }, [user, authLoading, navigate]);
 
