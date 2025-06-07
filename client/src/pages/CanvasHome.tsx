@@ -123,7 +123,7 @@ export default function CanvasHome() {
     popular?: boolean;
     new?: boolean;
   }
-  
+
   const templates: Template[] = [
     {
       id: 'cc-1',
@@ -176,7 +176,7 @@ export default function CanvasHome() {
   const handleTemplateSelect = (templateId: string) => {
     // Store template ID for after login/signup
     localStorage.setItem('selectedTemplate', templateId);
-    
+
     // With Canva-like experience, we directly navigate to builder
     // Authentication will be handled there when saving/deploying
     navigate(`/builder`);
@@ -186,20 +186,20 @@ export default function CanvasHome() {
   const handleCreateBlank = () => {
     // Clear any existing template selections
     localStorage.removeItem('selectedTemplate');
-    
+
     // Simple flag to indicate we want a blank starting agent
     // The actual node setup will be done in the AgentBuilder component
-    
+
     // Store flag in localStorage to indicate blank template
     localStorage.setItem('blankTemplate', 'true');
-    
+
     // Navigate to builder page with all node types
     navigate('/builder');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
-      
+
       {/* Login/Signup Modals */}
       <LoginModal 
         isOpen={isLoginModalOpen} 
@@ -217,7 +217,7 @@ export default function CanvasHome() {
           setIsLoginModalOpen(true);
         }}
       />
-      
+
       {/* Hero Section */}
       <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-blue-50 to-white dark:from-slate-950/50 dark:to-background">
         <div className="container px-4 md:px-6">
@@ -286,7 +286,7 @@ export default function CanvasHome() {
               <TabsTrigger value="data-processing">Data</TabsTrigger>
             </TabsList>
           </div>
-          
+
           <TabsContent value="all" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates.map((template) => (
@@ -303,7 +303,7 @@ export default function CanvasHome() {
               ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="content" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
@@ -322,7 +322,7 @@ export default function CanvasHome() {
                 ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="customer-support" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
@@ -341,7 +341,7 @@ export default function CanvasHome() {
                 ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="data-processing" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
@@ -379,7 +379,7 @@ export default function CanvasHome() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-none shadow-md">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center space-y-2">
@@ -393,7 +393,7 @@ export default function CanvasHome() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-none shadow-md">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center space-y-2">

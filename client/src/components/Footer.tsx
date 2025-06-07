@@ -46,7 +46,7 @@ const Footer = () => {
   };
 
   // Custom X (Twitter) icon component
-  const XIcon = ({ className }) => (
+  const XIcon = ({ className }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
     </svg>
@@ -66,53 +66,39 @@ const Footer = () => {
           <div className="text-center">
             <h3 className="text-2xl font-bold mb-4">Stay Updated</h3>
             <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-              Get the latest updates on new AI agent templates, features, and industry insights delivered to your inbox.
+              Get the latest updates on new features, templates, and AI agent best practices delivered to your inbox.
             </p>
-            <div className="max-w-md mx-auto">
-              <div className="flex space-x-3">
-                <div className="flex-1 relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-white placeholder-gray-400"
-                  />
-                </div>
-                <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg flex items-center space-x-2">
-                  <span>Subscribe</span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
+            <div className="flex flex-col sm:flex-row max-w-md mx-auto">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-3 rounded-l-lg sm:rounded-r-none rounded-r-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+              <button className="bg-primary-600 hover:bg-primary-700 px-6 py-3 rounded-r-lg sm:rounded-l-none rounded-l-lg font-medium transition-colors flex items-center justify-center">
+                Subscribe
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
-          {/* Brand Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Logo and Company Info */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center space-x-2 group mb-6">
-              <div className="relative">
-                <Bot className="h-8 w-8 text-purple-400 group-hover:text-purple-300 transition-colors" />
-                <Sparkles className="h-4 w-4 text-yellow-400 absolute -top-1 -right-1 group-hover:scale-110 transition-transform" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                AI Agent Studio
-              </span>
-            </Link>
-            <p className="text-gray-400 mb-6 leading-relaxed">
-              Build powerful AI agents without code. Create, customize, and deploy intelligent automation 
-              that works for your business with our intuitive visual interface.
+            <div className="flex items-center mb-4">
+              <Bot className="h-8 w-8 text-primary-500 mr-2" />
+              <span className="text-xl font-bold">AI Agent Studio</span>
+            </div>
+            <p className="text-gray-400 mb-6 max-w-md">
+              Build, deploy, and manage powerful AI agents with our intuitive visual builder. 
+              No coding required - just drag, drop, and deploy.
             </p>
-            
-            {/* Contact Info */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 text-gray-400">
-                <Mail className="h-4 w-4" />
-                <span>hello@aiagentstudio.com</span>
-              </div>
+            <div className="flex items-center text-gray-400">
+              <Mail className="h-5 w-5 mr-2" />
+              <span>support@aiagentstudio.ai</span>
             </div>
           </div>
 
@@ -123,7 +109,7 @@ const Footer = () => {
               {footerLinks.product.map((link) => (
                 <li key={link.name}>
                   <Link 
-                    href={link.href} 
+                    to={link.href} 
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     {link.name}
@@ -140,7 +126,7 @@ const Footer = () => {
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link 
-                    href={link.href} 
+                    to={link.href} 
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     {link.name}
@@ -157,7 +143,7 @@ const Footer = () => {
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   <Link 
-                    href={link.href} 
+                    to={link.href} 
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     {link.name}
@@ -174,7 +160,7 @@ const Footer = () => {
               {footerLinks.legal.map((link) => (
                 <li key={link.name}>
                   <Link 
-                    href={link.href} 
+                    to={link.href} 
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     {link.name}
@@ -182,6 +168,30 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+
+        {/* Additional Info */}
+        <div className="border-t border-gray-800 mt-8 pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+            <div>
+              <h5 className="font-semibold mb-2 text-purple-400">🚀 Enterprise Ready</h5>
+              <p className="text-gray-400 text-sm">
+                SOC 2 compliant with enterprise-grade security and 99.9% uptime SLA.
+              </p>
+            </div>
+            <div>
+              <h5 className="font-semibold mb-2 text-blue-400">🌍 Global Scale</h5>
+              <p className="text-gray-400 text-sm">
+                Deployed across 15+ regions worldwide with edge computing capabilities.
+              </p>
+            </div>
+            <div>
+              <h5 className="font-semibold mb-2 text-green-400">🤖 AI Powered</h5>
+              <p className="text-gray-400 text-sm">
+                Powered by the latest AI models including GPT-4, Claude, and Gemini.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -210,30 +220,6 @@ const Footer = () => {
               <span>© {currentYear} AI Agent Studio. Made with</span>
               <Heart className="h-4 w-4 text-red-500" />
               <span>in San Francisco</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Info */}
-        <div className="border-t border-gray-800 mt-8 pt-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            <div>
-              <h5 className="font-semibold mb-2 text-purple-400">🚀 Enterprise Ready</h5>
-              <p className="text-gray-400 text-sm">
-                SOC 2 compliant with enterprise-grade security and 99.9% uptime SLA.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-2 text-blue-400">🌍 Global Scale</h5>
-              <p className="text-gray-400 text-sm">
-                Deployed across 15+ regions worldwide with edge computing capabilities.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-2 text-green-400">🤖 AI Powered</h5>
-              <p className="text-gray-400 text-sm">
-                Powered by the latest AI models including GPT-4, Claude, and Gemini.
-              </p>
             </div>
           </div>
         </div>
