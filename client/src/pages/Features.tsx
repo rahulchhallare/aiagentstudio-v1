@@ -1,8 +1,18 @@
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bot, Cpu, Network, Code, Sparkles, Zap, Lock, Globe } from "lucide-react";
+import { useLocation } from 'wouter';
+import { useAuth } from '@/context/AuthContext';
+import LoginModal from '@/components/LoginModal';
+import SignupModal from '@/components/SignupModal';
 
 export default function Features() {
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+
   const features = [
     {
       title: "Visual Agent Builder",
@@ -48,6 +58,24 @@ export default function Features() {
 
   return (
     <div className="container max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      {/* Login/Signup Modals */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)}
+        onSignupClick={() => {
+          setIsLoginModalOpen(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
+      <SignupModal 
+        isOpen={isSignupModalOpen} 
+        onClose={() => setIsSignupModalOpen(false)}
+        onLoginClick={() => {
+          setIsSignupModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
+      />
+
       <div className="text-center mb-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Platform Features</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -80,9 +108,20 @@ export default function Features() {
               enhance customer experiences, and drive innovation.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="bg-primary-600 hover:bg-primary-700">
-                Sign Up Free
-              </Button>
+              <Button 
+                  size="lg" 
+                  className="bg-primary-600 hover:bg-primary-700"
+                  onClick={() => {
+                    if (!user) {
+                      setIsLoginModalOpen(true);
+                      return;
+                    }
+                    navigate('/builder');
+                  }}
+                >
+                  Get Started Now
+                  {/*<ArrowRight className="ml-2 h-4 w-4" />*/}
+                </Button>
               <Button size="lg" variant="outline">
                 View Pricing
               </Button>
