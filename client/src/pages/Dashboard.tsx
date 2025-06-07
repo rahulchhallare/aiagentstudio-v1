@@ -17,10 +17,10 @@ export default function Dashboard() {
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Redirect to home if not authenticated
+  // Redirect to welcome page if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/');
+      navigate('/welcome');
     }
   }, [user, authLoading, navigate]);
 
