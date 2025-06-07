@@ -503,6 +503,7 @@ export const getTemplateById = (templateId: string): FlowData | null => {
     'cc-2': socialMediaTemplate,
     'cs-1': faqResponderTemplate,
     'cs-2': ticketClassifierTemplate,
+    'tc-1': ticketClassifierTemplate, // Add alias for tc-1
     'dp-1': dataSummarizerTemplate,
     'dp-2': researchAssistantTemplate,
   };

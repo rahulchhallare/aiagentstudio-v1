@@ -109,7 +109,11 @@ export default function Templates() {
                       <p className="text-gray-600 mb-4">{template.description}</p>
                       <Button 
                         className="w-full"
-                        onClick={() => navigate(`/builder?template=${encodeURIComponent(template.id)}`)}
+                        onClick={() => {
+                          // Store template ID for the builder to load
+                          localStorage.setItem('selectedTemplate', template.id);
+                          navigate('/builder');
+                        }}
                       >
                         Use Template
                       </Button>
