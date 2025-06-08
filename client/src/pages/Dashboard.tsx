@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/dashboard/Sidebar';
 import AgentCard from '@/components/dashboard/AgentCard';
+import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgents } from '@/hooks/useAgents';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ export default function Dashboard() {
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Sidebar */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
+
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300">
         {/* Top Bar */}
@@ -53,7 +54,7 @@ export default function Dashboard() {
           >
             <MenuIcon className="h-6 w-6" />
           </button>
-          
+
           <div className="flex items-center space-x-3">
             <Button 
               variant="outline" 
@@ -64,7 +65,7 @@ export default function Dashboard() {
               <CircleHelp className="h-4 w-4" />
               <span>Help</span>
             </Button>
-            
+
             <Button 
               variant="outline" 
               size="sm" 
@@ -76,14 +77,14 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
-        
+
         {/* Dashboard Content */}
         <div className="p-4 lg:p-8 overflow-y-auto" style={{ height: 'calc(100vh - 4rem)' }}>
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600">Welcome back! Here's an overview of your AI agents.</p>
           </div>
-          
+
           {/* Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-xl shadow-sm p-6">
@@ -100,7 +101,7 @@ export default function Dashboard() {
                 {agentsLoading ? 'Loading...' : `${agents?.length || 0} total agents`}
               </p>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-500 font-medium">API Calls</h3>
@@ -111,7 +112,7 @@ export default function Dashboard() {
               <p className="text-3xl font-bold text-gray-900">43</p>
               <p className="text-sm text-gray-500 mt-2">43% of monthly limit</p>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-500 font-medium">Saved Flows</h3>
@@ -127,7 +128,7 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          
+
           {/* Recent Agents */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -136,7 +137,7 @@ export default function Dashboard() {
                 View All
               </Button>
             </div>
-            
+
             {agentsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map(i => (
@@ -161,13 +162,13 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          
+
           {/* Quick Start */}
           <div>
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900">Quick Start</h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Quick Start Card 1 */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200">
@@ -186,7 +187,7 @@ export default function Dashboard() {
                   </Button>
                 </div>
               </div>
-              
+
               {/* Quick Start Card 2 */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="p-6">
@@ -203,7 +204,7 @@ export default function Dashboard() {
                   </Button>
                 </div>
               </div>
-              
+
               {/* Quick Start Card 3 */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="p-6">
@@ -224,6 +225,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -33,6 +33,7 @@ import {
 import { getTemplateById } from '@/lib/templates';
 import LoginModal from '@/components/LoginModal';
 import SignupModal from '@/components/SignupModal';
+import Footer from '@/components/Footer';
 
 // Import node components
 import InputNode from '@/components/builder/nodes/InputNode';
@@ -580,32 +581,7 @@ export default function AgentBuilder() {
           </div>
         )}
       </div>
-
-      {/* Auth Modals */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)}
-        onSignupClick={handleSignupClick}
-      />
-
-      <SignupModal
-        isOpen={isSignupModalOpen}
-        onClose={() => setIsSignupModalOpen(false)}
-        onLoginClick={handleLoginClick}
-      />
-
-      {/* Deploy Modal */}
-      {isDeploying && (
-        <DeployModal
-          isOpen={isDeploying}
-          onClose={handleDeployClose}
-          agentName={agentName}
-          agentId={id ? Number(id) : undefined}
-          flowData={reactFlowInstance?.toObject() || { nodes: [], edges: [] }}
-          userId={user?.id || 0}
-          onDeploy={handleDeployConfirm}
-        />
-      )}
+      <Footer />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import Footer from '@/components/Footer';
 
 export default function Pricing() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
@@ -226,6 +227,7 @@ export default function Pricing() {
           </Button>
         </div>
       </div>
+       <Footer />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import Sidebar from '@/components/dashboard/Sidebar';
 import AgentCard from '@/components/dashboard/AgentCard';
+import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -77,6 +78,7 @@ export default function Agents() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bot, Cpu, Network, Code, Sparkles, Zap, Lock, Globe } from "lucide-react";
+import Footer from '@/components/Footer';
 
 export default function Features() {
   const features = [
@@ -142,6 +143,7 @@ export default function Features() {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }
