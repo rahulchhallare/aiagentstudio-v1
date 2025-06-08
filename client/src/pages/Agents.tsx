@@ -12,7 +12,7 @@ import { useState } from 'react';
 export default function Agents() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
-  const { agents, isLoading: agentsLoading } = useAgents(user?.id);
+  const { agents, isLoading: agentsLoading, refetch: refetchAgents } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Redirect to welcome page if not authenticated
@@ -21,6 +21,13 @@ export default function Agents() {
       navigate('/welcome');
     }
   }, [user, authLoading, navigate]);
+
+  // Refresh agents data when component mounts to ensure latest deploy URLs are shown
+  useEffect(() => {
+    if (user?.id && !authLoading) {
+      refetchAgents();
+    }
+  }, [user?.id, authLoading, refetchAgents]);
 
   if (authLoading) {
     return (
