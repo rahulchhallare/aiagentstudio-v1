@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { AlertCircle, Bell, ChevronDown, HelpCircle, Menu, User, LogOut } from 'lucide-react';
+import { AlertCircle, Bell, Bot, ChevronDown, HelpCircle, Menu, User, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -92,8 +92,11 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {user && (
           <div className="flex items-center space-x-4">
             <div className="hidden sm:flex items-center space-x-6 mr-4">
-              <Link href="/agents" className="text-gray-600 hover:text-primary-600 font-medium">
-                My Agents
+              <Link href="/agents">
+                <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                  <Bot className="h-4 w-4" />
+                  <span>My Agents</span>
+                </Button>
               </Link>
               <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">
                 Templates
