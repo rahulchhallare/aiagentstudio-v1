@@ -265,7 +265,7 @@ export default function CanvasHome() {
       <VideoModal
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
-        videoUrl="/attached_assets/social Media_AI Agent Studio.mov"
+        videoUrl="/social_Media_AI_Agent_Studio.mov"
         title="AIagentStudio Demo"
       />
 
