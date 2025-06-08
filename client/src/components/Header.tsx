@@ -135,6 +135,11 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
+                  <Link href="/agents" className="flex items-center w-full">
+                    <Bot className="mr-2 h-4 w-4" /> Agents
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
