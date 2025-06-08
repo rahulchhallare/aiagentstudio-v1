@@ -16,6 +16,9 @@ interface VideoModalProps {
 }
 
 export default function VideoModal({ isOpen, onClose, videoUrl, title = "Demo Video" }: VideoModalProps) {
+  // Check if it's a local file or external URL
+  const isLocalFile = videoUrl.startsWith('/') || videoUrl.startsWith('./');
+  
   // Convert Google Drive share URL to embeddable format
   const getEmbedUrl = (url: string) => {
     const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -40,12 +43,26 @@ export default function VideoModal({ isOpen, onClose, videoUrl, title = "Demo Vi
           </div>
         </DialogHeader>
         <div className="flex-1 p-6 pt-0">
-          <iframe
-            src={getEmbedUrl(videoUrl)}
-            className="w-full h-full rounded-lg"
-            allow="autoplay"
-            title={title}
-          />
+          {isLocalFile ? (
+            <video
+              className="w-full h-full rounded-lg"
+              controls
+              autoPlay
+              preload="metadata"
+            >
+              <source src={videoUrl} type="video/mp4" />
+              <source src={videoUrl} type="video/quicktime" />
+              <source src={videoUrl} type="video/mov" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <iframe
+              src={getEmbedUrl(videoUrl)}
+              className="w-full h-full rounded-lg"
+              allow="autoplay"
+              title={title}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
