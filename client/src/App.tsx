@@ -28,6 +28,7 @@ import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";
+import { AuthDebugger } from '@/debug-auth';
 
 function Router() {
   return (
@@ -65,6 +66,7 @@ function App() {
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider>
             <div className="min-h-screen flex flex-col">
+              <AuthDebugger />
               <CanvasHeader 
                 onLoginClick={() => setIsLoginModalOpen(true)}
                 onSignupClick={() => setIsSignupModalOpen(true)}
