@@ -581,7 +581,6 @@ export default function AgentBuilder() {
           </div>
         )}
       </div>
-      <Footer />
     </div>
   );
 }
