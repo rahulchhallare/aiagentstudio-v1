@@ -5,9 +5,9 @@ import { apiRequest } from '@/lib/queryClient';
 
 // Hook for fetching all agents for a user
 export function useAgents(userId?: number) {
-  const query = useQuery<Agent[]>({
+  const { data, isLoading, error, refetch } = useQuery<Agent[]>({
     queryKey: ['/api/agents', { userId }],
-    queryFn: ({ signal }) =>
+    queryFn: ({ signal }) => 
       fetch(`/api/agents?userId=${userId}`, { signal, credentials: 'include' })
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch agents');
@@ -17,8 +17,10 @@ export function useAgents(userId?: number) {
   });
 
   return {
-    ...query,
-    refetch: query.refetch,
+    agents: data,
+    isLoading,
+    error,
+    refetch,
   };
 }
 
@@ -28,12 +30,12 @@ export function useAgent(id?: string | number) {
     queryKey: [`/api/agents/${id}`],
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('Agent ID is required');
-
-      const response = await fetch(`/api/agents/${id}`, {
-        signal,
-        credentials: 'include'
+      
+      const response = await fetch(`/api/agents/${id}`, { 
+        signal, 
+        credentials: 'include' 
       });
-
+      
       if (!response.ok) throw new Error('Failed to fetch agent');
       return response.json();
     },
