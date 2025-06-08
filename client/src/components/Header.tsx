@@ -91,6 +91,15 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {/* User menu when authenticated */}
         {user && (
           <div className="flex items-center space-x-4">
+            <div className="hidden sm:flex items-center space-x-6 mr-4">
+              <Link href="/agents" className="text-gray-600 hover:text-primary-600 font-medium">
+                My Agents
+              </Link>
+              <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">
+                Templates
+              </Link>
+            </div>
+            
             <Button
               variant="ghost"
               size="icon"
