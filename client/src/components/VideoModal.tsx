@@ -1,12 +1,11 @@
-
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { X } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { X } from "lucide-react";
 
 interface VideoModalProps {
   isOpen: boolean;
@@ -15,10 +14,15 @@ interface VideoModalProps {
   title?: string;
 }
 
-export default function VideoModal({ isOpen, onClose, videoUrl, title = "Demo Video" }: VideoModalProps) {
+export default function VideoModal({
+  isOpen,
+  onClose,
+  videoUrl,
+  title = "Demo Video",
+}: VideoModalProps) {
   // Check if it's a local file or external URL
-  const isLocalFile = videoUrl.startsWith('/') || videoUrl.startsWith('./');
-  
+  const isLocalFile = videoUrl.startsWith("/") || videoUrl.startsWith("./");
+
   // Convert Google Drive share URL to embeddable format
   const getEmbedUrl = (url: string) => {
     const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -34,12 +38,6 @@ export default function VideoModal({ isOpen, onClose, videoUrl, title = "Demo Vi
         <DialogHeader className="p-6 pb-0">
           <div className="flex items-center justify-between">
             <DialogTitle>{title}</DialogTitle>
-            <button
-              onClick={onClose}
-              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </DialogHeader>
         <div className="flex-1 p-6 pt-0">
