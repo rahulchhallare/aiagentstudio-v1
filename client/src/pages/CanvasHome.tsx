@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Rocket, Star, Zap, ArrowRight, Search, Users, TrendingUp, Copy, Layout, Share } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import CanvasHeader from '@/components/CanvasHeader';
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
