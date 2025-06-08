@@ -581,33 +581,32 @@ export default function AgentBuilder() {
           </div>
         )}
       </div>
-    </div>
 
-    {/* Deploy Modal */}
-    {isDeploying && reactFlowInstance && (
-      <DeployModal
-        isOpen={isDeploying}
-        onClose={handleDeployClose}
-        agentName={agentName}
-        agentId={id}
-        flowData={reactFlowInstance.toObject()}
-        userId={user?.id || 0}
-        onDeploy={handleDeployConfirm}
+      {/* Deploy Modal */}
+      {isDeploying && reactFlowInstance && (
+        <DeployModal
+          isOpen={isDeploying}
+          onClose={handleDeployClose}
+          agentName={agentName}
+          agentId={id}
+          flowData={reactFlowInstance.toObject()}
+          userId={user?.id || 0}
+          onDeploy={handleDeployConfirm}
+        />
+      )}
+
+      {/* Auth Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSwitchToSignup={handleSignupClick}
       />
-    )}
 
-    {/* Auth Modals */}
-    <LoginModal
-      isOpen={isLoginModalOpen}
-      onClose={() => setIsLoginModalOpen(false)}
-      onSwitchToSignup={handleSignupClick}
-    />
-
-    <SignupModal
-      isOpen={isSignupModalOpen}
-      onClose={() => setIsSignupModalOpen(false)}
-      onSwitchToLogin={handleLoginClick}
-    />
-  </div>
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onSwitchToLogin={handleLoginClick}
+      />
+    </div>
   );
 }
