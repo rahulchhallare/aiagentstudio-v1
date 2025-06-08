@@ -34,33 +34,33 @@ export default function VideoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
-        <DialogHeader className="p-6 pb-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle>{title}</DialogTitle>
-          </div>
+      <DialogContent className="max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-0 flex-shrink-0">
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 p-6 pt-0">
-          {isLocalFile ? (
-            <video
-              className="w-full h-full rounded-lg"
-              controls
-              autoPlay
-              preload="metadata"
-            >
-              <source src={videoUrl} type="video/mp4" />
-              <source src={videoUrl} type="video/quicktime" />
-              <source src={videoUrl} type="video/mov" />
-              Your browser does not support the video tag.
-            </video>
-          ) : (
-            <iframe
-              src={getEmbedUrl(videoUrl)}
-              className="w-full h-full rounded-lg"
-              allow="autoplay"
-              title={title}
-            />
-          )}
+        <div className="flex-1 p-6 pt-0 overflow-hidden">
+          <div className="w-full h-[60vh] max-h-[500px]">
+            {isLocalFile ? (
+              <video
+                className="w-full h-full rounded-lg object-contain"
+                controls
+                autoPlay
+                preload="metadata"
+              >
+                <source src={videoUrl} type="video/mp4" />
+                <source src={videoUrl} type="video/quicktime" />
+                <source src={videoUrl} type="video/mov" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <iframe
+                src={getEmbedUrl(videoUrl)}
+                className="w-full h-full rounded-lg border-0"
+                allow="autoplay"
+                title={title}
+              />
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
