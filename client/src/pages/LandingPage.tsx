@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import WaitlistForm from '@/components/WaitlistForm';
 import SubscriptionForm from '@/components/SubscriptionForm';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 // Icons
 import { 
@@ -15,6 +16,7 @@ import {
 export default function LandingPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // Redirect to dashboard if user is already logged in
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function LandingPage() {
                     variant="outline"
                     className="h-auto px-6 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 flex items-center justify-center space-x-2"
                     size="lg"
+                    onClick={() => setIsVideoModalOpen(true)}
                   >
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
@@ -102,7 +105,7 @@ export default function LandingPage() {
                 Everything you need to create, test, and deploy intelligent AI agents that solve real business problems.
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Feature 1 */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
@@ -114,7 +117,7 @@ export default function LandingPage() {
                   Drag and drop components to design your agent workflow without writing any code.
                 </p>
               </div>
-              
+
               {/* Feature 2 */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-4">
@@ -125,7 +128,7 @@ export default function LandingPage() {
                   Seamlessly integrate with OpenAI's GPT models to power your agent with advanced AI capabilities.
                 </p>
               </div>
-              
+
               {/* Feature 3 */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
@@ -136,7 +139,7 @@ export default function LandingPage() {
                   Deploy your agents to production with a single click and make them available to your users.
                 </p>
               </div>
-              
+
               {/* Feature 4 */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4">
@@ -147,7 +150,7 @@ export default function LandingPage() {
                   Start from pre-built templates for common use cases and customize them to your needs.
                 </p>
               </div>
-              
+
               {/* Feature 5 */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4">
@@ -158,7 +161,7 @@ export default function LandingPage() {
                   Track how your agents are performing with comprehensive analytics and metrics.
                 </p>
               </div>
-              
+
               {/* Feature 6 */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                 <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center mb-4">
@@ -182,7 +185,7 @@ export default function LandingPage() {
                 Building an AI agent is as simple as connecting a few blocks together.
               </p>
             </div>
-            
+
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="md:w-2/5 mb-10 md:mb-0">
                 <div className="space-y-8">
@@ -195,7 +198,7 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start">
                     <div className="flex-shrink-0 bg-primary-100 rounded-full w-10 h-10 flex items-center justify-center text-primary-600 font-bold mr-4">2</div>
                     <div>
@@ -205,7 +208,7 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start">
                     <div className="flex-shrink-0 bg-primary-100 rounded-full w-10 h-10 flex items-center justify-center text-primary-600 font-bold mr-4">3</div>
                     <div>
@@ -215,7 +218,7 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start">
                     <div className="flex-shrink-0 bg-primary-100 rounded-full w-10 h-10 flex items-center justify-center text-primary-600 font-bold mr-4">4</div>
                     <div>
@@ -227,7 +230,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="md:w-1/2">
                 <img 
                   src="https://images.unsplash.com/photo-1643116774075-acc00caa9a7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
@@ -248,13 +251,13 @@ export default function LandingPage() {
                 Choose the plan that's right for you, from individual creators to enterprise teams.
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {/* Free Plan */}
               <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200 flex flex-col">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Free</h3>
                 <div className="text-4xl font-bold text-gray-900 mb-6">$0<span className="text-lg text-gray-500 font-normal">/month</span></div>
-                
+
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <svg 
@@ -301,7 +304,7 @@ export default function LandingPage() {
                     <span>Community support</span>
                   </li>
                 </ul>
-                
+
                 <Button
                   variant="outline"
                   className="mt-auto"
@@ -310,13 +313,13 @@ export default function LandingPage() {
                   Get Started
                 </Button>
               </div>
-              
+
               {/* Pro Plan */}
               <div className="bg-white rounded-xl shadow-lg p-8 border border-primary-200 flex flex-col relative scale-105 z-10">
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
                 <div className="text-4xl font-bold text-gray-900 mb-6">$29<span className="text-lg text-gray-500 font-normal">/month</span></div>
-                
+
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <svg 
@@ -374,7 +377,7 @@ export default function LandingPage() {
                     <span>Advanced analytics</span>
                   </li>
                 </ul>
-                
+
                 <Button
                   className="mt-auto"
                   onClick={() => document.getElementById('signup-button')?.click()}
@@ -382,12 +385,12 @@ export default function LandingPage() {
                   Get Started
                 </Button>
               </div>
-              
+
               {/* Enterprise Plan */}
               <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200 flex flex-col">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Enterprise</h3>
                 <div className="text-4xl font-bold text-gray-900 mb-6">$99<span className="text-lg text-gray-500 font-normal">/month</span></div>
-                
+
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <svg 
@@ -445,7 +448,7 @@ export default function LandingPage() {
                     <span>SSO & advanced security</span>
                   </li>
                 </ul>
-                
+
                 <Button
                   variant="outline"
                   className="mt-auto"
@@ -467,7 +470,7 @@ export default function LandingPage() {
                 Hear from businesses that have transformed their operations with AI agent workflows.
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-8">
               {/* Testimonial 1 */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -497,7 +500,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Testimonial 2 */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center mb-4">
@@ -526,7 +529,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Testimonial 3 */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center mb-4">
@@ -563,7 +566,7 @@ export default function LandingPage() {
         <section className="py-16 bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 text-white relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23%23%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%224%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-          
+
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               {/* Badge */}
@@ -573,19 +576,19 @@ export default function LandingPage() {
                 </svg>
                 <span className="text-white font-medium">Join 10,000+ AI Enthusiasts</span>
               </div>
-              
+
               <h2 className="text-4xl md:text-5xl font-bold mb-6">Join the AI Revolution</h2>
               <p className="text-xl md:text-2xl text-purple-100 mb-12 max-w-3xl mx-auto leading-relaxed">
                 Get exclusive access to new templates, features, and AI insights delivered to your inbox.
               </p>
-              
+
               {/* Enhanced Subscription Form */}
               <SubscriptionForm />
-              
+
               <p className="text-purple-200 mt-6 text-sm">
                 ✨ Free forever • 🚀 No spam • 📧 Unsubscribe anytime
               </p>
-              
+
               {/* Social Proof */}
               <div className="mt-12 flex flex-wrap justify-center items-center gap-8 opacity-80">
                 <div className="text-center">
@@ -607,9 +610,27 @@ export default function LandingPage() {
           </div>
         </section>
       </div>
-      
+
       {/* Footer */}
       <Footer />
+
+      {/* Video Modal */}
+      <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Watch Demo</DialogTitle>
+          </DialogHeader>
+          <iframe 
+            width="100%" 
+            height="315" 
+            src="https://www.youtube.com/embed/dQw4w9WgXcQ"  // Replace with your Google Drive embed link
+            title="YouTube video player" 
+            frameBorder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowFullScreen>
+          </iframe>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
