@@ -21,7 +21,7 @@ export default function Dashboard() {
   // Redirect to welcome page if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/welcome');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 

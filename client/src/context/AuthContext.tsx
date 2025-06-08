@@ -93,7 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
     
     // Immediate navigation to landing page
-    navigate('/welcome');
+    navigate('/');
   };
 
   return (
