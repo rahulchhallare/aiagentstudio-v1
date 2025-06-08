@@ -95,7 +95,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <Link href="/agents">
                 <Button variant="outline" size="sm" className="flex items-center space-x-2">
                   <Bot className="h-4 w-4" />
-                  <span>My Agents</span>
+                  <span>Your Agents</span>
                 </Button>
               </Link>
               <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">
