@@ -265,7 +265,7 @@ export default function CanvasHome() {
       <VideoModal
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
-        videoUrl="https://www.youtube.com/watch?v=9M-Wna8mGHQ"
+        videoUrl="https://www.youtube-nocookie.com/embed/9M-Wna8mGHQ"
         title="AIagentStudio Demo"
       />
 
@@ -290,8 +290,8 @@ export default function CanvasHome() {
               >
                 Create New Agent
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="lg"
                 onClick={() => setIsVideoModalOpen(true)}
               >
