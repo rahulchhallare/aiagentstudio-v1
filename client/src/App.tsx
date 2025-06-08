@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import NotFound from "@/pages/not-found";
-
+import LandingPage from "@/pages/LandingPage";
 import CanvasHome from "@/pages/CanvasHome";
 import Dashboard from "@/pages/Dashboard";
 import AgentBuilder from "@/pages/AgentBuilder";
@@ -28,12 +28,12 @@ import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";
-import { AuthDebugger } from '@/debug-auth';
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={CanvasHome} />
+      <Route path="/welcome" component={LandingPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/builder" component={AgentBuilder} />
       <Route path="/builder/:id" component={AgentBuilder} />

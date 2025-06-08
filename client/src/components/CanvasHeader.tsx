@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown, Menu, User } from 'lucide-react';
 
@@ -69,14 +69,9 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link href="/agents" className="md:flex hidden">
+              <Link href="/dashboard" className="md:flex hidden">
                 <Button variant="outline" size="sm">
                   My Agents
-                </Button>
-              </Link>
-              <Link href="/templates" className="md:flex hidden">
-                <Button variant="ghost" size="sm">
-                  Templates
                 </Button>
               </Link>
               <DropdownMenu>
@@ -164,14 +159,9 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
               Documentation
             </Link>
             {isAuthenticated && (
-              <>
-                <Link href="/agents" className="block py-2 text-sm font-medium">
-                  My Agents
-                </Link>
-                <Link href="/templates" className="block py-2 text-sm font-medium">
-                  Templates
-                </Link>
-              </>
+              <Link href="/dashboard" className="block py-2 text-sm font-medium">
+                My Agents
+              </Link>
             )}
             {!isAuthenticated && (
               <Button 

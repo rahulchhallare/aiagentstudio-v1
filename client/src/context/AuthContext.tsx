@@ -80,14 +80,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout function
   const logout = () => {
-    // Clear user state immediately
+    // Clear user state
     setUser(null);
     
     // Remove from localStorage
     localStorage.removeItem('auth_user');
     
-    // Force immediate navigation to home page
-    window.location.href = '/';
+    // Notify user
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+    
+    // Immediate navigation to landing page
+    navigate('/welcome');
   };
 
   return (

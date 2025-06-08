@@ -61,10 +61,10 @@ export default function Profile() {
     }
   }, [user, form]);
 
-  // Redirect to welcome page if not authenticated
+  // Redirect to home if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/welcome');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 

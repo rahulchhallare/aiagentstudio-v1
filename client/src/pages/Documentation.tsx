@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, BookOpen, Code, FileText, PlayCircle, ChevronRight } from "lucide-react";
-import Footer from '@/components/Footer';
 
 export default function Documentation() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -527,7 +526,6 @@ export default function Documentation() {
           </Tabs>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

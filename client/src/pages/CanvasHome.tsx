@@ -6,11 +6,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Rocket, Star, Zap, ArrowRight, Search, Users, TrendingUp, Copy, Layout, Share } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import CanvasHeader from '@/components/CanvasHeader';
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
-import Footer from '@/components/Footer';
 
 // Template card component
 interface TemplateCardProps {
@@ -124,7 +123,7 @@ export default function CanvasHome() {
     popular?: boolean;
     new?: boolean;
   }
-
+  
   const templates: Template[] = [
     {
       id: 'cc-1',
@@ -177,7 +176,7 @@ export default function CanvasHome() {
   const handleTemplateSelect = (templateId: string) => {
     // Store template ID for after login/signup
     localStorage.setItem('selectedTemplate', templateId);
-
+    
     // With Canva-like experience, we directly navigate to builder
     // Authentication will be handled there when saving/deploying
     navigate(`/builder`);
@@ -187,20 +186,20 @@ export default function CanvasHome() {
   const handleCreateBlank = () => {
     // Clear any existing template selections
     localStorage.removeItem('selectedTemplate');
-
+    
     // Simple flag to indicate we want a blank starting agent
     // The actual node setup will be done in the AgentBuilder component
-
+    
     // Store flag in localStorage to indicate blank template
     localStorage.setItem('blankTemplate', 'true');
-
+    
     // Navigate to builder page with all node types
     navigate('/builder');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
-
+      
       {/* Login/Signup Modals */}
       <LoginModal 
         isOpen={isLoginModalOpen} 
@@ -218,31 +217,21 @@ export default function CanvasHome() {
           setIsLoginModalOpen(true);
         }}
       />
-
+      
       {/* Hero Section */}
       <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-blue-50 to-white dark:from-slate-950/50 dark:to-background">
-        <div className="container mx-auto px-4 md:px-6 max-w-6xl">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center min-h-[400px]">
-            <div className="space-y-6 max-w-4xl">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-10 pb-4">
                 Create Powerful AI Agents
               </h1>
-              <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400 leading-relaxed">
+              <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
                 Build, deploy, and share custom AI agents in minutes — no coding required.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button 
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
-                size="lg" 
-                onClick={() => {
-                  if (!user) {
-                    setIsLoginModalOpen(true);
-                    return;
-                  }
-                  handleCreateBlank();
-                }}
-              >
+            <div className="space-x-4">
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" size="lg" onClick={handleCreateBlank}>
                 Create New Agent
               </Button>
               <Button variant="outline" size="lg">
@@ -254,7 +243,7 @@ export default function CanvasHome() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 md:px-6 py-12 max-w-6xl">
+      <div className="container px-4 md:px-6 py-12">
         {/* Search Bar */}
         <div className="relative mb-8 max-w-md mx-auto">
           <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
@@ -287,7 +276,7 @@ export default function CanvasHome() {
               <TabsTrigger value="data-processing">Data</TabsTrigger>
             </TabsList>
           </div>
-
+          
           <TabsContent value="all" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates.map((template) => (
@@ -304,7 +293,7 @@ export default function CanvasHome() {
               ))}
             </div>
           </TabsContent>
-
+          
           <TabsContent value="content" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
@@ -323,7 +312,7 @@ export default function CanvasHome() {
                 ))}
             </div>
           </TabsContent>
-
+          
           <TabsContent value="customer-support" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
@@ -342,7 +331,7 @@ export default function CanvasHome() {
                 ))}
             </div>
           </TabsContent>
-
+          
           <TabsContent value="data-processing" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
@@ -380,7 +369,7 @@ export default function CanvasHome() {
                 </div>
               </CardContent>
             </Card>
-
+            
             <Card className="border-none shadow-md">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center space-y-2">
@@ -394,7 +383,7 @@ export default function CanvasHome() {
                 </div>
               </CardContent>
             </Card>
-
+            
             <Card className="border-none shadow-md">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center space-y-2">
@@ -420,19 +409,12 @@ export default function CanvasHome() {
           <Button 
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
             size="lg"
-            onClick={() => {
-              if (!user) {
-                setIsLoginModalOpen(true);
-                return;
-              }
-              handleCreateBlank();
-            }}
+            onClick={handleCreateBlank}
           >
             Get Started Now
           </Button>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

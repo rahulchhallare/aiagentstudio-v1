@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import {
@@ -29,22 +29,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   
-  // Redirect immediately if user is not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate('/welcome');
-    }
-  }, [user, navigate]);
-  
   const handleProfileClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     navigate('/profile');
   }, [navigate]);
-
-  // Don't render sidebar if user is not authenticated
-  if (!user) {
-    return null;
-  }
   
   // Navigation items
   const navItems = [
