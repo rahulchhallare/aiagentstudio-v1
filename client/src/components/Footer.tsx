@@ -1,51 +1,52 @@
+
 import { Link } from 'wouter';
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-400 py-12">
+    <footer className="bg-white border-t border-gray-200 text-gray-600 py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-white font-semibold mb-4">Product</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Product</h3>
             <ul className="space-y-2">
-              <li><Link href="#features" className="hover:text-white">Features</Link></li>
-              <li><Link href="#pricing" className="hover:text-white">Pricing</Link></li>
-              <li><Link href="#" className="hover:text-white">Use Cases</Link></li>
-              <li><Link href="#" className="hover:text-white">Roadmap</Link></li>
+              <li><Link href="#features" className="hover:text-primary-600 transition-colors">Features</Link></li>
+              <li><Link href="#pricing" className="hover:text-primary-600 transition-colors">Pricing</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Use Cases</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Roadmap</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-white font-semibold mb-4">Resources</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Resources</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-white">Documentation</Link></li>
-              <li><Link href="#" className="hover:text-white">Tutorials</Link></li>
-              <li><Link href="#" className="hover:text-white">API Reference</Link></li>
-              <li><Link href="#" className="hover:text-white">Blog</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Documentation</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Tutorials</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">API Reference</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Blog</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-white">About Us</Link></li>
-              <li><Link href="#" className="hover:text-white">Careers</Link></li>
-              <li><Link href="#" className="hover:text-white">Contact</Link></li>
-              <li><Link href="#" className="hover:text-white">Press</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">About Us</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Careers</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Contact</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Press</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-white font-semibold mb-4">Legal</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-white">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-white">Terms of Service</Link></li>
-              <li><Link href="#" className="hover:text-white">Security</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Terms of Service</Link></li>
+              <li><Link href="#" className="hover:text-primary-600 transition-colors">Security</Link></li>
             </ul>
           </div>
         </div>
         
-        <div className="border-t border-gray-800 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-gray-200 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
             <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary-600 to-purple-500 flex items-center justify-center mr-2">
               <svg 
@@ -65,11 +66,11 @@ export default function Footer() {
                 <path d="m9 18 3-3 3 3" />
               </svg>
             </div>
-            <span className="font-bold text-white">AIagentStudio<span className="text-primary-500">.ai</span></span>
+            <span className="font-bold text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
           </div>
           
           <div className="flex space-x-6">
-            <a href="#" className="text-gray-400 hover:text-white">
+            <a href="#" className="text-gray-600 hover:text-primary-600 transition-colors">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 className="h-5 w-5" 
@@ -83,7 +84,7 @@ export default function Footer() {
                 <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
               </svg>
             </a>
-            <a href="#" className="text-gray-400 hover:text-white">
+            <a href="#" className="text-gray-600 hover:text-primary-600 transition-colors">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 className="h-5 w-5" 
@@ -99,7 +100,7 @@ export default function Footer() {
                 <circle cx="4" cy="4" r="2" />
               </svg>
             </a>
-            <a href="#" className="text-gray-400 hover:text-white">
+            <a href="#" className="text-gray-600 hover:text-primary-600 transition-colors">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 className="h-5 w-5" 
@@ -114,7 +115,7 @@ export default function Footer() {
                 <path d="M9 18c-4.51 2-5-2-7-2" />
               </svg>
             </a>
-            <a href="#" className="text-gray-400 hover:text-white">
+            <a href="#" className="text-gray-600 hover:text-primary-600 transition-colors">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 className="h-5 w-5" 
@@ -132,7 +133,7 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="text-center text-gray-600 text-sm mt-8">
+        <div className="text-center text-gray-500 text-sm mt-8">
           &copy; {new Date().getFullYear()} AIagentStudio.ai. All rights reserved.
         </div>
       </div>
