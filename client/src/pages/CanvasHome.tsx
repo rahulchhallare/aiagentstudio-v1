@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
+import VideoModal from "@/components/VideoModal";
 import Footer from "@/components/Footer";
 
 // Template card component
@@ -152,6 +153,7 @@ export default function CanvasHome() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // Define template interfaces
   interface Template {
@@ -259,6 +261,14 @@ export default function CanvasHome() {
         }}
       />
 
+      {/* Video Modal */}
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        videoUrl="/attached_assets/social Media_AI Agent Studio.mov"
+        title="AIagentStudio Demo"
+      />
+
       {/* Hero Section */}
       <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-blue-50 to-white dark:from-slate-950/50 dark:to-background">
         <div className="container px-4 md:px-6">
@@ -280,7 +290,11 @@ export default function CanvasHome() {
               >
                 Create New Agent
               </Button>
-              <Button variant="outline" size="lg">
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => setIsVideoModalOpen(true)}
+              >
                 Watch Demo
               </Button>
             </div>
