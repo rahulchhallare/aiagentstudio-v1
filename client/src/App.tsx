@@ -66,7 +66,6 @@ function App() {
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider>
             <div className="min-h-screen flex flex-col">
-              <AuthDebugger />
               <CanvasHeader 
                 onLoginClick={() => setIsLoginModalOpen(true)}
                 onSignupClick={() => setIsSignupModalOpen(true)}
