@@ -22,6 +22,7 @@ import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
 import VideoModal from "@/components/VideoModal";
+import SubscriptionForm from "@/components/SubscriptionForm";
 import Footer from "@/components/Footer";
 
 // Template card component
@@ -482,6 +483,36 @@ export default function CanvasHome() {
           >
             Get Started Now
           </Button>
+        </div>
+
+        {/* Newsletter/Subscription Section */}
+        <div className="py-16 bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 text-white rounded-2xl mx-4 mb-12 relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%224%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="max-w-4xl mx-auto text-center">
+              {/* Badge */}
+              <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-6 py-2 mb-8">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+                <span className="text-white font-medium">Join 10,000+ AI Enthusiasts</span>
+              </div>
+
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">Join the AI Revolution</h2>
+              <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Get exclusive access to new templates, features, and AI insights delivered to your inbox.
+              </p>
+
+              {/* Enhanced Subscription Form */}
+              <SubscriptionForm />
+
+              <p className="text-white/80 mt-6 text-sm">
+                ✨ Free forever • 🚀 No spam • 📧 Unsubscribe anytime
+              </p>
+            </div>
+          </div>
         </div>
       </div>
       <Footer />
