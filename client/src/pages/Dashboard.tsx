@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/dashboard/Sidebar';
 import AgentCard from '@/components/dashboard/AgentCard';
 import Footer from '@/components/Footer';
+import AuthGuard from '@/components/AuthGuard';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgents } from '@/hooks/useAgents';
 import { Button } from '@/components/ui/button';
@@ -14,39 +15,17 @@ import {
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Immediate redirect if not authenticated
-  if (!authLoading && !user) {
-    navigate('/');
-    return null;
-  }
-
-  // Also use useEffect as backup
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/');
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-100 flex flex-col">
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -234,6 +213,7 @@ export default function Dashboard() {
         </div>
       </div>
       <Footer />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
