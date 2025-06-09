@@ -92,8 +92,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       description: "You have been successfully logged out.",
     });
     
-    // Force a page refresh to clear all state and redirect to landing page
-    window.location.href = '/';
+    // Navigate to home page first, then force a refresh to ensure clean state
+    navigate('/');
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   return (
