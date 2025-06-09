@@ -77,8 +77,8 @@ export default function Agents() {
             </div>
           )}
         </div>
+        <Footer />
       </div>
-      <Footer />
     </div>
   );
 }

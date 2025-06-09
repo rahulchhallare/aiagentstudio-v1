@@ -10,7 +10,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#features"
+                  href="/features"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Features
@@ -18,7 +18,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#pricing"
+                  href="/pricing"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Pricing
@@ -48,7 +48,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="/documentation"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Documentation
