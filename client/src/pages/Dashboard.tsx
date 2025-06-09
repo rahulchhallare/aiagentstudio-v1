@@ -4,7 +4,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import AgentCard from '@/components/dashboard/AgentCard';
 import Footer from '@/components/Footer';
 import AuthGuard from '@/components/AuthGuard';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { Button } from '@/components/ui/button';
 import { Agent } from '@/lib/types';
