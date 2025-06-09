@@ -23,13 +23,6 @@ export default function Dashboard() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Redirect logic moved entirely to useEffect
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/');
-    }
-  }, [authLoading, user, navigate]);
-
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-100 flex flex-col">
