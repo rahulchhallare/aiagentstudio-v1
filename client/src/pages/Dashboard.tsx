@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/dashboard/Sidebar';
 import AgentCard from '@/components/dashboard/AgentCard';
@@ -15,13 +15,20 @@ import {
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  // Redirect logic moved entirely to useEffect
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/');
+    }
+  }, [authLoading, user, navigate]);
 
   return (
     <AuthGuard>

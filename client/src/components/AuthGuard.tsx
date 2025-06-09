@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,32 +16,49 @@ export default function AuthGuard({
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (requireAuth && !user) {
-        navigate(redirectTo);
-      } else if (!requireAuth && user) {
-        navigate('/dashboard');
-      }
-    }
-  }, [user, isLoading, navigate, redirectTo, requireAuth]);
-
-  // Show loading spinner while checking auth
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // Don't render children if auth requirements aren't met
+  // Handle redirects with useEffect to prevent render loops
+  useEffect(() => {
+    if (!isLoading) {
+      if (requireAuth && !user) {
+        navigate('/');
+      } else if (!requireAuth && user) {
+        navigate('/dashboard');
+      }
+    }
+  }, [isLoading, requireAuth, user, navigate]);
+
+  // If we need auth but don't have user, show loading (redirect is happening)
   if (requireAuth && !user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
+  // If we don't need auth but have user, show loading (redirect is happening)
   if (!requireAuth && user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
