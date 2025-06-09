@@ -15,7 +15,7 @@ import {
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { user, authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
