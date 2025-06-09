@@ -126,17 +126,17 @@ export default function Templates() {
                     {category.templates.map((template) => (
                       <div
                         key={template.id}
-                        className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 hover:shadow-lg hover:border-primary-200 transition-all duration-300 group"
+                        className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 hover:shadow-lg hover:border-primary-200 transition-all duration-300 group flex flex-col h-full"
                       >
                         <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{template.icon}</div>
                         <h3 className="text-xl font-semibold text-gray-900 mb-3">
                           {template.name}
                         </h3>
-                        <p className="text-gray-600 mb-6 leading-relaxed">
+                        <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
                           {template.description}
                         </p>
                         <Button
-                          className="w-full py-3 text-base font-medium"
+                          className="w-full py-3 text-base font-medium mt-auto"
                           onClick={() => {
                             if (!user) {
                               // Redirect to home page with login prompt for non-logged-in users
