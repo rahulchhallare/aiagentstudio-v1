@@ -66,6 +66,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <div className="hidden sm:flex space-x-8">
             <Link href="#features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
             <Link href="#pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
+            <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">Templates</Link>
             <Link href="#docs" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
             <Button
               variant="ghost"
@@ -173,6 +174,9 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 </Link>
                 <Link href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Pricing
+                </Link>
+                <Link href="/templates" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
+                  Templates
                 </Link>
                 <Link href="#docs" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Documentation
