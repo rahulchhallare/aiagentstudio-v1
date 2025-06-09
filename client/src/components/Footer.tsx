@@ -175,7 +175,7 @@ export default function Footer() {
             </span>
           </div>
 
-          <div className="flex space-x-6">
+          <div className="flex justify-center space-x-6">
             <a
               href="https://www.linkedin.com/company/aiagentstudio-ai"
               className="text-gray-600 hover:text-primary-600 transition-colors"
