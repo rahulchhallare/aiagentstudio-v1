@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/dashboard/Sidebar';
 import AgentCard from '@/components/dashboard/AgentCard';
 import Footer from '@/components/Footer';
-import { useAuth } from '@/hooks/useAuth';
+import AuthGuard from '@/components/AuthGuard';
+import { useAuth } from '@/context/AuthContext';
 import { useAgents } from '@/hooks/useAgents';
 import { Button } from '@/components/ui/button';
 import { Agent } from '@/lib/types';
@@ -18,29 +19,13 @@ export default function Dashboard() {
   const { agents, isLoading: agentsLoading } = useAgents(user?.id);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Redirect to welcome page if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/');
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-100 flex flex-col">
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -228,6 +213,7 @@ export default function Dashboard() {
         </div>
       </div>
       <Footer />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useLocation, useParams } from 'wouter';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useLocation, useParams } from "wouter";
 import ReactFlow, {
   ReactFlowProvider,
   Background,
@@ -13,42 +13,38 @@ import ReactFlow, {
   addEdge,
   Panel,
   MarkerType,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Save, Rocket, ChevronLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
-import SimpleNodePanel from '@/components/builder/SimpleNodePanel';
-import PropertiesPanel from '@/components/builder/PropertiesPanel';
-import DeployModal from '@/components/builder/DeployModal';
-import { FlowData } from '@/lib/types';
-import { useAuth } from '@/hooks/useAuth';
-import { 
-  useAgent, 
-  useCreateAgent,
-  useUpdateAgent 
-} from '@/hooks/useAgents';
-import { getTemplateById } from '@/lib/templates';
-import LoginModal from '@/components/LoginModal';
-import SignupModal from '@/components/SignupModal';
-import Footer from '@/components/Footer';
+} from "reactflow";
+import "reactflow/dist/style.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Save, Rocket, ChevronLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SimpleNodePanel from "@/components/builder/SimpleNodePanel";
+import PropertiesPanel from "@/components/builder/PropertiesPanel";
+import DeployModal from "@/components/builder/DeployModal";
+import { FlowData } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
+import { useAgent, useCreateAgent, useUpdateAgent } from "@/hooks/useAgents";
+import { getTemplateById } from "@/lib/templates";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
+import Footer from "@/components/Footer";
 
 // Import node components
-import InputNode from '@/components/builder/nodes/InputNode';
-import FileInputNode from '@/components/builder/nodes/FileInputNode';
-import ImageInputNode from '@/components/builder/nodes/ImageInputNode';
-import WebhookInputNode from '@/components/builder/nodes/WebhookInputNode';
-import GPTNode from '@/components/builder/nodes/GPTNode';
-import OllamaNode from '@/components/builder/nodes/OllamaNode';
-import APINode from '@/components/builder/nodes/APINode';
-import LogicNode from '@/components/builder/nodes/LogicNode';
-import OutputNode from '@/components/builder/nodes/OutputNode';
-import ImageOutputNode from '@/components/builder/nodes/ImageOutputNode';
-import EmailNode from '@/components/builder/nodes/EmailNode';
-import NotificationNode from '@/components/builder/nodes/NotificationNode';
-import HuggingFaceNode from '@/components/builder/nodes/HuggingFaceNode';
+import InputNode from "@/components/builder/nodes/InputNode";
+import FileInputNode from "@/components/builder/nodes/FileInputNode";
+import ImageInputNode from "@/components/builder/nodes/ImageInputNode";
+import WebhookInputNode from "@/components/builder/nodes/WebhookInputNode";
+import GPTNode from "@/components/builder/nodes/GPTNode";
+import OllamaNode from "@/components/builder/nodes/OllamaNode";
+import APINode from "@/components/builder/nodes/APINode";
+import LogicNode from "@/components/builder/nodes/LogicNode";
+import OutputNode from "@/components/builder/nodes/OutputNode";
+import ImageOutputNode from "@/components/builder/nodes/ImageOutputNode";
+import EmailNode from "@/components/builder/nodes/EmailNode";
+import NotificationNode from "@/components/builder/nodes/NotificationNode";
+import HuggingFaceNode from "@/components/builder/nodes/HuggingFaceNode";
 
 // Define node types
 const nodeTypes = {
@@ -77,7 +73,7 @@ export default function AgentBuilder() {
   const isMobile = useIsMobile();
 
   // Agent state
-  const [agentName, setAgentName] = useState('Untitled Agent');
+  const [agentName, setAgentName] = useState("Untitled Agent");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
 
@@ -110,7 +106,7 @@ export default function AgentBuilder() {
         try {
           // Ensure flow_data is properly parsed if it's a string
           let flowData = agent.flow_data;
-          if (typeof flowData === 'string') {
+          if (typeof flowData === "string") {
             try {
               flowData = JSON.parse(flowData);
             } catch (e) {
@@ -128,37 +124,37 @@ export default function AgentBuilder() {
             // Add default nodes for editing
             const defaultNodes = [
               {
-                id: 'input-edit-1',
-                type: 'inputNode',
+                id: "input-edit-1",
+                type: "inputNode",
                 position: { x: 250, y: 100 },
-                data: { 
-                  label: 'Text Input', 
-                  placeholder: 'Enter your text...', 
-                  description: 'User input'
-                }
+                data: {
+                  label: "Text Input",
+                  placeholder: "Enter your text...",
+                  description: "User input",
+                },
               },
               {
-                id: 'output-edit-1',
-                type: 'outputNode',
+                id: "output-edit-1",
+                type: "outputNode",
                 position: { x: 250, y: 250 },
-                data: { 
-                  label: 'Text Output',
-                  format: 'plaintext'
-                }
-              }
+                data: {
+                  label: "Text Output",
+                  format: "plaintext",
+                },
+              },
             ];
 
             const defaultEdges = [
               {
-                id: 'e-edit-1',
-                source: 'input-edit-1',
-                target: 'output-edit-1',
-                type: 'smoothstep',
+                id: "e-edit-1",
+                source: "input-edit-1",
+                target: "output-edit-1",
+                type: "smoothstep",
                 animated: true,
                 markerEnd: {
                   type: MarkerType.ArrowClosed,
                 },
-              }
+              },
             ];
 
             setNodes(defaultNodes);
@@ -175,37 +171,37 @@ export default function AgentBuilder() {
           // Fallback to default nodes if something went wrong
           const defaultNodes = [
             {
-              id: 'input-default-1',
-              type: 'inputNode',
+              id: "input-default-1",
+              type: "inputNode",
               position: { x: 250, y: 100 },
-              data: { 
-                label: 'Text Input', 
-                placeholder: 'Enter your text...', 
-                description: 'User input'
-              }
+              data: {
+                label: "Text Input",
+                placeholder: "Enter your text...",
+                description: "User input",
+              },
             },
             {
-              id: 'output-default-1',
-              type: 'outputNode',
+              id: "output-default-1",
+              type: "outputNode",
               position: { x: 250, y: 250 },
-              data: { 
-                label: 'Text Output',
-                format: 'plaintext'
-              }
-            }
+              data: {
+                label: "Text Output",
+                format: "plaintext",
+              },
+            },
           ];
 
           const defaultEdges = [
             {
-              id: 'e-default-1',
-              source: 'input-default-1',
-              target: 'output-default-1',
-              type: 'smoothstep',
+              id: "e-default-1",
+              source: "input-default-1",
+              target: "output-default-1",
+              type: "smoothstep",
               animated: true,
               markerEnd: {
                 type: MarkerType.ArrowClosed,
               },
-            }
+            },
           ];
 
           setNodes(defaultNodes);
@@ -216,37 +212,37 @@ export default function AgentBuilder() {
         // Fallback to default nodes and edges
         const defaultNodes = [
           {
-            id: 'input-default-1',
-            type: 'inputNode',
+            id: "input-default-1",
+            type: "inputNode",
             position: { x: 250, y: 100 },
-            data: { 
-              label: 'Text Input', 
-              placeholder: 'Enter your text...', 
-              description: 'User input'
-            }
+            data: {
+              label: "Text Input",
+              placeholder: "Enter your text...",
+              description: "User input",
+            },
           },
           {
-            id: 'output-default-1',
-            type: 'outputNode',
+            id: "output-default-1",
+            type: "outputNode",
             position: { x: 250, y: 250 },
-            data: { 
-              label: 'Text Output',
-              format: 'plaintext'
-            }
-          }
+            data: {
+              label: "Text Output",
+              format: "plaintext",
+            },
+          },
         ];
 
         const defaultEdges = [
           {
-            id: 'e-default-1',
-            source: 'input-default-1',
-            target: 'output-default-1',
-            type: 'smoothstep',
+            id: "e-default-1",
+            source: "input-default-1",
+            target: "output-default-1",
+            type: "smoothstep",
             animated: true,
             markerEnd: {
               type: MarkerType.ArrowClosed,
             },
-          }
+          },
         ];
 
         setNodes(defaultNodes);
@@ -256,7 +252,7 @@ export default function AgentBuilder() {
     }
 
     // Otherwise, check for template
-    const templateId = localStorage.getItem('selectedTemplate');
+    const templateId = localStorage.getItem("selectedTemplate");
 
     if (templateId) {
       const template = getTemplateById(templateId);
@@ -264,43 +260,46 @@ export default function AgentBuilder() {
         console.log("Loading template:", template);
         setNodes(template.nodes);
         setEdges(template.edges);
-        localStorage.removeItem('selectedTemplate');
+        localStorage.removeItem("selectedTemplate");
         return;
       }
     }
 
     // If starting with blank template
-    const isBlankTemplate = localStorage.getItem('blankTemplate') === 'true';
+    const isBlankTemplate = localStorage.getItem("blankTemplate") === "true";
     if (isBlankTemplate) {
       // Start with an empty canvas - no pre-placed nodes
       console.log("Starting with blank template");
       setNodes([]);
       setEdges([]);
-      localStorage.removeItem('blankTemplate');
+      localStorage.removeItem("blankTemplate");
     }
   }, [id, agent, setNodes, setEdges]);
 
   // Handle connecting nodes
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => 
-        addEdge({ 
-          ...params, 
-          type: 'smoothstep', 
-          animated: true,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            type: "smoothstep",
+            animated: true,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+            },
           },
-        }, eds)
+          eds,
+        ),
       );
     },
-    [setEdges]
+    [setEdges],
   );
 
   // Handle node drag over
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   }, []);
 
   // Handle node drop
@@ -311,7 +310,7 @@ export default function AgentBuilder() {
       if (!reactFlowWrapper.current || !reactFlowInstance) return;
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      const nodeType = event.dataTransfer.getData('application/reactflow');
+      const nodeType = event.dataTransfer.getData("application/reactflow");
 
       // Check if the dropped element is valid
       if (!nodeType) return;
@@ -325,34 +324,34 @@ export default function AgentBuilder() {
         id: `${nodeType}-${Date.now()}`,
         type: nodeType,
         position,
-        data: {}
+        data: {},
       };
 
       // Set appropriate data based on node type
-      if (nodeType === 'inputNode') {
-        newNode.data = { 
-          label: 'Text Input',
-          placeholder: 'Enter your text...',
-          description: 'User input' 
+      if (nodeType === "inputNode") {
+        newNode.data = {
+          label: "Text Input",
+          placeholder: "Enter your text...",
+          description: "User input",
         };
-      } else if (nodeType === 'gptNode') {
-        newNode.data = { 
-          label: 'GPT-4 Processor',
-          model: 'gpt-4o',
-          systemPrompt: 'You are a helpful assistant.',
+      } else if (nodeType === "gptNode") {
+        newNode.data = {
+          label: "GPT-4 Processor",
+          model: "gpt-4o",
+          systemPrompt: "You are a helpful assistant.",
           temperature: 0.7,
-          maxTokens: 1000
+          maxTokens: 1000,
         };
-      } else if (nodeType === 'outputNode') {
-        newNode.data = { 
-          label: 'Text Output',
-          format: 'markdown'
+      } else if (nodeType === "outputNode") {
+        newNode.data = {
+          label: "Text Output",
+          format: "markdown",
         };
       }
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, setNodes],
   );
 
   // Handle node click
@@ -366,16 +365,19 @@ export default function AgentBuilder() {
   }, []);
 
   // Update node properties
-  const updateNode = useCallback((updatedNode: Node) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === updatedNode.id) {
-          return updatedNode;
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
+  const updateNode = useCallback(
+    (updatedNode: Node) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === updatedNode.id) {
+            return updatedNode;
+          }
+          return node;
+        }),
+      );
+    },
+    [setNodes],
+  );
 
   // Save agent
   const handleSave = async () => {
@@ -399,29 +401,29 @@ export default function AgentBuilder() {
         await updateAgent.mutateAsync({
           id: Number(id),
           name: agentName,
-          description: '',
+          description: "",
           flow_data: flowData,
           is_active: true,
-          user_id: user.id
+          user_id: user.id,
         });
 
         toast({
-          title: 'Agent Updated',
-          description: 'Your agent has been updated successfully.',
+          title: "Agent Updated",
+          description: "Your agent has been updated successfully.",
         });
       } else {
         // Create new agent
         const newAgent = await createAgent.mutateAsync({
           name: agentName,
-          description: '',
+          description: "",
           flow_data: flowData,
           is_active: true,
-          user_id: user.id
+          user_id: user.id,
         });
 
         toast({
-          title: 'Agent Saved',
-          description: 'Your agent has been saved successfully.',
+          title: "Agent Saved",
+          description: "Your agent has been saved successfully.",
         });
 
         // Navigate to the new agent
@@ -429,9 +431,9 @@ export default function AgentBuilder() {
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to save agent. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to save agent. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
@@ -472,8 +474,8 @@ export default function AgentBuilder() {
   const handleDeployConfirm = () => {
     setIsDeploying(false);
     toast({
-      title: 'Agent Deployed',
-      description: 'Your agent has been deployed successfully.',
+      title: "Agent Deployed",
+      description: "Your agent has been deployed successfully.",
     });
   };
 
@@ -484,7 +486,7 @@ export default function AgentBuilder() {
         <div className="flex items-center">
           <Button
             variant="ghost"
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="flex items-center text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -512,15 +514,15 @@ export default function AgentBuilder() {
           />
         </div>
         <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={handleSave}
             disabled={isSaving}
             className="flex items-center"
           >
             <Save className="mr-1 h-4 w-4" />
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? "Saving..." : "Save"}
           </Button>
           <Button
             size="sm"
@@ -542,8 +544,8 @@ export default function AgentBuilder() {
         {/* Main content - ReactFlow canvas */}
         <div className="flex-1 flex overflow-hidden">
           <ReactFlowProvider>
-            <div 
-              className="flex-1 h-full" 
+            <div
+              className="flex-1 h-full"
               ref={reactFlowWrapper}
               onDragOver={onDragOver}
               onDrop={onDrop}
@@ -566,7 +568,8 @@ export default function AgentBuilder() {
                 {!isMobile && <MiniMap />}
                 <Panel position="top-center">
                   <div className="bg-background/90 backdrop-blur-sm px-3 py-1 rounded-md border shadow-sm text-sm text-center">
-                    Drag components from the left panel and connect them to build your agent
+                    Drag components from the left panel and connect them to
+                    build your agent
                   </div>
                 </Panel>
               </ReactFlow>
@@ -577,7 +580,10 @@ export default function AgentBuilder() {
         {/* Right sidebar - Properties panel */}
         {selectedNode && (
           <div className="w-80 border-l bg-background overflow-y-auto flex-shrink-0 shadow-sm">
-            <PropertiesPanel selectedNode={selectedNode} updateNode={updateNode} />
+            <PropertiesPanel
+              selectedNode={selectedNode}
+              updateNode={updateNode}
+            />
           </div>
         )}
       </div>

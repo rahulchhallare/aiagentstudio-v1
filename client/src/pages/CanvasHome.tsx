@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +18,6 @@ import {
   Layout,
   Share,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -494,15 +494,28 @@ export default function CanvasHome() {
             <div className="max-w-4xl mx-auto text-center">
               {/* Badge */}
               <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-6 py-2 mb-8">
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <span className="text-white font-medium">Join 10,000+ AI Enthusiasts</span>
+                <span className="text-white font-medium">
+                  Join 10,000+ AI Enthusiasts
+                </span>
               </div>
 
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">Join the AI Revolution</h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Join the AI Revolution
+              </h2>
               <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
-                Get exclusive access to new templates, features, and AI insights delivered to your inbox.
+                Get exclusive access to new templates, features, and AI insights
+                delivered to your inbox.
               </p>
 
               {/* Enhanced Subscription Form */}

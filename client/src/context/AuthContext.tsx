@@ -80,20 +80,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout function
   const logout = () => {
-    // Clear user state
-    setUser(null);
-    
-    // Remove from localStorage
-    localStorage.removeItem('auth_user');
-    
-    // Notify user
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-    
-    // Force a page refresh to clear all state and redirect to landing page
-    window.location.href = '/';
+    try {
+      // Clear user state first
+      setUser(null);
+      
+      // Remove from localStorage
+      localStorage.removeItem('auth_user');
+      
+      // Notify user
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      
+      // Use navigate instead of window.location for SPA behavior
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback to hard redirect if navigation fails
+      window.location.href = '/';
+    }
   };
 
   return (
