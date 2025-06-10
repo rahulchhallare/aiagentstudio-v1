@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AlertCircle, Bell, ChevronDown, HelpCircle, Menu, User, LogOut } from 'lucide-react';
-import logoPath from '@assets/AIAgentStudio.ai Logo (2)_1749578153991.png';
+import logoPath from '@assets/Logo_F1_1749579780754.png';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -149,7 +149,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex justify-between items-center p-4 border-b">
             <Link href="/" className="flex items-center space-x-2">
-              <img src={logoPath} alt="AIAgentStudio.AI" className="h-8 w-auto" />
+              <img src={logoPath} alt="AIAgentStudio.AI" className="h-10 w-auto" />
             </Link>
             <Button
               variant="ghost"
