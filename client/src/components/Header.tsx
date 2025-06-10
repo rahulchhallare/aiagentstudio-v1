@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AlertCircle, Bell, ChevronDown, HelpCircle, Menu, User, LogOut } from 'lucide-react';
+import logoPath from '@assets/AIAgentStudio.ai Logo (2)_1749578153991.png';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -42,10 +43,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
       <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary-600 to-purple-500 flex items-center justify-center">
-              <Robot className="text-white" />
-            </div>
-            <span className="font-bold text-xl text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
+            <img src={logoPath} alt="AIAgentStudio.AI" className="h-10 w-auto" />
           </Link>
         </div>
         
@@ -151,10 +149,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex justify-between items-center p-4 border-b">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary-600 to-purple-500 flex items-center justify-center">
-                <Robot className="text-white" />
-              </div>
-              <span className="font-bold text-xl text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
+              <img src={logoPath} alt="AIAgentStudio.AI" className="h-8 w-auto" />
             </Link>
             <Button
               variant="ghost"
@@ -243,28 +238,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   );
 }
 
-function Robot(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <rect width="16" height="16" x="4" y="4" rx="2" />
-      <circle cx="9" cy="9" r="1" />
-      <circle cx="15" cy="9" r="1" />
-      <path d="M8 14h8" />
-      <path d="m9 18 3-3 3 3" />
-    </svg>
-  );
-}
+
 
 function X(props: React.SVGProps<SVGSVGElement>) {
   return (
