@@ -11,7 +11,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown, Menu, User } from 'lucide-react';
-import logoPath from '@assets/Logo_F1_1749580152363.png';
+import logoPath from '@assets/Logo_1749580419369.jpeg';
 
 interface CanvasHeaderProps {
   onLoginClick: () => void;
@@ -30,7 +30,7 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center">
-            <img src={logoPath} alt="AIAgentStudio.AI" className="h-12 w-auto" />
+            <img src={logoPath} alt="AIAgentStudio.AI" className="h-8 w-auto" />
           </Link>
         </div>
 
