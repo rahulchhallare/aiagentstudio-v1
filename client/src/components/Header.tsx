@@ -39,7 +39,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   }, []);
 
   return (
-    <header className={`bg-white sticky top-0 z-40 ${isScrolled ? 'shadow-sm' : ''}`}>
+    <header className={`bg-white sticky top-0 z-40 overflow-hidden ${isScrolled ? 'shadow-sm' : ''}`}>
       <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Link href="/" className="flex items-center space-x-2">
