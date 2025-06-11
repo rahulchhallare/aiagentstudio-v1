@@ -66,7 +66,7 @@ export default function SubscriptionForm({
             value={form.watch('email')}
             onChange={(e) => form.setValue('email', e.target.value)}
             disabled={isSubmitting}
-            className="w-full px-6 py-4 bg-white/90 text-gray-900 placeholder-gray-500 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
+            className="w-full px-6 py-4 bg-white/90 text-gray-900 placeholder-gray-500 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 text-lg"
           />
           {form.formState.errors.email && (
             <p className="text-red-300 text-sm mt-2 ml-2">
@@ -77,7 +77,7 @@ export default function SubscriptionForm({
         <button 
           type="submit"
           disabled={isSubmitting}
-          className="px-8 py-4 bg-white text-purple-600 font-semibold rounded-xl hover:bg-purple-50 transition-all duration-200 flex items-center justify-center text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-70 disabled:transform-none"
+          className="px-8 py-4 bg-white text-brand-blue font-semibold rounded-xl hover:bg-gray-50 transition-all duration-200 flex items-center justify-center text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-70 disabled:transform-none"
         >
           {isSubmitting ? 'Joining...' : buttonText}
           <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

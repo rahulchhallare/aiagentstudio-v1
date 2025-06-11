@@ -138,7 +138,7 @@ const FeaturedTemplate = ({
         <p className="text-white/80 mb-8 max-w-lg">{description}</p>
         <Button
           onClick={onClick}
-          className="bg-white text-blue-700 hover:bg-white/90 hover:text-blue-800"
+          className="bg-white text-brand-blue hover:bg-white/90 hover:text-primary-700"
         >
           Use This Template
           <ArrowRight className="ml-2 h-4 w-4" />
@@ -271,11 +271,11 @@ export default function CanvasHome() {
       />
 
       {/* Hero Section */}
-      <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-blue-50 to-white dark:from-slate-950/50 dark:to-background">
+      <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-primary-50 to-white dark:from-slate-950/50 dark:to-background">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col items-center space-y-4 text-center">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-10 pb-4">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-brand-blue to-brand-green mb-10 pb-4">
                 Create Powerful AI Agents
               </h1>
               <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
@@ -285,7 +285,7 @@ export default function CanvasHome() {
             </div>
             <div className="space-x-4">
               <Button
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700"
                 size="lg"
                 onClick={handleCreateBlank}
               >
