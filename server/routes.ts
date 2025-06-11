@@ -71,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const oauth2Client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.REPL_URL || 'https://34d59a28-2dee-4698-829a-8001a9709ca3-00-18bl5upzhty49.janeway.replit.dev'}/api/auth/google/callback`
+    'https://aiagentstudio.ai/api/auth/google/callback'
   );
 
   // Google OAuth routes
