@@ -76,9 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google OAuth routes
   app.get("/api/auth/google", (req: Request, res: Response) => {
-    // Set the redirect URI dynamically
-    oauth2Client.redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
-    
+   
     const scopes = [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile'
@@ -100,9 +98,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!code) {
         return res.redirect('/?error=no_code');
       }
-
-      // Ensure the redirect URI matches what was used in the auth request
-      oauth2Client.redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
       
       const { tokens } = await oauth2Client.getToken(code as string);
       oauth2Client.setCredentials(tokens);
