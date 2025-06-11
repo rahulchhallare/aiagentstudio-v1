@@ -1,4 +1,6 @@
+
 import { createRoot } from "react-dom/client";
+import { useState, useEffect } from "react";
 import App from "./App";
 import "./index.css";
 import { createBrowserHistory } from "history";
@@ -15,9 +17,6 @@ function useLocation() {
   }, []);
   return [location, (to: string) => history.push(to)];
 }
-
-// Import React hooks
-import { useState, useEffect } from "react";
 
 createRoot(document.getElementById("root")!).render(
   <Router hook={useLocation}>
