@@ -477,7 +477,7 @@ export default function CanvasHome() {
             Start with a template or create your own from scratch in minutes.
           </p>
           <Button
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700"
             size="lg"
             onClick={handleCreateBlank}
           >
