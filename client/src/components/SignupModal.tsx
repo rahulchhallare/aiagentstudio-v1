@@ -111,6 +111,23 @@ export default function SignupModal({
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      // Redirect to Google OAuth endpoint
+      window.location.href = "/api/auth/google";
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      toast({
+        title: "Sign-in failed",
+        description: "Failed to initiate Google sign-in. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -247,6 +264,7 @@ export default function SignupModal({
           variant="outline"
           className="w-full flex items-center justify-center gap-2"
           disabled={isLoading}
+          onClick={handleGoogleSignIn}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
