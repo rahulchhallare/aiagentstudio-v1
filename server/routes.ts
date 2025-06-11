@@ -126,9 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           email,
           username: email.split('@')[0],
-          firstName: name?.split(' ')[0] || '',
-          lastName: name?.split(' ').slice(1).join(' ') || '',
-          avatar: picture,
+          password: Math.random().toString(36).substring(2, 15), // Generate random password for OAuth users
         });
       } else {
         user = existingUser;
