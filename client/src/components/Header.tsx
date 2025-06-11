@@ -41,9 +41,9 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   return (
     <header className={`bg-white sticky top-0 z-40 overflow-hidden ${isScrolled ? 'shadow-sm' : ''}`}>
       <nav className="container mx-auto px-4 py-3 flex items-center justify-between relative">
-        <div className="flex items-center space-x-2">
-          <Link href="/" className="flex items-center space-x-2">
-            <img src={logoPath} alt="AIAgentStudio.AI" className="h-10 w-auto" />
+        <div className="flex items-center space-x-2 z-50">
+          <Link href="/" className="flex items-center space-x-2 no-underline">
+            <img src={logoPath} alt="AIAgentStudio.AI" className="h-10 w-auto block max-w-none" style={{display: 'block', position: 'relative'}} />
           </Link>
         </div>
         
