@@ -130,27 +130,27 @@ export default function SignupModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-2">
-          <DialogTitle className="text-xl font-bold">
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-lg font-bold">
             Create an account
           </DialogTitle>
-          <DialogDescription className="text-sm">
+          <DialogDescription className="text-xs">
             Join AIagentStudio.ai to start building your own AI agents
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-sm">First name</FormLabel>
+                    <FormLabel className="text-xs">First name</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isLoading} className="h-9" />
+                      <Input {...field} disabled={isLoading} className="h-8 text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -162,9 +162,9 @@ export default function SignupModal({
                 name="lastName"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-sm">Last name</FormLabel>
+                    <FormLabel className="text-xs">Last name</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isLoading} className="h-9" />
+                      <Input {...field} disabled={isLoading} className="h-8 text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -177,13 +177,13 @@ export default function SignupModal({
               name="email"
               render={({ field }) => (
                 <FormItem className="space-y-1">
-                  <FormLabel className="text-sm">Email</FormLabel>
+                  <FormLabel className="text-xs">Email</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="your@email.com"
                       {...field}
                       disabled={isLoading}
-                      className="h-9"
+                      className="h-8 text-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -196,17 +196,17 @@ export default function SignupModal({
               name="password"
               render={({ field }) => (
                 <FormItem className="space-y-1">
-                  <FormLabel className="text-sm">Password</FormLabel>
+                  <FormLabel className="text-xs">Password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder="••••••••"
                       {...field}
                       disabled={isLoading}
-                      className="h-9"
+                      className="h-8 text-sm"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs mt-1">
+                  <FormDescription className="text-xs">
                     8+ characters with uppercase, lowercase, and number
                   </FormDescription>
                   <FormMessage />
@@ -218,7 +218,7 @@ export default function SignupModal({
               control={form.control}
               name="terms"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-2 space-y-0 pt-1">
+                <FormItem className="flex flex-row items-start space-x-2 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -250,26 +250,26 @@ export default function SignupModal({
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-8 text-sm" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Sign up"}
             </Button>
           </form>
         </Form>
 
-        <div className="relative flex items-center justify-center my-3">
+        <div className="relative flex items-center justify-center my-2">
           <div className="border-t border-gray-300 absolute w-full"></div>
-          <div className="bg-white px-3 relative text-xs text-gray-500">
+          <div className="bg-white px-2 relative text-xs text-gray-500">
             or continue with
           </div>
         </div>
 
         <Button
           variant="outline"
-          className="w-full flex items-center justify-center gap-2 h-9"
+          className="w-full flex items-center justify-center gap-2 h-8 text-sm"
           disabled={isLoading}
           onClick={handleGoogleSignIn}
         >
-          <svg className="h-5 w-5" viewBox="0 0 24 24">
+          <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               fill="#4285F4"
@@ -290,12 +290,12 @@ export default function SignupModal({
           Continue with Google
         </Button>
 
-        <DialogFooter className="sm:justify-center">
-          <p className="text-center text-sm text-gray-600">
+        <DialogFooter className="sm:justify-center mt-2">
+          <p className="text-center text-xs text-gray-600">
             Already have an account?{" "}
             <Button
               variant="link"
-              className="text-primary-600 hover:text-primary-700 p-0 h-auto"
+              className="text-primary-600 hover:text-primary-700 p-0 h-auto text-xs"
               onClick={() => {
                 onClose();
                 onLoginClick();
