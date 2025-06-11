@@ -3,16 +3,16 @@ import logoPath from '@assets/image_1749638537646.png';
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-r from-brand-blue to-brand-green text-white py-12">
+    <footer className="bg-white border-t border-gray-200 text-gray-600 py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-white font-semibold mb-4">Product</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Product</h3>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/features"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Features
                 </Link>
@@ -20,7 +20,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/pricing"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Pricing
                 </Link>
@@ -28,7 +28,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Use Cases
                 </Link>
@@ -36,7 +36,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Roadmap
                 </Link>
@@ -45,12 +45,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Resources</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Resources</h3>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/documentation"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Documentation
                 </Link>
@@ -58,7 +58,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Tutorials
                 </Link>
@@ -66,7 +66,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   API Reference
                 </Link>
@@ -74,7 +74,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Blog
                 </Link>
@@ -83,12 +83,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   About Us
                 </Link>
@@ -96,7 +96,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Careers
                 </Link>
@@ -104,7 +104,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Contact
                 </Link>
@@ -112,7 +112,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Press
                 </Link>
@@ -121,12 +121,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Legal</h3>
+            <h3 className="text-gray-900 font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -134,7 +134,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Terms of Service
                 </Link>
@@ -142,7 +142,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="hover:text-white/80 transition-colors text-white/90"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   Security
                 </Link>
@@ -151,7 +151,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/20 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-gray-200 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
             <Link href="/" className="flex items-center">
               <img src={logoPath} alt="AIAgentStudio.AI" className="h-8 w-auto" />
@@ -161,7 +161,7 @@ export default function Footer() {
           <div className="flex justify-center space-x-6">
             <a
               href="https://www.linkedin.com/company/aiagentstudio-ai"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-gray-600 hover:text-primary-600 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -181,7 +181,7 @@ export default function Footer() {
 
             <a
               href="https://www.youtube.com/@AIAgentStudioOfficial"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-gray-600 hover:text-primary-600 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -200,7 +200,7 @@ export default function Footer() {
 
             <a
               href="https://x.com/AiAgentStudio"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-gray-600 hover:text-primary-600 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -214,7 +214,7 @@ export default function Footer() {
 
             <a
               href="https://www.instagram.com/aiagentstudio/"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-gray-600 hover:text-primary-600 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -234,7 +234,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="text-center text-white/80 text-sm mt-8">
+        <div className="text-center text-gray-500 text-sm mt-8">
           &copy; {new Date().getFullYear()} AIagentStudio.ai. All rights
           reserved.
         </div>
