@@ -73,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.NODE_ENV === 'production'
       ? 'https://your-domain.com/api/auth/google/callback'
-      : 'http://localhost:5000/api/auth/google/callback'
+      : `https://${process.env.REPL_SLUG || 'localhost'}.${process.env.REPL_OWNER || 'local'}.replit.dev/api/auth/google/callback`
   );
 
   // Google OAuth routes
