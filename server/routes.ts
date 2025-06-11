@@ -71,11 +71,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const oauth2Client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    'https://34d59a28-2dee-4698-829a-8001a9709ca3-00-18bl5upzhty49.janeway.replit.dev/api/auth/google/callback'
+    `${process.env.REPL_URL || 'https://34d59a28-2dee-4698-829a-8001a9709ca3-00-18bl5upzhty49.janeway.replit.dev'}/api/auth/google/callback`
   );
 
   // Google OAuth routes
   app.get("/api/auth/google", (req: Request, res: Response) => {
+    // Set the redirect URI dynamically
+    oauth2Client.redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+    
     const scopes = [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile'
@@ -84,6 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const url = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
+      prompt: 'consent', // Force consent screen to handle repeat sign-ins
     });
 
     res.redirect(url);
@@ -94,9 +98,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { code } = req.query;
 
       if (!code) {
-        return res.redirect('/login?error=no_code');
+        return res.redirect('/?error=no_code');
       }
 
+      // Ensure the redirect URI matches what was used in the auth request
+      oauth2Client.redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+      
       const { tokens } = await oauth2Client.getToken(code as string);
       oauth2Client.setCredentials(tokens);
 
