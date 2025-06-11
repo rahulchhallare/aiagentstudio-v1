@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { executeFlow } from "./agent-execution";
 import { z } from "zod";
+import { OAuth2Client } from 'google-auth-library';
 
 // Helper to validate request body with Zod schema
 function validateBody<T>(schema: z.ZodType<T>, body: unknown): T {
@@ -63,6 +64,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
       return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Google OAuth client initialization
+  const oauth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.NODE_ENV === 'production'
+      ? 'https://your-domain.com/api/auth/google/callback'
+      : 'http://localhost:5000/api/auth/google/callback'
+  );
+
+  // Google OAuth routes
+  app.get("/api/auth/google", (req: Request, res: Response) => {
+    const scopes = [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ];
+
+    const url = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+    });
+
+    res.redirect(url);
+  });
+
+  app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
+    try {
+      const { code } = req.query;
+
+      if (!code) {
+        return res.redirect('/login?error=no_code');
+      }
+
+      const { tokens } = await oauth2Client.getToken(code as string);
+      oauth2Client.setCredentials(tokens);
+
+      // Get user info from Google
+      const ticket = await oauth2Client.verifyIdToken({
+        idToken: tokens.id_token!,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.redirect('/login?error=invalid_token');
+      }
+
+      const { email, name, picture } = payload;
+
+      if (!email) {
+        return res.redirect('/login?error=no_email');
+      }
+
+      // Check if user exists
+      let existingUser = await storage.getUserByEmail(email);
+
+      let user;
+      if (!existingUser) {
+        // Create new user
+        user = await storage.createUser({
+          email,
+          username: email.split('@')[0],
+          firstName: name?.split(' ')[0] || '',
+          lastName: name?.split(' ').slice(1).join(' ') || '',
+          avatar: picture,
+        });
+      } else {
+        user = existingUser;
+      }
+
+      // Redirect to frontend with user data
+      const userData = encodeURIComponent(JSON.stringify(user));
+      res.redirect(`/?auth=success&user=${userData}`);
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      res.redirect('/login?error=oauth_failed');
     }
   });
 

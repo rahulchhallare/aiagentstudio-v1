@@ -28,11 +28,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // This would typically be a call to a /me or /session endpoint
-        // For this demo, we'll check localStorage for simplicity
-        const storedUser = localStorage.getItem('auth_user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        // Check for Google OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const authSuccess = urlParams.get('auth');
+        const userData = urlParams.get('user');
+
+        if (authSuccess === 'success' && userData) {
+          const user = JSON.parse(decodeURIComponent(userData));
+          setUser(user);
+          localStorage.setItem('auth_user', JSON.stringify(user));
+          
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          toast({
+            title: "Login successful",
+            description: "Welcome to AIagentStudio.ai",
+          });
+        } else {
+          // Check localStorage for existing session
+          const storedUser = localStorage.getItem('auth_user');
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
         }
       } catch (error) {
         console.error('Failed to restore auth session:', error);
@@ -42,7 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     checkAuth();
-  }, []);
+  }, [toast]);
 
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
