@@ -219,6 +219,7 @@ export default function LoginModal({
               fill="#EA4335"
             />
           </svg>
+          Continue with Google
         </Button>
 
         <DialogFooter className="sm:justify-center">
