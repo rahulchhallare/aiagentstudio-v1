@@ -4,7 +4,7 @@ import { Calendar, Clock, User, ArrowRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import Header from "@/components/Header";
+
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -105,11 +105,6 @@ export default function Blog() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header 
-        onLoginClick={() => setIsLoginModalOpen(true)}
-        onSignupClick={() => setIsSignupModalOpen(true)}
-      />
-
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-primary-50 to-white py-16">
