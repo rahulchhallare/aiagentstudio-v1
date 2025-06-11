@@ -10,6 +10,7 @@ import {
 import { executeFlow } from "./agent-execution";
 import { z } from "zod";
 import { OAuth2Client } from 'google-auth-library';
+import { stripe, PRICE_IDS } from './stripe';
 
 // Helper to validate request body with Zod schema
 function validateBody<T>(schema: z.ZodType<T>, body: unknown): T {
@@ -432,6 +433,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error creating test agent:", error);
       return res.status(500).json({ message: "Failed to create test agent" });
     }
+  });
+
+  // Stripe payment routes
+  app.post("/api/create-checkout-session", async (req: Request, res: Response) => {
+    try {
+      const { priceId, userId, email } = req.body;
+
+      if (!priceId || !userId || !email) {
+        return res.status(400).json({ message: "Price ID, user ID, and email are required" });
+      }
+
+      // Validate price ID
+      const validPriceIds = Object.values(PRICE_IDS).filter(Boolean);
+      if (!validPriceIds.includes(priceId)) {
+        return res.status(400).json({ message: "Invalid price ID" });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: `${req.get('origin')}/billing?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.get('origin')}/pricing`,
+        customer_email: email,
+        metadata: {
+          userId: userId.toString(),
+        },
+      });
+
+      res.json({ sessionId: session.id });
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      res.status(500).json({ message: 'Failed to create checkout session' });
+    }
+  });
+
+  app.post("/api/create-portal-session", async (req: Request, res: Response) => {
+    try {
+      const { customerId } = req.body;
+
+      if (!customerId) {
+        return res.status(400).json({ message: "Customer ID is required" });
+      }
+
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${req.get('origin')}/billing`,
+      });
+
+      res.json({ url: portalSession.url });
+    } catch (error) {
+      console.error('Error creating portal session:', error);
+      res.status(500).json({ message: 'Failed to create portal session' });
+    }
+  });
+
+  app.post("/api/webhook/stripe", async (req: Request, res: Response) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!sig || !endpointSecret) {
+      return res.status(400).json({ message: 'Missing signature or webhook secret' });
+    }
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+      console.log(`Webhook signature verification failed:`, err);
+      return res.status(400).json({ message: 'Webhook signature verification failed' });
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        console.log('Payment was successful!', session);
+        // Here you would update the user's subscription status in your database
+        break;
+      case 'invoice.payment_succeeded':
+        const invoice = event.data.object;
+        console.log('Invoice payment succeeded!', invoice);
+        break;
+      case 'customer.subscription.deleted':
+        const subscription = event.data.object;
+        console.log('Subscription was cancelled!', subscription);
+        // Here you would update the user's subscription status in your database
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    res.json({ received: true });
   });
 
   // Waitlist route

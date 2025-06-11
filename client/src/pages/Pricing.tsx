@@ -5,10 +5,40 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { usePayment } from "@/hooks/usePayment";
+import { useAuth } from "@/context/AuthContext";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
 import Footer from '@/components/Footer';
 
 export default function Pricing() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const { createCheckoutSession, isLoading } = usePayment();
+  const { user } = useAuth();
+
+  // Price IDs from your Stripe dashboard
+  const priceIds = {
+    pro: {
+      monthly: "price_pro_monthly", // Replace with actual price ID
+      yearly: "price_pro_yearly", // Replace with actual price ID
+    },
+    enterprise: {
+      monthly: "price_enterprise_monthly", // Replace with actual price ID
+      yearly: "price_enterprise_yearly", // Replace with actual price ID
+    },
+  };
+
+  const handleSubscribe = async (planType: "pro" | "enterprise") => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    const priceId = priceIds[planType][billingInterval];
+    await createCheckoutSession(priceId);
+  };
 
   const plans = [
     {
@@ -24,7 +54,9 @@ export default function Pricing() {
       button: {
         text: "Get Started",
         variant: "outline" as const,
+        onClick: () => setShowSignupModal(true),
       },
+      planType: null,
     },
     {
       name: "Pro",
@@ -43,7 +75,9 @@ export default function Pricing() {
       button: {
         text: "Get Started",
         variant: "default" as const,
+        onClick: () => handleSubscribe("pro"),
       },
+      planType: "pro" as const,
     },
     {
       name: "Enterprise",
@@ -62,7 +96,9 @@ export default function Pricing() {
       button: {
         text: "Contact Sales",
         variant: "outline" as const,
+        onClick: () => handleSubscribe("enterprise"),
       },
+      planType: "enterprise" as const,
     },
   ];
 
@@ -157,8 +193,10 @@ export default function Pricing() {
               <Button
                 className={`w-full ${plan.mostPopular ? "bg-primary-600 hover:bg-primary-700" : ""}`}
                 variant={plan.button.variant}
+                onClick={plan.button.onClick}
+                disabled={isLoading}
               >
-                {plan.button.text}
+                {isLoading && plan.planType ? "Processing..." : plan.button.text}
               </Button>
             </CardContent>
           </Card>
@@ -228,6 +266,24 @@ export default function Pricing() {
         </div>
       </div>
        <Footer />
+      
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSignupClick={() => {
+          setShowLoginModal(false);
+          setShowSignupModal(true);
+        }}
+      />
+      
+      <SignupModal
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onLoginClick={() => {
+          setShowSignupModal(false);
+          setShowLoginModal(true);
+        }}
+      />
     </div>
   );
 }
