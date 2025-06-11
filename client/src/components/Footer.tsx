@@ -234,7 +234,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="text-center text-gray-500 text-sm mt-8">
+        <div className="text-center text-white/80 text-sm mt-8">
           &copy; {new Date().getFullYear()} AIagentStudio.ai. All rights
           reserved.
         </div>
