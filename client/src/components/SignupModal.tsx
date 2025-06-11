@@ -130,27 +130,27 @@ export default function SignupModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="text-xl font-bold">
             Create an account
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Join AIagentStudio.ai to start building your own AI agents
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First name</FormLabel>
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-sm">First name</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isLoading} />
+                      <Input {...field} disabled={isLoading} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,10 +161,10 @@ export default function SignupModal({
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last name</FormLabel>
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-sm">Last name</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isLoading} />
+                      <Input {...field} disabled={isLoading} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,13 +176,14 @@ export default function SignupModal({
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-sm">Email</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="your@email.com"
                       {...field}
                       disabled={isLoading}
+                      className="h-9"
                     />
                   </FormControl>
                   <FormMessage />
@@ -194,17 +195,18 @@ export default function SignupModal({
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-sm">Password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder="••••••••"
                       {...field}
                       disabled={isLoading}
+                      className="h-9"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
+                  <FormDescription className="text-xs mt-1">
                     8+ characters with uppercase, lowercase, and number
                   </FormDescription>
                   <FormMessage />
@@ -216,16 +218,17 @@ export default function SignupModal({
               control={form.control}
               name="terms"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-x-2 space-y-0 pt-1">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isLoading}
+                      className="mt-0.5"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm">
+                    <FormLabel className="text-xs leading-relaxed">
                       I agree to the{" "}
                       <a
                         href="#"
@@ -253,16 +256,16 @@ export default function SignupModal({
           </form>
         </Form>
 
-        <div className="relative flex items-center justify-center my-4">
+        <div className="relative flex items-center justify-center my-3">
           <div className="border-t border-gray-300 absolute w-full"></div>
-          <div className="bg-white px-4 relative text-sm text-gray-500">
+          <div className="bg-white px-3 relative text-xs text-gray-500">
             or continue with
           </div>
         </div>
 
         <Button
           variant="outline"
-          className="w-full flex items-center justify-center gap-2"
+          className="w-full flex items-center justify-center gap-2 h-9"
           disabled={isLoading}
           onClick={handleGoogleSignIn}
         >
