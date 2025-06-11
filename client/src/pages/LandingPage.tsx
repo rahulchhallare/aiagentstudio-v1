@@ -46,7 +46,7 @@ export default function LandingPage() {
                 <div className="md:w-1/2 md:pr-12 mb-10 md:mb-0">
                   <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
                     Build AI Agents{" "}
-                    <span className="text-primary-600">Without Code</span>
+                    <span className="text-brand-blue">Without Code</span>
                   </h1>
                   <p className="text-xl text-gray-600 mb-8">
                     Create, deploy, and manage custom AI agents with a simple
@@ -57,7 +57,7 @@ export default function LandingPage() {
                       onClick={() =>
                         document.getElementById("signup-button")?.click()
                       }
-                      className="h-auto px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white"
+                      className="h-auto px-6 py-3 bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700 text-white"
                       size="lg"
                     >
                       Start Building for Free
@@ -738,7 +738,7 @@ export default function LandingPage() {
           </section>
 
           {/* CTA / Newsletter Section */}
-          <section className="py-16 bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 text-white relative overflow-hidden">
+          <section className="py-16 bg-gradient-to-br from-brand-blue via-primary-700 to-brand-green text-white relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23%23%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%224%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
 
@@ -765,7 +765,7 @@ export default function LandingPage() {
                 <h2 className="text-4xl md:text-5xl font-bold mb-6">
                   Join the AI Revolution
                 </h2>
-                <p className="text-xl md:text-2xl text-purple-100 mb-12 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
                   Get exclusive access to new templates, features, and AI
                   insights delivered to your inbox.
                 </p>
@@ -773,7 +773,7 @@ export default function LandingPage() {
                 {/* Enhanced Subscription Form */}
                 <SubscriptionForm />
 
-                <p className="text-purple-200 mt-6 text-sm">
+                <p className="text-white/80 mt-6 text-sm">
                   ✨ Free forever • 🚀 No spam • 📧 Unsubscribe anytime
                 </p>
 

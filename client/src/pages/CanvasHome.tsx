@@ -46,9 +46,9 @@ const TemplateCard = ({
   onClick,
 }: TemplateCardProps) => {
   const categoryColor = {
-    content: "bg-gradient-to-r from-purple-500 to-pink-500",
-    "customer-support": "bg-gradient-to-r from-blue-500 to-cyan-500",
-    "data-processing": "bg-gradient-to-r from-green-500 to-emerald-500",
+    content: "bg-gradient-to-r from-brand-blue to-brand-green",
+    "customer-support": "bg-gradient-to-r from-brand-blue to-primary-600",
+    "data-processing": "bg-gradient-to-r from-brand-green to-secondary-600",
   }[category];
 
   const categoryName = {
@@ -126,7 +126,7 @@ const FeaturedTemplate = ({
   onClick,
 }: FeaturedTemplateProps) => {
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-xl overflow-hidden text-white">
+    <div className="bg-gradient-to-r from-brand-blue to-brand-green rounded-xl overflow-hidden text-white">
       <div className="p-8 md:p-12">
         <Badge
           variant="outline"
