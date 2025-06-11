@@ -106,7 +106,7 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
                 Log in
               </Button>
               <Button 
-                className="hidden md:inline-flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" 
+                className="hidden md:inline-flex bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700" 
                 size="sm" 
                 onClick={onSignupClick}
               >
@@ -150,7 +150,7 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
             )}
             {!isAuthenticated && (
               <Button 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 mt-2" 
+                className="w-full bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700 mt-2" 
                 onClick={onSignupClick}
               >
                 Sign up free

@@ -62,17 +62,17 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
-            <Link href="#features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
-            <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">Templates</Link>
-            <Link href="#docs" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
+            <Link href="#features" className="text-gray-600 hover:text-brand-blue font-medium">Features</Link>
+            <Link href="#pricing" className="text-gray-600 hover:text-brand-blue font-medium">Pricing</Link>
+            <Link href="/templates" className="text-gray-600 hover:text-brand-blue font-medium">Templates</Link>
+            <Link href="#docs" className="text-gray-600 hover:text-brand-blue font-medium">Documentation</Link>
             <Button
               variant="ghost"
               onClick={() => {
                 const subscriptionSection = document.querySelector('.py-16.bg-gradient-to-br.from-purple-600');
                 subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="text-gray-600 hover:text-primary-600 font-medium px-0"
+              className="text-gray-600 hover:text-brand-blue font-medium px-0"
             >
               Subscribe
             </Button>
@@ -80,14 +80,14 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <Button
                 variant="ghost"
                 onClick={onLoginClick}
-                className="px-4 py-2 text-primary-600 font-medium"
+                className="px-4 py-2 text-brand-blue font-medium"
                 id="login-button"
               >
                 Log in
               </Button>
               <Button
                 onClick={onSignupClick}
-                className="px-4 py-2 bg-primary-600 text-white font-medium hover:bg-primary-700"
+                className="px-4 py-2 bg-brand-blue text-white font-medium hover:bg-primary-700"
                 id="signup-button"
               >
                 Sign up
