@@ -27,18 +27,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/use-cases"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Use Cases
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-primary-600 transition-colors"
-                >
-                  Roadmap
                 </Link>
               </li>
             </ul>
@@ -57,7 +49,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/tutorials"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Tutorials
@@ -65,7 +57,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/api-reference"
                   className="hover:text-primary-600 transition-colors"
                 >
                   API Reference
@@ -87,7 +79,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="/about-us"
                   className="hover:text-primary-600 transition-colors"
                 >
                   About Us
@@ -95,7 +87,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/careers"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Careers
@@ -103,7 +95,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/contact"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Contact
@@ -125,7 +117,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="/privacy-policy"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Privacy Policy
@@ -133,7 +125,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/terms-of-service"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Terms of Service
@@ -141,7 +133,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/security"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Security

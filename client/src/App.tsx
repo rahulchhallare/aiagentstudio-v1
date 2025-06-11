@@ -24,6 +24,15 @@ import DeployedAgent from "@/pages/DeployedAgent";
 import AgentTester from "@/pages/AgentTester";
 import SimpleTest from "@/pages/SimpleTest";
 import Blog from "@/pages/Blog";
+import AboutUs from "@/pages/AboutUs";
+import Careers from "@/pages/Careers";
+import Contact from "@/pages/Contact";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
+import Security from "@/pages/Security";
+import UseCases from "@/pages/UseCases";
+import Tutorials from "@/pages/Tutorials";
+import ApiReference from "@/pages/ApiReference";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -54,6 +63,15 @@ function Router() {
       <Route path="/simple-test" component={SimpleTest} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:id" component={Blog} />
+      <Route path="/about-us" component={AboutUs} />
+      <Route path="/careers" component={Careers} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/terms-of-service" component={TermsOfService} />
+      <Route path="/security" component={Security} />
+      <Route path="/use-cases" component={UseCases} />
+      <Route path="/tutorials" component={Tutorials} />
+      <Route path="/api-reference" component={ApiReference} />
       <Route component={NotFound} />
     </Switch>
   );
