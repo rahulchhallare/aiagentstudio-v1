@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { AlertCircle, Bell, ChevronDown, HelpCircle, Menu, User, LogOut } from 'lucide-react';
+import { AlertCircle, Bell, ChevronDown, HelpCircle, Menu, User, LogOut, X } from 'lucide-react';
+import logoPath from '@assets/image_1749638537646.png';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -38,14 +39,11 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   }, []);
 
   return (
-    <header className={`bg-white sticky top-0 z-40 ${isScrolled ? 'shadow-sm' : ''}`}>
-      <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary-600 to-purple-500 flex items-center justify-center">
-              <Robot className="text-white" />
-            </div>
-            <span className="font-bold text-xl text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
+    <header className={`bg-white sticky top-0 z-40 overflow-hidden ${isScrolled ? 'shadow-sm' : ''}`}>
+      <nav className="container mx-auto px-4 py-3 flex items-center justify-between relative">
+        <div className="flex items-center space-x-2 z-50">
+          <Link href="/" className="flex items-center space-x-2 no-underline">
+            <img src={logoPath} alt="AIAgentStudio.AI" className="h-10 w-auto block max-w-none" style={{display: 'block', position: 'relative'}} />
           </Link>
         </div>
         
@@ -64,17 +62,17 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
-            <Link href="#features" className="text-gray-600 hover:text-primary-600 font-medium">Features</Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-primary-600 font-medium">Pricing</Link>
-            <Link href="/templates" className="text-gray-600 hover:text-primary-600 font-medium">Templates</Link>
-            <Link href="#docs" className="text-gray-600 hover:text-primary-600 font-medium">Documentation</Link>
+            <Link href="#features" className="text-gray-600 hover:text-brand-blue font-medium">Features</Link>
+            <Link href="#pricing" className="text-gray-600 hover:text-brand-blue font-medium">Pricing</Link>
+            <Link href="/templates" className="text-gray-600 hover:text-brand-blue font-medium">Templates</Link>
+            <Link href="#docs" className="text-gray-600 hover:text-brand-blue font-medium">Documentation</Link>
             <Button
               variant="ghost"
               onClick={() => {
                 const subscriptionSection = document.querySelector('.py-16.bg-gradient-to-br.from-purple-600');
                 subscriptionSection?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="text-gray-600 hover:text-primary-600 font-medium px-0"
+              className="text-gray-600 hover:text-brand-blue font-medium px-0"
             >
               Subscribe
             </Button>
@@ -82,14 +80,14 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <Button
                 variant="ghost"
                 onClick={onLoginClick}
-                className="px-4 py-2 text-primary-600 font-medium"
+                className="px-4 py-2 text-brand-blue font-medium"
                 id="login-button"
               >
                 Log in
               </Button>
               <Button
                 onClick={onSignupClick}
-                className="px-4 py-2 bg-primary-600 text-white font-medium hover:bg-primary-700"
+                className="px-4 py-2 bg-brand-blue text-white font-medium hover:bg-primary-700"
                 id="signup-button"
               >
                 Sign up
@@ -149,13 +147,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary-600 to-purple-500 flex items-center justify-center">
-                <Robot className="text-white" />
-              </div>
-              <span className="font-bold text-xl text-gray-900">AIagentStudio<span className="text-primary-500">.ai</span></span>
-            </Link>
+          <div className="flex justify-end items-center p-4 border-b">
             <Button
               variant="ghost"
               size="sm"
@@ -243,45 +235,6 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   );
 }
 
-function Robot(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <rect width="16" height="16" x="4" y="4" rx="2" />
-      <circle cx="9" cy="9" r="1" />
-      <circle cx="15" cy="9" r="1" />
-      <path d="M8 14h8" />
-      <path d="m9 18 3-3 3 3" />
-    </svg>
-  );
-}
 
-function X(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}
+
+
