@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import logoPath from '@assets/image_1749638537646.png';
 
 export default function Footer() {
   return (
@@ -72,7 +73,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/blog"
                   className="hover:text-primary-600 transition-colors"
                 >
                   Blog
@@ -152,27 +153,9 @@ export default function Footer() {
 
         <div className="border-t border-gray-200 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
-            <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary-600 to-purple-500 flex items-center justify-center mr-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-white"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect width="16" height="16" x="4" y="4" rx="2" />
-                <circle cx="9" cy="9" r="1" />
-                <circle cx="15" cy="9" r="1" />
-                <path d="M8 14h8" />
-                <path d="m9 18 3-3 3 3" />
-              </svg>
-            </div>
-            <span className="font-bold text-gray-900">
-              AIagentStudio<span className="text-primary-500">.ai</span>
-            </span>
+            <Link href="/" className="flex items-center">
+              <img src={logoPath} alt="AIAgentStudio.AI" className="h-8 w-auto" />
+            </Link>
           </div>
 
           <div className="flex justify-center space-x-6">
