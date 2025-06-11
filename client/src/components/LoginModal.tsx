@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,10 +21,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -33,12 +33,16 @@ interface LoginModalProps {
 }
 
 const formSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   rememberMe: z.boolean().optional(),
 });
 
-export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModalProps) {
+export default function LoginModal({
+  isOpen,
+  onClose,
+  onSignupClick,
+}: LoginModalProps) {
   const [, navigate] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -47,8 +51,8 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
       rememberMe: false,
     },
   });
@@ -71,7 +75,7 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
         }, 100);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
 
       toast({
         title: "Login failed",
@@ -87,9 +91,9 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
     setIsLoading(true);
     try {
       // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google';
+      window.location.href = "/api/auth/google";
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error("Google sign-in error:", error);
       toast({
         title: "Sign-in failed",
         description: "Failed to initiate Google sign-in. Please try again.",
@@ -119,9 +123,9 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="your@email.com" 
-                      {...field} 
+                    <Input
+                      placeholder="your@email.com"
+                      {...field}
                       disabled={isLoading}
                     />
                   </FormControl>
@@ -137,10 +141,10 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      {...field} 
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
                       disabled={isLoading}
                     />
                   </FormControl>
@@ -156,40 +160,44 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Checkbox 
-                        checked={field.value} 
+                      <Checkbox
+                        checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isLoading}
                       />
                     </FormControl>
-                    <FormLabel className="text-sm cursor-pointer">Remember me</FormLabel>
+                    <FormLabel className="text-sm cursor-pointer">
+                      Remember me
+                    </FormLabel>
                   </FormItem>
                 )}
               />
 
-              <Button variant="link" className="text-sm p-0 h-auto" disabled={isLoading}>
+              <Button
+                variant="link"
+                className="text-sm p-0 h-auto"
+                disabled={isLoading}
+              >
                 Forgot password?
               </Button>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Logging in...' : 'Log in'}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Log in"}
             </Button>
           </form>
         </Form>
 
         <div className="relative flex items-center justify-center my-4">
           <div className="border-t border-gray-300 absolute w-full"></div>
-          <div className="bg-white px-4 relative text-sm text-gray-500">or continue with</div>
+          <div className="bg-white px-4 relative text-sm text-gray-500">
+            or continue with
+          </div>
         </div>
 
-        <Button 
-          variant="outline" 
-          className="w-full flex items-center justify-center gap-2" 
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2"
           disabled={isLoading}
           onClick={handleGoogleSignIn}
         >
@@ -211,15 +219,14 @@ export default function LoginModal({ isOpen, onClose, onSignupClick }: LoginModa
               fill="#EA4335"
             />
           </svg>
-          Continue with Google
         </Button>
 
         <DialogFooter className="sm:justify-center">
           <p className="text-center text-sm text-gray-600">
             Don't have an account?{" "}
-            <Button 
-              variant="link" 
-              className="text-primary-600 hover:text-primary-700 p-0 h-auto" 
+            <Button
+              variant="link"
+              className="text-primary-600 hover:text-primary-700 p-0 h-auto"
               onClick={() => {
                 onClose();
                 onSignupClick();
