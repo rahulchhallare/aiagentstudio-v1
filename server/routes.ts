@@ -19,6 +19,48 @@ function validateBody<T>(schema: z.ZodType<T>, body: unknown): T {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Stripe webhook - MUST be defined BEFORE any JSON body parser middleware
+  // This route needs raw body for signature verification
+  app.post("/api/webhook/stripe", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!sig || !endpointSecret) {
+      return res.status(400).json({ message: 'Missing signature or webhook secret' });
+    }
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err: any) {
+      console.log(`Webhook signature verification failed:`, err.message);
+      return res.status(400).json({ message: 'Webhook signature verification failed' });
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        console.log('Payment was successful!', session);
+        // Here you would update the user's subscription status in your database
+        break;
+      case 'invoice.payment_succeeded':
+        const invoice = event.data.object;
+        console.log('Invoice payment succeeded!', invoice);
+        break;
+      case 'customer.subscription.deleted':
+        const subscription = event.data.object;
+        console.log('Subscription was cancelled!', subscription);
+        // Here you would update the user's subscription status in your database
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    res.json({ received: true });
+  });
+
   // Auth routes
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
@@ -533,46 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe webhook - needs raw body for signature verification
-  app.post("/api/webhook/stripe", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
-    const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    if (!sig || !endpointSecret) {
-      return res.status(400).json({ message: 'Missing signature or webhook secret' });
-    }
-
-    let event;
-
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-      console.log(`Webhook signature verification failed:`, err);
-      return res.status(400).json({ message: 'Webhook signature verification failed' });
-    }
-
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object;
-        console.log('Payment was successful!', session);
-        // Here you would update the user's subscription status in your database
-        break;
-      case 'invoice.payment_succeeded':
-        const invoice = event.data.object;
-        console.log('Invoice payment succeeded!', invoice);
-        break;
-      case 'customer.subscription.deleted':
-        const subscription = event.data.object;
-        console.log('Subscription was cancelled!', subscription);
-        // Here you would update the user's subscription status in your database
-        break;
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
-
-    res.json({ received: true });
-  });
+  
 
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
