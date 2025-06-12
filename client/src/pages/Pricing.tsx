@@ -40,7 +40,7 @@ export default function Pricing() {
     const priceId = priceIds[planType][billingInterval];
     console.log('Creating checkout session with price ID:', priceId);
     
-    if (!priceId || priceId.startsWith('price_')) {
+    if (!priceId || !priceId.startsWith('price_')) {
       console.error('Invalid price ID:', priceId);
       return;
     }
