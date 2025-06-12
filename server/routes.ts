@@ -62,18 +62,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
               current_period_end: new Date(subscription.current_period_end * 1000),
             });
             
-            // Save payment history
+            // Save payment history - use session amount if payment_intent is not available
+            let paymentRecord = {
+              user_id: userId,
+              amount: session.amount_total || 0,
+              currency: session.currency || 'usd',
+              status: 'succeeded',
+              description: `Subscription payment for ${subscription.items.data[0].price.nickname || 'plan'}`,
+            };
+            
             if (session.payment_intent) {
-              const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
-              await storage.createPaymentHistory({
-                user_id: userId,
-                stripe_payment_intent_id: paymentIntent.id,
-                amount: paymentIntent.amount,
-                currency: paymentIntent.currency,
-                status: paymentIntent.status,
-                description: `Subscription payment for ${subscription.items.data[0].price.nickname || 'plan'}`,
-              });
+              try {
+                const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+                paymentRecord = {
+                  ...paymentRecord,
+                  stripe_payment_intent_id: paymentIntent.id,
+                  amount: paymentIntent.amount,
+                  currency: paymentIntent.currency,
+                  status: paymentIntent.status,
+                };
+              } catch (piError) {
+                console.error('Error retrieving payment intent:', piError);
+                // Use session ID as fallback
+                paymentRecord.stripe_payment_intent_id = session.id;
+              }
+            } else {
+              // Use session ID as payment reference when payment_intent is not available
+              paymentRecord.stripe_payment_intent_id = session.id;
             }
+            
+            await storage.createPaymentHistory(paymentRecord);
+            console.log('Payment history created:', paymentRecord);
           }
         } catch (error) {
           console.error('Error saving checkout session data:', error);
@@ -85,16 +104,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Invoice payment succeeded!', invoice);
         
         try {
-          const userId = parseInt(invoice.metadata?.userId || '0');
-          if (userId > 0 && invoice.payment_intent) {
-            await storage.createPaymentHistory({
+          // Try to get userId from subscription if not in metadata
+          let userId = parseInt(invoice.metadata?.userId || '0');
+          
+          if (userId === 0 && invoice.subscription) {
+            try {
+              const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+              // Get user from subscription metadata or customer
+              userId = parseInt(subscription.metadata?.userId || '0');
+            } catch (subError) {
+              console.error('Error retrieving subscription for user ID:', subError);
+            }
+          }
+          
+          if (userId > 0) {
+            const paymentRecord = {
               user_id: userId,
-              stripe_payment_intent_id: invoice.payment_intent as string,
+              stripe_payment_intent_id: invoice.payment_intent as string || invoice.id,
               amount: invoice.amount_paid,
               currency: invoice.currency,
               status: 'succeeded',
               description: `Invoice payment for subscription ${invoice.subscription}`,
-            });
+            };
+            
+            await storage.createPaymentHistory(paymentRecord);
+            console.log('Invoice payment history created:', paymentRecord);
+          } else {
+            console.warn('Could not determine user ID for invoice:', invoice.id);
           }
         } catch (error) {
           console.error('Error saving invoice payment data:', error);
