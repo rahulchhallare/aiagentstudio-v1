@@ -34,11 +34,11 @@ export function usePayment() {
         }),
       });
 
-      const { sessionId } = await response.json();
-
       if (!response.ok) {
         throw new Error('Failed to create checkout session');
       }
+
+      const { sessionId } = await response.json();
 
       const stripe = await stripePromise;
       if (!stripe) {
@@ -52,11 +52,11 @@ export function usePayment() {
       if (error) {
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating checkout session:', error);
       toast({
         title: "Payment failed",
-        description: "Failed to initiate payment. Please try again.",
+        description: error.message || "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
     } finally {
