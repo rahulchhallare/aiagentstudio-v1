@@ -80,18 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             
             // Save payment history - use session amount if payment_intent is not available
-            // Get plan name for payment description
-            const priceId = subscription.items.data[0].price.id;
-            let planName = 'plan';
-            if (priceId === PRICE_IDS.PRO_MONTHLY) {
-              planName = 'Pro Monthly';
-            } else if (priceId === PRICE_IDS.PRO_YEARLY) {
-              planName = 'Pro Yearly';
-            } else if (priceId === PRICE_IDS.ENTERPRISE_MONTHLY) {
-              planName = 'Enterprise Monthly';
-            } else if (priceId === PRICE_IDS.ENTERPRISE_YEARLY) {
-              planName = 'Enterprise Yearly';
-            }
+            // Get plan name for payment description (reuse existing priceId variable)
             
             let paymentRecord = {
               user_id: userId,
