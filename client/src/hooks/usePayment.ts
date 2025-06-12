@@ -97,9 +97,73 @@ export function usePayment() {
     }
   };
 
+  const updateCustomer = async (customerId: string, invoiceSettings: any) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/customer/${customerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoice_settings: invoiceSettings,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update customer');
+      }
+
+      const { customer } = await response.json();
+      return customer;
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update customer settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateSubscription = async (subscriptionId: string, updateData: any) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/subscription/${subscriptionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update subscription');
+      }
+
+      const { subscription } = await response.json();
+      return subscription;
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update subscription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     createCheckoutSession,
     createPortalSession,
+    updateCustomer,
+    updateSubscription,
     isLoading,
   };
 }

@@ -494,6 +494,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update customer
+  app.put("/api/customer/:customerId", async (req: Request, res: Response) => {
+    try {
+      const { customerId } = req.params;
+      const { invoice_settings } = req.body;
+
+      const customer = await stripe.customers.update(customerId, {
+        invoice_settings: invoice_settings || {}
+      });
+
+      res.json({ customer });
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      res.status(500).json({ message: 'Failed to update customer' });
+    }
+  });
+
+  // Update subscription
+  app.put("/api/subscription/:subscriptionId", async (req: Request, res: Response) => {
+    try {
+      const { subscriptionId } = req.params;
+      const { items, discounts, off_session, payment_behavior, proration_behavior } = req.body;
+
+      const subscription = await stripe.subscriptions.update(subscriptionId, {
+        items,
+        discounts: discounts || [],
+        off_session: off_session || false,
+        payment_behavior: payment_behavior || 'error_if_incomplete',
+        proration_behavior: proration_behavior || 'none'
+      });
+
+      res.json({ subscription });
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      res.status(500).json({ message: 'Failed to update subscription' });
+    }
+  });
+
   app.post("/api/webhook/stripe", async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
