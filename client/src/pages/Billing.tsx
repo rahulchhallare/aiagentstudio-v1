@@ -85,15 +85,16 @@ export default function Billing() {
       };
     }
 
-    // Determine plan based on price_id or plan_name
+    // Determine plan based on plan_name first, then fallback to price_id
     const planName = subscription.plan_name?.toLowerCase() || '';
-    const isYearly = planName.includes('yearly') || planName.includes('annual');
+    const priceId = subscription.price_id || '';
     
-    if (planName.includes('pro')) {
+    // Check for Pro plans
+    if (planName.includes('pro monthly') || priceId.includes('pro') && planName.includes('monthly')) {
       return {
         name: 'Pro',
-        price: isYearly ? '$290' : '$29',
-        interval: isYearly ? 'year' : 'month',
+        price: '$29',
+        interval: 'month',
         features: [
           'Up to 10 AI agents',
           '1,000 API requests per month',
@@ -103,11 +104,81 @@ export default function Billing() {
           'Custom branding'
         ]
       };
-    } else if (planName.includes('enterprise')) {
+    }
+    
+    if (planName.includes('pro yearly') || priceId.includes('pro') && planName.includes('yearly')) {
+      return {
+        name: 'Pro',
+        price: '$290',
+        interval: 'year',
+        features: [
+          'Up to 10 AI agents',
+          '1,000 API requests per month',
+          'All templates',
+          'Priority support',
+          'Webhook integrations',
+          'Custom branding'
+        ]
+      };
+    }
+    
+    // Check for Enterprise plans
+    if (planName.includes('enterprise monthly') || priceId.includes('enterprise') && planName.includes('monthly')) {
       return {
         name: 'Enterprise',
-        price: isYearly ? '$990' : '$99',
-        interval: isYearly ? 'year' : 'month',
+        price: '$99',
+        interval: 'month',
+        features: [
+          'Unlimited AI agents',
+          '10,000 API requests per month',
+          'All templates',
+          'Dedicated support',
+          'Advanced analytics',
+          'Custom model training',
+          'SLA guarantees'
+        ]
+      };
+    }
+    
+    if (planName.includes('enterprise yearly') || priceId.includes('enterprise') && planName.includes('yearly')) {
+      return {
+        name: 'Enterprise',
+        price: '$990',
+        interval: 'year',
+        features: [
+          'Unlimited AI agents',
+          '10,000 API requests per month',
+          'All templates',
+          'Dedicated support',
+          'Advanced analytics',
+          'Custom model training',
+          'SLA guarantees'
+        ]
+      };
+    }
+
+    // Fallback for any other plan - check if it's a general pro or enterprise
+    if (planName.includes('pro')) {
+      return {
+        name: 'Pro',
+        price: '$29',
+        interval: 'month',
+        features: [
+          'Up to 10 AI agents',
+          '1,000 API requests per month',
+          'All templates',
+          'Priority support',
+          'Webhook integrations',
+          'Custom branding'
+        ]
+      };
+    }
+    
+    if (planName.includes('enterprise')) {
+      return {
+        name: 'Enterprise',
+        price: '$99',
+        interval: 'month',
         features: [
           'Unlimited AI agents',
           '10,000 API requests per month',

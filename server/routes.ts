@@ -50,25 +50,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userId = parseInt(session.metadata?.userId || '0');
           
           if (userId > 0) {
+            const priceId = subscription.items.data[0].price.id;
+            
+            // Map price ID to plan name
+            let planName = 'Free';
+            if (priceId === PRICE_IDS.PRO_MONTHLY) {
+              planName = 'Pro Monthly';
+            } else if (priceId === PRICE_IDS.PRO_YEARLY) {
+              planName = 'Pro Yearly';
+            } else if (priceId === PRICE_IDS.ENTERPRISE_MONTHLY) {
+              planName = 'Enterprise Monthly';
+            } else if (priceId === PRICE_IDS.ENTERPRISE_YEARLY) {
+              planName = 'Enterprise Yearly';
+            } else {
+              // Fallback to nickname if available
+              planName = subscription.items.data[0].price.nickname || 'Unknown Plan';
+            }
+            
             // Save subscription to database
             await storage.createSubscription({
               user_id: userId,
               stripe_subscription_id: subscription.id,
               stripe_customer_id: subscription.customer as string,
               status: subscription.status,
-              plan_name: subscription.items.data[0].price.nickname || 'Unknown Plan',
-              price_id: subscription.items.data[0].price.id,
+              plan_name: planName,
+              price_id: priceId,
               current_period_start: new Date(subscription.current_period_start * 1000),
               current_period_end: new Date(subscription.current_period_end * 1000),
             });
             
             // Save payment history - use session amount if payment_intent is not available
+            // Get plan name for payment description
+            const priceId = subscription.items.data[0].price.id;
+            let planName = 'plan';
+            if (priceId === PRICE_IDS.PRO_MONTHLY) {
+              planName = 'Pro Monthly';
+            } else if (priceId === PRICE_IDS.PRO_YEARLY) {
+              planName = 'Pro Yearly';
+            } else if (priceId === PRICE_IDS.ENTERPRISE_MONTHLY) {
+              planName = 'Enterprise Monthly';
+            } else if (priceId === PRICE_IDS.ENTERPRISE_YEARLY) {
+              planName = 'Enterprise Yearly';
+            }
+            
             let paymentRecord = {
               user_id: userId,
               amount: session.amount_total || 0,
               currency: session.currency || 'usd',
               status: 'succeeded',
-              description: `Subscription payment for ${subscription.items.data[0].price.nickname || 'plan'}`,
+              description: `Subscription payment for ${planName}`,
             };
             
             if (session.payment_intent) {
