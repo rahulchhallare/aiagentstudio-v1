@@ -155,13 +155,13 @@ export type Agent = typeof agents.$inferSelect;
 export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type Waitlist = typeof waitlist.$inferSelect;
 
-export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
 
-export type InsertPaymentHistory = z.infer<typeof insertPaymentHistorySchema>;
+export type InsertPaymentHistory = typeof payment_history.$inferInsert;
 export type PaymentHistory = typeof payment_history.$inferSelect;
 
-export type InsertWebhookEvent = z.infer<typeof insertWebhookEventSchema>;
+export type InsertWebhookEvent = typeof webhook_events.$inferInsert;
 export type WebhookEvent = typeof webhook_events.$inferSelect;
 
 export type FlowData = z.infer<typeof flowDataSchema>;

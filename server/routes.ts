@@ -43,19 +43,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       case 'checkout.session.completed':
         const session = event.data.object;
         console.log('Payment was successful!', session);
-        // Here you would update the user's subscription status in your database
+        
+        try {
+          // Get the subscription details
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          const userId = parseInt(session.metadata?.userId || '0');
+          
+          if (userId > 0) {
+            // Save subscription to database
+            await storage.createSubscription({
+              user_id: userId,
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: subscription.customer as string,
+              status: subscription.status,
+              plan_name: subscription.items.data[0].price.nickname || 'Unknown Plan',
+              price_id: subscription.items.data[0].price.id,
+              current_period_start: new Date(subscription.current_period_start * 1000),
+              current_period_end: new Date(subscription.current_period_end * 1000),
+            });
+            
+            // Save payment history
+            if (session.payment_intent) {
+              const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+              await storage.createPaymentHistory({
+                user_id: userId,
+                stripe_payment_intent_id: paymentIntent.id,
+                amount: paymentIntent.amount,
+                currency: paymentIntent.currency,
+                status: paymentIntent.status,
+                description: `Subscription payment for ${subscription.items.data[0].price.nickname || 'plan'}`,
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error saving checkout session data:', error);
+        }
         break;
+        
       case 'invoice.payment_succeeded':
         const invoice = event.data.object;
         console.log('Invoice payment succeeded!', invoice);
+        
+        try {
+          const userId = parseInt(invoice.metadata?.userId || '0');
+          if (userId > 0 && invoice.payment_intent) {
+            await storage.createPaymentHistory({
+              user_id: userId,
+              stripe_payment_intent_id: invoice.payment_intent as string,
+              amount: invoice.amount_paid,
+              currency: invoice.currency,
+              status: 'succeeded',
+              description: `Invoice payment for subscription ${invoice.subscription}`,
+            });
+          }
+        } catch (error) {
+          console.error('Error saving invoice payment data:', error);
+        }
         break;
+        
+      case 'customer.subscription.updated':
+        const updatedSubscription = event.data.object;
+        console.log('Subscription updated!', updatedSubscription);
+        
+        try {
+          await storage.updateSubscription(updatedSubscription.id, {
+            status: updatedSubscription.status,
+            current_period_start: new Date(updatedSubscription.current_period_start * 1000),
+            current_period_end: new Date(updatedSubscription.current_period_end * 1000),
+          });
+        } catch (error) {
+          console.error('Error updating subscription:', error);
+        }
+        break;
+        
       case 'customer.subscription.deleted':
-        const subscription = event.data.object;
-        console.log('Subscription was cancelled!', subscription);
-        // Here you would update the user's subscription status in your database
+        const deletedSubscription = event.data.object;
+        console.log('Subscription was cancelled!', deletedSubscription);
+        
+        try {
+          await storage.updateSubscription(deletedSubscription.id, {
+            status: 'canceled',
+          });
+        } catch (error) {
+          console.error('Error updating cancelled subscription:', error);
+        }
         break;
+        
       default:
         console.log(`Unhandled event type ${event.type}`);
+    }
+
+    // Save webhook event to prevent duplicate processing
+    try {
+      await storage.createWebhookEvent({
+        stripe_event_id: event.id,
+        event_type: event.type,
+        processed: true,
+      });
+    } catch (error) {
+      console.error('Error saving webhook event:', error);
     }
 
     res.json({ received: true });
