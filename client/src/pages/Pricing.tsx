@@ -53,9 +53,13 @@ export default function Pricing() {
         "Community support",
       ],
       button: {
-        text: "Get Started",
+        text: user ? "Current Plan" : "Get Started",
         variant: "outline" as const,
-        onClick: () => setShowSignupModal(true),
+        onClick: () => {
+          if (!user) {
+            setShowSignupModal(true);
+          }
+        },
       },
       planType: null,
     },
@@ -206,7 +210,7 @@ export default function Pricing() {
                   className={`w-full ${plan.mostPopular ? "bg-primary-600 hover:bg-primary-700" : ""}`}
                   variant={plan.button.variant}
                   onClick={plan.button.onClick}
-                  disabled={isLoading}
+                  disabled={isLoading || (plan.name === "Free" && user)}
                 >
                   {isLoading && plan.planType ? "Processing..." : plan.button.text}
                 </Button>
@@ -269,8 +273,13 @@ export default function Pricing() {
             Join thousands of users building and deploying AI agents with AIagentStudio.ai
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="bg-primary-600 hover:bg-primary-700">
-              Sign Up Free
+            <Button 
+              size="lg" 
+              className="bg-primary-600 hover:bg-primary-700"
+              onClick={() => user ? null : setShowSignupModal(true)}
+              disabled={user}
+            >
+              {user ? "Welcome!" : "Sign Up Free"}
             </Button>
             <Button size="lg" variant="outline">
               Schedule a Demo
