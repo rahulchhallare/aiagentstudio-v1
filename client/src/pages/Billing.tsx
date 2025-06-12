@@ -7,11 +7,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard, Receipt, AlertTriangle } from 'lucide-react';
+import { usePayment } from '@/hooks/usePayment';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Billing() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { createCheckoutSession, createPortalSession, isLoading: paymentLoading } = usePayment();
+  const { toast } = useToast();
+  const [subscription, setSubscription] = useState<any>(null);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Redirect to welcome page if not authenticated
   useEffect(() => {
@@ -19,6 +26,38 @@ export default function Billing() {
       navigate('/welcome');
     }
   }, [user, authLoading, navigate]);
+
+  // Fetch subscription and payment data
+  useEffect(() => {
+    if (user) {
+      fetchBillingData();
+    }
+  }, [user]);
+
+  const fetchBillingData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Fetch subscription data
+      const subResponse = await fetch(`/api/subscription/user/${user.id}`);
+      if (subResponse.ok) {
+        const subData = await subResponse.json();
+        setSubscription(subData);
+      }
+
+      // Fetch payment history
+      const paymentResponse = await fetch(`/api/payment-history/user/${user.id}`);
+      if (paymentResponse.ok) {
+        const paymentData = await paymentResponse.json();
+        setPaymentHistory(paymentData);
+      }
+    } catch (error) {
+      console.error('Error fetching billing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (authLoading) {
     return (
@@ -30,18 +69,71 @@ export default function Billing() {
 
   if (!user) return null;
 
-  // Mock billing data
-  const currentPlan = {
-    name: 'Free',
-    price: '$0',
-    interval: 'month',
-    features: [
-      'Up to 2 AI agents',
-      '100 API requests per month',
-      'Basic templates',
-      'Community support'
-    ]
+  // Determine current plan based on subscription
+  const getCurrentPlan = () => {
+    if (!subscription || subscription.status !== 'active') {
+      return {
+        name: 'Free',
+        price: '$0',
+        interval: 'month',
+        features: [
+          'Up to 2 AI agents',
+          '100 API requests per month',
+          'Basic templates',
+          'Community support'
+        ]
+      };
+    }
+
+    // Determine plan based on price_id or plan_name
+    const planName = subscription.plan_name?.toLowerCase() || '';
+    const isYearly = planName.includes('yearly') || planName.includes('annual');
+    
+    if (planName.includes('pro')) {
+      return {
+        name: 'Pro',
+        price: isYearly ? '$290' : '$29',
+        interval: isYearly ? 'year' : 'month',
+        features: [
+          'Up to 10 AI agents',
+          '1,000 API requests per month',
+          'All templates',
+          'Priority support',
+          'Webhook integrations',
+          'Custom branding'
+        ]
+      };
+    } else if (planName.includes('enterprise')) {
+      return {
+        name: 'Enterprise',
+        price: isYearly ? '$990' : '$99',
+        interval: isYearly ? 'year' : 'month',
+        features: [
+          'Unlimited AI agents',
+          '10,000 API requests per month',
+          'All templates',
+          'Dedicated support',
+          'Advanced analytics',
+          'Custom model training',
+          'SLA guarantees'
+        ]
+      };
+    }
+
+    return {
+      name: 'Free',
+      price: '$0',
+      interval: 'month',
+      features: [
+        'Up to 2 AI agents',
+        '100 API requests per month',
+        'Basic templates',
+        'Community support'
+      ]
+    };
   };
+
+  const currentPlan = getCurrentPlan();
 
   const plans = [
     {
@@ -54,7 +146,7 @@ export default function Billing() {
         'Basic templates',
         'Community support'
       ],
-      isCurrent: true
+      isCurrent: currentPlan.name === 'Free'
     },
     {
       name: 'Pro',
@@ -69,7 +161,7 @@ export default function Billing() {
         'Custom branding'
       ],
       popular: true,
-      isCurrent: false
+      isCurrent: currentPlan.name === 'Pro'
     },
     {
       name: 'Enterprise',
@@ -84,34 +176,22 @@ export default function Billing() {
         'Custom model training',
         'SLA guarantees'
       ],
-      isCurrent: false
+      isCurrent: currentPlan.name === 'Enterprise'
     }
   ];
 
-  // Mock invoices
-  const invoices = [
-    {
-      id: 'INV-001',
-      date: '2023-05-01',
-      amount: '$0.00',
-      status: 'Paid',
-      plan: 'Free Plan'
-    },
-    {
-      id: 'INV-002',
-      date: '2023-04-01',
-      amount: '$0.00',
-      status: 'Paid',
-      plan: 'Free Plan'
-    },
-    {
-      id: 'INV-003',
-      date: '2023-03-01',
-      amount: '$0.00',
-      status: 'Paid',
-      plan: 'Free Plan'
-    }
-  ];
+  // Format payment history for display
+  const formatPaymentHistory = () => {
+    return paymentHistory.map((payment) => ({
+      id: payment.stripe_payment_intent_id || payment.id,
+      date: new Date(payment.created_at).toLocaleDateString(),
+      amount: `$${(payment.amount / 100).toFixed(2)}`,
+      status: payment.status === 'succeeded' ? 'Paid' : payment.status,
+      plan: payment.description || 'Subscription Payment'
+    }));
+  };
+
+  const invoices = formatPaymentHistory();
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -164,7 +244,17 @@ export default function Billing() {
                     </div>
                     <div className="mt-6 md:mt-0 flex flex-col justify-center">
                       <Badge className="mb-4 self-end">Current Plan</Badge>
-                      <Button variant="outline">Change Plan</Button>
+                      {subscription && subscription.status === 'active' ? (
+                        <Button 
+                          variant="outline"
+                          onClick={() => createPortalSession(subscription.stripe_customer_id)}
+                          disabled={paymentLoading}
+                        >
+                          {paymentLoading ? 'Loading...' : 'Manage Subscription'}
+                        </Button>
+                      ) : (
+                        <Button variant="outline">Change Plan</Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -199,9 +289,25 @@ export default function Billing() {
                     <CardFooter>
                       {plan.isCurrent ? (
                         <Button disabled className="w-full">Current Plan</Button>
+                      ) : plan.name === 'Free' ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => subscription && createPortalSession(subscription.stripe_customer_id)}
+                          disabled={!subscription || paymentLoading}
+                        >
+                          {paymentLoading ? 'Loading...' : 'Downgrade'}
+                        </Button>
                       ) : (
-                        <Button className={plan.popular ? 'w-full bg-primary-600' : 'w-full'}>
-                          {plan.name === 'Free' ? 'Downgrade' : 'Upgrade'}
+                        <Button 
+                          className={plan.popular ? 'w-full bg-primary-600' : 'w-full'}
+                          onClick={() => {
+                            // Navigate to pricing page for upgrades
+                            navigate('/pricing');
+                          }}
+                          disabled={paymentLoading}
+                        >
+                          {paymentLoading ? 'Loading...' : 'Upgrade'}
                         </Button>
                       )}
                     </CardFooter>

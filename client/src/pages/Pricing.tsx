@@ -19,15 +19,15 @@ export default function Pricing() {
   const { createCheckoutSession, isLoading } = usePayment();
   const { user } = useAuth();
 
-  // Price IDs from your Stripe dashboard
+  // Price IDs from your Stripe dashboard - use actual price IDs
   const priceIds = {
     pro: {
-      monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_pro_monthly",
-      yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_pro_yearly",
+      monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1QYy3GQTNP6FvxI89L0Lf7fI",
+      yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1QYy3wQTNP6FvxI8wz1xOTf9",
     },
     enterprise: {
-      monthly: import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_enterprise_monthly",
-      yearly: import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_enterprise_yearly",
+      monthly: import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ",
+      yearly: import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG",
     },
   };
 
@@ -38,6 +38,13 @@ export default function Pricing() {
     }
 
     const priceId = priceIds[planType][billingInterval];
+    console.log('Creating checkout session with price ID:', priceId);
+    
+    if (!priceId || priceId.startsWith('price_')) {
+      console.error('Invalid price ID:', priceId);
+      return;
+    }
+    
     await createCheckoutSession(priceId);
   };
 

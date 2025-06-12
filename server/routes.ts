@@ -699,6 +699,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   
 
+  // Get user subscription
+  app.get("/api/subscription/user/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Valid user ID is required" });
+      }
+
+      const subscription = await storage.getSubscriptionByUserId(userId);
+      
+      if (!subscription) {
+        return res.status(404).json({ message: "No subscription found" });
+      }
+
+      return res.status(200).json(subscription);
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get user payment history
+  app.get("/api/payment-history/user/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Valid user ID is required" });
+      }
+
+      const paymentHistory = await storage.getPaymentHistoryByUserId(userId);
+      return res.status(200).json(paymentHistory);
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
     try {
