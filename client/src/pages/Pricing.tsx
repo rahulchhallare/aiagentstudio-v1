@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
 import Footer from '@/components/Footer';
+import Header from '@/components/Header';
 
 export default function Pricing() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
@@ -133,7 +134,10 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Header />
+        <Header 
+          onLoginClick={() => setShowLoginModal(true)}
+          onSignupClick={() => setShowSignupModal(true)}
+        />
       {isTestMode && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-center">
           <p className="font-medium">🧪 Test Mode Active - Use test card: 4242 4242 4242 4242</p>
