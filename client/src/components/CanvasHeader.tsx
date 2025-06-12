@@ -11,7 +11,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown, Menu, User } from 'lucide-react';
-import logoPath from '@assets/image_1749638537646.png';
+import logoPath from '@assets/Logo_F2-removebg-preview_1749704910398.png';
 
 interface CanvasHeaderProps {
   onLoginClick: () => void;
