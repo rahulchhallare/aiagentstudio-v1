@@ -63,7 +63,7 @@ export default function Pricing() {
     }
 
     try {
-      const response = await fetch(`/api/subscription/${userSubscription.id}/cancel`, {
+      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
