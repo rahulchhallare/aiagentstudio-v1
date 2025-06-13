@@ -369,6 +369,15 @@ export default function Billing() {
                         >
                           {paymentLoading ? 'Loading...' : 'Downgrade'}
                         </Button>
+                      ) : plan.name === 'Pro' && currentPlan.name === 'Enterprise' ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => subscription && createPortalSession(subscription.stripe_customer_id)}
+                          disabled={!subscription || paymentLoading}
+                        >
+                          {paymentLoading ? 'Loading...' : 'Downgrade to Pro'}
+                        </Button>
                       ) : (
                         <Button 
                           className={plan.popular ? 'w-full bg-primary-600' : 'w-full'}
