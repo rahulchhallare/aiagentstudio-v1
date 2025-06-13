@@ -61,26 +61,32 @@ export default function Pricing() {
   useEffect(() => {
     const fetchUserSubscription = async () => {
       if (!user?.id) {
+        console.log('🔍 No user ID, clearing subscription');
         setUserSubscription(null);
         return;
       }
 
+      console.log('🔍 Fetching subscription for user:', user.id);
       setSubscriptionLoading(true);
       try {
         const response = await fetch(`/api/subscription/user/${user.id}`);
+        console.log('📡 Subscription API response status:', response.status);
+        
         if (response.ok) {
           const subscription = await response.json();
+          console.log('✅ Subscription data received:', subscription);
           setUserSubscription(subscription);
-          console.log('User subscription:', subscription);
         } else {
-          // No subscription found
+          const responseText = await response.text();
+          console.log('❌ No subscription found. Response:', responseText);
           setUserSubscription(null);
         }
       } catch (error) {
-        console.error('Error fetching user subscription:', error);
+        console.error('❌ Error fetching user subscription:', error);
         setUserSubscription(null);
       } finally {
         setSubscriptionLoading(false);
+        console.log('🔍 Subscription loading complete');
       }
     };
 
@@ -96,33 +102,68 @@ export default function Pricing() {
     const planName = userSubscription.plan_name?.toLowerCase() || '';
     const priceId = userSubscription.price_id || '';
     
-    // Check for Pro plans
-    if (planName.includes('pro monthly') || (priceId.includes('pro') && planName.includes('monthly'))) {
+    console.log('=== PLAN DETECTION DEBUG ===');
+    console.log('Plan name:', planName);
+    console.log('Price ID:', priceId);
+    console.log('Status:', userSubscription.status);
+    console.log('Full subscription:', userSubscription);
+    
+    // Check against actual price IDs from our pricing config
+    const proMonthlyPriceId = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
+    const proYearlyPriceId = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
+    const enterpriseMonthlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ";
+    const enterpriseYearlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG";
+    
+    // Check by price ID first (most reliable)
+    if (priceId === proMonthlyPriceId) {
+      console.log('✅ Detected Pro Monthly by price ID');
       return 'pro-monthly';
     }
     
-    if (planName.includes('pro yearly') || (priceId.includes('pro') && planName.includes('yearly'))) {
+    if (priceId === proYearlyPriceId) {
+      console.log('✅ Detected Pro Yearly by price ID');
       return 'pro-yearly';
     }
     
-    // Check for Enterprise plans
-    if (planName.includes('enterprise monthly') || (priceId.includes('enterprise') && planName.includes('monthly'))) {
+    if (priceId === enterpriseMonthlyPriceId) {
+      console.log('✅ Detected Enterprise Monthly by price ID');
       return 'enterprise-monthly';
     }
     
-    if (planName.includes('enterprise yearly') || (priceId.includes('enterprise') && planName.includes('yearly'))) {
+    if (priceId === enterpriseYearlyPriceId) {
+      console.log('✅ Detected Enterprise Yearly by price ID');
       return 'enterprise-yearly';
     }
-
-    // Fallback check for general pro/enterprise
+    
+    // Fallback to plan name detection
     if (planName.includes('pro')) {
+      if (planName.includes('monthly')) {
+        console.log('✅ Detected Pro Monthly by plan name');
+        return 'pro-monthly';
+      }
+      if (planName.includes('yearly') || planName.includes('year')) {
+        console.log('✅ Detected Pro Yearly by plan name');
+        return 'pro-yearly';
+      }
+      // If no specific interval, return based on current billing interval
+      console.log('✅ Detected Pro by plan name (using current billing interval)');
       return billingInterval === 'yearly' ? 'pro-yearly' : 'pro-monthly';
     }
     
     if (planName.includes('enterprise')) {
+      if (planName.includes('monthly')) {
+        console.log('✅ Detected Enterprise Monthly by plan name');
+        return 'enterprise-monthly';
+      }
+      if (planName.includes('yearly') || planName.includes('year')) {
+        console.log('✅ Detected Enterprise Yearly by plan name');
+        return 'enterprise-yearly';
+      }
+      console.log('✅ Detected Enterprise by plan name (using current billing interval)');
       return billingInterval === 'yearly' ? 'enterprise-yearly' : 'enterprise-monthly';
     }
 
+    console.log('❌ No plan detected, defaulting to free');
     return 'free';
   };
 
