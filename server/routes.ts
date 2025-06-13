@@ -781,66 +781,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update subscription
+  app.put('/api/subscription/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+
+      const subscription = await stripe.subscriptions.update(id, updateData);
+
+      res.json({ subscription });
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Cancel subscription (downgrade to free)
+  app.post('/api/subscription/:id/cancel', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.body;
+
+      // Cancel the subscription at the end of the billing period
+      const subscription = await stripe.subscriptions.update(id, {
+        cancel_at_period_end: true,
+      });
+
+      // Update the subscription status in your database
+      await storage.updateSubscription(id, {
+        status: 'canceled',
+        cancel_at_period_end: true,
+      });
+
+      res.json({ 
+        success: true, 
+        subscription,
+        message: 'Subscription cancelled successfully. Access will continue until the end of the billing period.' 
+      });
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
-
-// Update subscription
-app.put('/api/subscription/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-
-    const subscription = await stripe.subscriptions.update(id, updateData);
-
-    res.json({ subscription });
-  } catch (error) {
-    console.error('Error updating subscription:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Cancel subscription (downgrade to free)
-app.post('/api/subscription/:id/cancel', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { userId } = req.body;
-
-    // Cancel the subscription at the end of the billing period
-    const subscription = await stripe.subscriptions.update(id, {
-      cancel_at_period_end: true,
-    });
-
-    // Update the subscription status in your database
-    const { data: subscriptions, error: fetchError } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .single();
-
-    if (!fetchError && subscriptions) {
-      const { error: updateError } = await supabase
-        .from('subscriptions')
-        .update({ 
-          status: 'cancelled',
-          cancel_at_period_end: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', subscriptions.id);
-
-      if (updateError) {
-        console.error('Error updating subscription in database:', updateError);
-      }
-    }
-
-    res.json({ 
-      success: true, 
-      subscription,
-      message: 'Subscription cancelled successfully. Access will continue until the end of the billing period.' 
-    });
-  } catch (error) {
-    console.error('Error cancelling subscription:', error);
-    res.status(500).json({ error: 'Failed to cancel subscription' });
-  }
-});
