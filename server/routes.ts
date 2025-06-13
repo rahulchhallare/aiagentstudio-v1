@@ -162,11 +162,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Subscription updated!', updatedSubscription);
 
         try {
+          // Update subscription in database
           await storage.updateSubscription(updatedSubscription.id, {
             status: updatedSubscription.status,
             current_period_start: new Date(updatedSubscription.current_period_start * 1000),
             current_period_end: new Date(updatedSubscription.current_period_end * 1000),
+            cancel_at_period_end: updatedSubscription.cancel_at_period_end || false,
           });
+
+          // Check if this is a plan change and create payment record
+          if (updatedSubscription.metadata?.plan_change === 'true') {
+            const planName = updatedSubscription.items.data[0].price.nickname || 'Updated Plan';
+            
+            // Try to get userId from subscription metadata
+            let userId = parseInt(updatedSubscription.metadata?.userId || '0');
+            
+            if (userId > 0) {
+              await storage.createPaymentHistory({
+                user_id: userId,
+                stripe_payment_intent_id: `sub_update_${updatedSubscription.id}_${Date.now()}`,
+                amount: 0, // Amount will be handled by separate invoice events
+                currency: 'usd',
+                status: 'succeeded',
+                description: `Subscription updated to ${planName}`,
+              });
+            }
+          }
         } catch (error) {
           console.error('Error updating subscription:', error);
         }
@@ -700,7 +721,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/subscription/:subscriptionId", async (req: Request, res: Response) => {
     try {
       const { subscriptionId } = req.params;
-      const { items, discounts, off_session, payment_behavior, proration_behavior } = req.body;
+      const { items, discounts, off_session, payment_behavior, proration_behavior, userId } = req.body;
+
+      // Get current subscription before update
+      const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const currentPlanName = currentSubscription.items.data[0].price.nickname || 'Current Plan';
 
       const subscription = await stripe.subscriptions.update(subscriptionId, {
         items,
@@ -709,6 +734,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payment_behavior: payment_behavior || 'error_if_incomplete',
         proration_behavior: proration_behavior || 'none'
       });
+
+      // Create payment record for plan change
+      if (userId && items && items.length > 0) {
+        const newPriceId = items[0].price;
+        const newPrice = await stripe.prices.retrieve(newPriceId);
+        const newPlanName = newPrice.nickname || 'New Plan';
+        
+        // Calculate proration amount if applicable
+        let prorationAmount = 0;
+        if (proration_behavior === 'create_prorations') {
+          // This would be calculated based on the difference in plan pricing
+          // For now, we'll use 0 and let Stripe handle the actual billing
+          prorationAmount = 0;
+        }
+
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          stripe_payment_intent_id: `plan_change_${subscriptionId}_${Date.now()}`,
+          amount: prorationAmount,
+          currency: subscription.currency || 'usd',
+          status: 'succeeded',
+          description: `Plan changed from ${currentPlanName} to ${newPlanName}`,
+        });
+      }
 
       res.json({ subscription });
     } catch (error) {
@@ -796,12 +845,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Handle plan downgrades with payment tracking
+  app.post('/api/subscription/:id/downgrade', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPriceId, userId } = req.body;
+
+      if (!newPriceId || !userId) {
+        return res.status(400).json({ error: 'New price ID and user ID are required' });
+      }
+
+      // Get current subscription details
+      const currentSubscription = await stripe.subscriptions.retrieve(id);
+      const currentPrice = currentSubscription.items.data[0].price;
+      const currentPlanName = currentPrice.nickname || 'Current Plan';
+
+      // Get new price details
+      const newPrice = await stripe.prices.retrieve(newPriceId);
+      const newPlanName = newPrice.nickname || 'New Plan';
+
+      // Update the subscription
+      const subscription = await stripe.subscriptions.update(id, {
+        items: [{
+          id: currentSubscription.items.data[0].id,
+          price: newPriceId,
+        }],
+        proration_behavior: 'create_prorations',
+      });
+
+      // Update subscription in database
+      await storage.updateSubscription(id, {
+        status: subscription.status,
+        plan_name: newPlanName,
+        price_id: newPriceId,
+        current_period_start: new Date(subscription.current_period_start * 1000),
+        current_period_end: new Date(subscription.current_period_end * 1000),
+      });
+
+      // Create payment record for the downgrade
+      await storage.createPaymentHistory({
+        user_id: parseInt(userId),
+        stripe_payment_intent_id: `downgrade_${id}_${Date.now()}`,
+        amount: 0, // Proration will be handled in separate invoice
+        currency: subscription.currency || 'usd',
+        status: 'succeeded',
+        description: `Plan downgraded from ${currentPlanName} to ${newPlanName}`,
+      });
+
+      res.json({
+        success: true,
+        subscription,
+        message: `Successfully downgraded from ${currentPlanName} to ${newPlanName}`,
+      });
+    } catch (error) {
+      console.error('Error downgrading subscription:', error);
+      res.status(500).json({ error: 'Failed to downgrade subscription' });
+    }
+  });
+
   // Cancel subscription (downgrade to free)
   app.post('/api/subscription/:id/cancel', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { userId } = req.body;
 
+      // Get current subscription details before canceling
+      const currentSubscription = await stripe.subscriptions.retrieve(id);
+      
       // Cancel the subscription at the end of the billing period
       const subscription = await stripe.subscriptions.update(id, {
         cancel_at_period_end: true,
@@ -812,6 +922,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'canceled',
         cancel_at_period_end: true,
       });
+
+      // Create a payment record for the cancellation
+      if (userId) {
+        const planName = currentSubscription.items.data[0].price.nickname || 'Unknown Plan';
+        
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          stripe_payment_intent_id: `cancel_${id}_${Date.now()}`,
+          amount: 0, // Cancellation doesn't involve a charge
+          currency: 'usd',
+          status: 'canceled',
+          description: `Subscription cancelled: ${planName} - Access continues until ${new Date(currentSubscription.current_period_end * 1000).toLocaleDateString()}`,
+        });
+      }
 
       res.json({ 
         success: true, 
