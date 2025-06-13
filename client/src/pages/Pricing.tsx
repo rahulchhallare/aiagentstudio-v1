@@ -207,7 +207,9 @@ export default function Pricing() {
       mostPopular: true,
       button: {
         text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
-              (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : "Get Started",
+              (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
+              (currentPlan.includes('pro') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
+              "Get Started",
         variant: "default" as const,
         onClick: () => {
           if ((currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
@@ -235,7 +237,9 @@ export default function Pricing() {
       ],
       button: {
         text: (currentPlan === 'enterprise-monthly' && billingInterval === 'monthly') || 
-              (currentPlan === 'enterprise-yearly' && billingInterval === 'yearly') ? "Current Plan" : "Contact Sales",
+              (currentPlan === 'enterprise-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
+              (currentPlan.includes('enterprise') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
+              "Contact Sales",
         variant: "outline" as const,
         onClick: () => {
           if ((currentPlan === 'enterprise-monthly' && billingInterval === 'monthly') || 
