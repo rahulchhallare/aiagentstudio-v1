@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,8 @@ export default function Pricing() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [userSubscription, setUserSubscription] = useState<any>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const { createCheckoutSession, isLoading } = usePayment();
   const { user } = useAuth();
 
@@ -55,6 +57,77 @@ export default function Pricing() {
     }
   };
 
+  // Fetch user subscription when user is available
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      if (!user?.id) {
+        setUserSubscription(null);
+        return;
+      }
+
+      setSubscriptionLoading(true);
+      try {
+        const response = await fetch(`/api/subscription/user/${user.id}`);
+        if (response.ok) {
+          const subscription = await response.json();
+          setUserSubscription(subscription);
+          console.log('User subscription:', subscription);
+        } else {
+          // No subscription found
+          setUserSubscription(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user subscription:', error);
+        setUserSubscription(null);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
+    fetchUserSubscription();
+  }, [user]);
+
+  // Determine if user has a specific plan
+  const getCurrentPlan = () => {
+    if (!userSubscription || userSubscription.status !== 'active') {
+      return 'free';
+    }
+
+    const planName = userSubscription.plan_name?.toLowerCase() || '';
+    const priceId = userSubscription.price_id || '';
+    
+    // Check for Pro plans
+    if (planName.includes('pro monthly') || (priceId.includes('pro') && planName.includes('monthly'))) {
+      return 'pro-monthly';
+    }
+    
+    if (planName.includes('pro yearly') || (priceId.includes('pro') && planName.includes('yearly'))) {
+      return 'pro-yearly';
+    }
+    
+    // Check for Enterprise plans
+    if (planName.includes('enterprise monthly') || (priceId.includes('enterprise') && planName.includes('monthly'))) {
+      return 'enterprise-monthly';
+    }
+    
+    if (planName.includes('enterprise yearly') || (priceId.includes('enterprise') && planName.includes('yearly'))) {
+      return 'enterprise-yearly';
+    }
+
+    // Fallback check for general pro/enterprise
+    if (planName.includes('pro')) {
+      return billingInterval === 'yearly' ? 'pro-yearly' : 'pro-monthly';
+    }
+    
+    if (planName.includes('enterprise')) {
+      return billingInterval === 'yearly' ? 'enterprise-yearly' : 'enterprise-monthly';
+    }
+
+    return 'free';
+  };
+
+  const currentPlan = getCurrentPlan();
+
   const plans = [
     {
       name: "Free",
@@ -67,7 +140,7 @@ export default function Pricing() {
         "Community support",
       ],
       button: {
-        text: user ? "Current Plan" : "Get Started",
+        text: currentPlan === 'free' ? "Current Plan" : "Get Started",
         variant: "outline" as const,
         onClick: () => {
           if (!user) {
@@ -92,9 +165,16 @@ export default function Pricing() {
       ],
       mostPopular: true,
       button: {
-        text: "Get Started",
+        text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
+              (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : "Get Started",
         variant: "default" as const,
-        onClick: () => handleSubscribe("pro"),
+        onClick: () => {
+          if ((currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
+              (currentPlan === 'pro-yearly' && billingInterval === 'yearly')) {
+            return; // Do nothing if it's the current plan
+          }
+          handleSubscribe("pro");
+        },
       },
       planType: "pro" as const,
     },
@@ -113,9 +193,16 @@ export default function Pricing() {
         "SLA guarantees",
       ],
       button: {
-        text: "Contact Sales",
+        text: (currentPlan === 'enterprise-monthly' && billingInterval === 'monthly') || 
+              (currentPlan === 'enterprise-yearly' && billingInterval === 'yearly') ? "Current Plan" : "Contact Sales",
         variant: "outline" as const,
-        onClick: () => handleSubscribe("enterprise"),
+        onClick: () => {
+          if ((currentPlan === 'enterprise-monthly' && billingInterval === 'monthly') || 
+              (currentPlan === 'enterprise-yearly' && billingInterval === 'yearly')) {
+            return; // Do nothing if it's the current plan
+          }
+          handleSubscribe("enterprise");
+        },
       },
       planType: "enterprise" as const,
     },
@@ -220,9 +307,10 @@ export default function Pricing() {
                   className={`w-full ${plan.mostPopular ? "bg-primary-600 hover:bg-primary-700" : ""}`}
                   variant={plan.button.variant}
                   onClick={plan.button.onClick}
-                  disabled={isLoading || (plan.name === "Free" && user)}
+                  disabled={isLoading || plan.button.text === "Current Plan" || subscriptionLoading}
                 >
-                  {isLoading && plan.planType ? "Processing..." : plan.button.text}
+                  {subscriptionLoading ? "Loading..." : 
+                   isLoading && plan.planType ? "Processing..." : plan.button.text}
                 </Button>
               </CardContent>
             </Card>
