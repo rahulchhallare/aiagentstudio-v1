@@ -57,6 +57,45 @@ export default function Pricing() {
     }
   };
 
+  const handleDowngradeToFree = async () => {
+    if (!user || !userSubscription) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/subscription/${userSubscription.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh subscription data
+        const fetchResponse = await fetch(`/api/subscription/user/${user.id}`);
+        if (fetchResponse.ok) {
+          const subscription = await fetchResponse.json();
+          setUserSubscription(subscription);
+        } else {
+          setUserSubscription(null);
+        }
+        
+        // Show success message
+        alert('Your subscription has been cancelled. You will continue to have access until the end of your billing period, then you will be moved to the Free plan.');
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to cancel subscription:', errorData);
+        alert('Failed to cancel subscription. Please try again or contact support.');
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      alert('Failed to cancel subscription. Please try again or contact support.');
+    }
+  };
+
   // Fetch user subscription when user is available
   useEffect(() => {
     const fetchUserSubscription = async () => {
@@ -181,12 +220,19 @@ export default function Pricing() {
         "Community support",
       ],
       button: {
-        text: currentPlan === 'free' ? "Current Plan" : "Get Started",
+        text: currentPlan === 'free' ? "Current Plan" : 
+              (user && currentPlan !== 'free') ? "Downgrade to Free" : "Get Started",
         variant: "outline" as const,
         onClick: () => {
           if (!user) {
             setShowSignupModal(true);
+          } else if (currentPlan !== 'free') {
+            // User wants to downgrade to free
+            if (confirm('Are you sure you want to cancel your subscription and downgrade to the Free plan? You will lose access to premium features at the end of your billing period.')) {
+              handleDowngradeToFree();
+            }
           }
+          // If user is already on free plan, do nothing (button shows "Current Plan")
         },
       },
       planType: null,

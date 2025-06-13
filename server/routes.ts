@@ -44,15 +44,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       case 'checkout.session.completed':
         const session = event.data.object;
         console.log('Payment was successful!', session);
-        
+
         try {
           // Get the subscription details
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
           const userId = parseInt(session.metadata?.userId || '0');
-          
+
           if (userId > 0) {
             const priceId = subscription.items.data[0].price.id;
-            
+
             // Map price ID to plan name
             let planName = 'Free';
             if (priceId === PRICE_IDS.PRO_MONTHLY) {
@@ -67,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Fallback to nickname if available
               planName = subscription.items.data[0].price.nickname || 'Unknown Plan';
             }
-            
+
             // Save subscription to database
             await storage.createSubscription({
               user_id: userId,
@@ -79,10 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               current_period_start: new Date(subscription.current_period_start * 1000),
               current_period_end: new Date(subscription.current_period_end * 1000),
             });
-            
+
             // Save payment history - use session amount if payment_intent is not available
             // Get plan name for payment description (reuse existing priceId variable)
-            
+
             let paymentRecord = {
               user_id: userId,
               amount: session.amount_total || 0,
@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'succeeded',
               description: `Subscription payment for ${planName}`,
             };
-            
+
             if (session.payment_intent) {
               try {
                 const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
@@ -110,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Use session ID as payment reference when payment_intent is not available
               paymentRecord.stripe_payment_intent_id = session.id;
             }
-            
+
             await storage.createPaymentHistory(paymentRecord);
             console.log('Payment history created:', paymentRecord);
           }
@@ -118,15 +118,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error saving checkout session data:', error);
         }
         break;
-        
+
       case 'invoice.payment_succeeded':
         const invoice = event.data.object;
         console.log('Invoice payment succeeded!', invoice);
-        
+
         try {
           // Try to get userId from subscription if not in metadata
           let userId = parseInt(invoice.metadata?.userId || '0');
-          
+
           if (userId === 0 && invoice.subscription) {
             try {
               const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
@@ -136,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error('Error retrieving subscription for user ID:', subError);
             }
           }
-          
+
           if (userId > 0) {
             const paymentRecord = {
               user_id: userId,
@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'succeeded',
               description: `Invoice payment for subscription ${invoice.subscription}`,
             };
-            
+
             await storage.createPaymentHistory(paymentRecord);
             console.log('Invoice payment history created:', paymentRecord);
           } else {
@@ -156,11 +156,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error saving invoice payment data:', error);
         }
         break;
-        
+
       case 'customer.subscription.updated':
         const updatedSubscription = event.data.object;
         console.log('Subscription updated!', updatedSubscription);
-        
+
         try {
           await storage.updateSubscription(updatedSubscription.id, {
             status: updatedSubscription.status,
@@ -171,11 +171,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error updating subscription:', error);
         }
         break;
-        
+
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object;
         console.log('Subscription was cancelled!', deletedSubscription);
-        
+
         try {
           await storage.updateSubscription(deletedSubscription.id, {
             status: 'canceled',
@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error updating cancelled subscription:', error);
         }
         break;
-        
+
       default:
         console.log(`Unhandled event type ${event.type}`);
     }
@@ -262,7 +262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google OAuth routes
   app.get("/api/auth/google", (req: Request, res: Response) => {
-   
+
     const scopes = [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile'
@@ -284,7 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!code) {
         return res.redirect('/?error=no_code');
       }
-      
+
       const { tokens } = await oauth2Client.getToken(code as string);
       oauth2Client.setCredentials(tokens);
 
@@ -717,19 +717,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  
+
 
   // Get user subscription
   app.get("/api/subscription/user/:userId", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      
+
       if (isNaN(userId)) {
         return res.status(400).json({ message: "Valid user ID is required" });
       }
 
       const subscription = await storage.getSubscriptionByUserId(userId);
-      
+
       if (!subscription) {
         return res.status(404).json({ message: "No subscription found" });
       }
@@ -745,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/payment-history/user/:userId", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      
+
       if (isNaN(userId)) {
         return res.status(400).json({ message: "Valid user ID is required" });
       }
@@ -784,3 +784,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+// Update subscription
+app.put('/api/subscription/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const subscription = await stripe.subscriptions.update(id, updateData);
+
+    res.json({ subscription });
+  } catch (error) {
+    console.error('Error updating subscription:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Cancel subscription (downgrade to free)
+app.post('/api/subscription/:id/cancel', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    // Cancel the subscription at the end of the billing period
+    const subscription = await stripe.subscriptions.update(id, {
+      cancel_at_period_end: true,
+    });
+
+    // Update the subscription status in your database
+    const { data: subscriptions, error: fetchError } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single();
+
+    if (!fetchError && subscriptions) {
+      const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({ 
+          status: 'cancelled',
+          cancel_at_period_end: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscriptions.id);
+
+      if (updateError) {
+        console.error('Error updating subscription in database:', updateError);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      subscription,
+      message: 'Subscription cancelled successfully. Access will continue until the end of the billing period.' 
+    });
+  } catch (error) {
+    console.error('Error cancelling subscription:', error);
+    res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
