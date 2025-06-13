@@ -19,37 +19,56 @@ export function usePayment() {
       return;
     }
 
+    console.log('Starting checkout session creation with price ID:', priceId);
     setIsLoading(true);
 
     try {
+      const requestBody = {
+        priceId,
+        userId: user.id,
+        email: user.email,
+      };
+      
+      console.log('Request body:', requestBody);
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          priceId,
-          userId: user.id,
-          email: user.email,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        const errorData = await response.text();
+        console.error('Response error:', errorData);
+        throw new Error(`Failed to create checkout session: ${response.status} ${errorData}`);
       }
 
-      const { sessionId } = await response.json();
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+      
+      const { sessionId } = responseData;
+
+      if (!sessionId) {
+        throw new Error('No session ID received from server');
+      }
 
       const stripe = await stripePromise;
       if (!stripe) {
         throw new Error('Stripe failed to load');
       }
 
+      console.log('Redirecting to checkout with session ID:', sessionId);
+      
       const { error } = await stripe.redirectToCheckout({
         sessionId,
       });
 
       if (error) {
+        console.error('Stripe redirect error:', error);
         throw error;
       }
     } catch (error: any) {

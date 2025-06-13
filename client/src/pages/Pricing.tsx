@@ -38,14 +38,22 @@ export default function Pricing() {
     }
 
     const priceId = priceIds[planType][billingInterval];
+    console.log('Plan type:', planType);
+    console.log('Billing interval:', billingInterval);
     console.log('Creating checkout session with price ID:', priceId);
+    console.log('Available price IDs:', priceIds);
     
     if (!priceId || !priceId.startsWith('price_')) {
       console.error('Invalid price ID:', priceId);
+      console.error('Plan type:', planType, 'Billing interval:', billingInterval);
       return;
     }
     
-    await createCheckoutSession(priceId);
+    try {
+      await createCheckoutSession(priceId);
+    } catch (error) {
+      console.error('Error in handleSubscribe:', error);
+    }
   };
 
   const plans = [
