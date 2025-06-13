@@ -254,6 +254,7 @@ export default function Pricing() {
       button: {
         text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
               (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
+              (currentPlan.includes('enterprise')) ? "Downgrade to Pro" :
               (currentPlan.includes('pro') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
               "Get Started",
         variant: "default" as const,
@@ -261,6 +262,13 @@ export default function Pricing() {
           if ((currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
               (currentPlan === 'pro-yearly' && billingInterval === 'yearly')) {
             return; // Do nothing if it's the current plan
+          }
+          if (currentPlan.includes('enterprise')) {
+            // Show confirmation for downgrade
+            if (confirm('Are you sure you want to downgrade from Enterprise to Pro? You will lose Enterprise features at the end of your billing period.')) {
+              handleSubscribe("pro");
+            }
+            return;
           }
           handleSubscribe("pro");
         },
