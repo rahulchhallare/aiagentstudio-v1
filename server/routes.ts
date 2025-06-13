@@ -200,7 +200,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.updateSubscription(deletedSubscription.id, {
             status: 'canceled',
+            cancel_at_period_end: false, // Reset since it's now actually canceled
           });
+          
+          // Create payment record for cancellation
+          let userId = parseInt(deletedSubscription.metadata?.userId || '0');
+          
+          if (userId > 0) {
+            const planName = deletedSubscription.items?.data?.[0]?.price?.nickname || 'Enterprise Monthly';
+            
+            await storage.createPaymentHistory({
+              user_id: userId,
+              stripe_payment_intent_id: `cancel_complete_${deletedSubscription.id}_${Date.now()}`,
+              amount: 0,
+              currency: 'usd',
+              status: 'canceled',
+              description: `Subscription fully canceled: ${planName}`,
+            });
+          }
         } catch (error) {
           console.error('Error updating cancelled subscription:', error);
         }
@@ -919,7 +936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update the subscription status in your database
       await storage.updateSubscription(id, {
-        status: 'canceled',
+        status: subscription.status, // Keep current status, will be 'active' until period ends
         cancel_at_period_end: true,
       });
 
@@ -929,11 +946,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         await storage.createPaymentHistory({
           user_id: parseInt(userId),
-          stripe_payment_intent_id: `cancel_${id}_${Date.now()}`,
+          stripe_payment_intent_id: `cancel_scheduled_${id}_${Date.now()}`,
           amount: 0, // Cancellation doesn't involve a charge
           currency: 'usd',
-          status: 'canceled',
-          description: `Subscription cancelled: ${planName} - Access continues until ${new Date(currentSubscription.current_period_end * 1000).toLocaleDateString()}`,
+          status: 'pending_cancellation',
+          description: `Subscription cancellation scheduled: ${planName} - Access continues until ${new Date(currentSubscription.current_period_end * 1000).toLocaleDateString()}`,
         });
       }
 
