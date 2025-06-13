@@ -22,8 +22,8 @@ export default function Pricing() {
   // Price IDs from your Stripe dashboard - use actual price IDs
   const priceIds = {
     pro: {
-      monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1QYy3GQTNP6FvxI89L0Lf7fI",
-      yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1QYy3wQTNP6FvxI8wz1xOTf9",
+      monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp",
+      yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp",
     },
     enterprise: {
       monthly: import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ",
