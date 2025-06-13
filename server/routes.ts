@@ -159,16 +159,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       case 'customer.subscription.updated':
         const updatedSubscription = event.data.object;
-        console.log('Subscription updated!', updatedSubscription);
+        console.log('Subscription updated:', {
+          subscriptionId: updatedSubscription.id,
+          status: updatedSubscription.status,
+          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end
+        });
 
         try {
           // Update subscription in database
-          await storage.updateSubscription(updatedSubscription.id, {
+          const dbUpdate = await storage.updateSubscription(updatedSubscription.id, {
             status: updatedSubscription.status,
             current_period_start: new Date(updatedSubscription.current_period_start * 1000),
             current_period_end: new Date(updatedSubscription.current_period_end * 1000),
             cancel_at_period_end: updatedSubscription.cancel_at_period_end || false,
           });
+          
+          console.log('Database subscription updated:', dbUpdate);
+
+          // If subscription is marked for cancellation, create a payment record
+          if (updatedSubscription.cancel_at_period_end && !updatedSubscription.metadata?.cancellation_recorded) {
+            let userId = parseInt(updatedSubscription.metadata?.userId || '0');
+            
+            if (userId > 0) {
+              const planName = updatedSubscription.items.data[0].price.nickname || 'Current Plan';
+              
+              await storage.createPaymentHistory({
+                user_id: userId,
+                stripe_payment_intent_id: `cancel_scheduled_${updatedSubscription.id}_${Date.now()}`,
+                amount: 0,
+                currency: 'usd',
+                status: 'pending_cancellation',
+                description: `Subscription cancellation scheduled: ${planName} - Access continues until ${new Date(updatedSubscription.current_period_end * 1000).toLocaleDateString()}`,
+              });
+              
+              console.log('Cancellation payment record created');
+            }
+          }
 
           // Check if this is a plan change and create payment record
           if (updatedSubscription.metadata?.plan_change === 'true') {
@@ -190,26 +216,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (error) {
           console.error('Error updating subscription:', error);
+          console.error('Error details:', error.message);
         }
         break;
 
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object;
-        console.log('Subscription was cancelled!', deletedSubscription);
+        console.log('Subscription deletion webhook received:', {
+          subscriptionId: deletedSubscription.id,
+          status: deletedSubscription.status,
+          cancelAtPeriodEnd: deletedSubscription.cancel_at_period_end
+        });
 
         try {
-          await storage.updateSubscription(deletedSubscription.id, {
+          // Update subscription status to canceled
+          const updatedSub = await storage.updateSubscription(deletedSubscription.id, {
             status: 'canceled',
             cancel_at_period_end: false, // Reset since it's now actually canceled
           });
+          
+          console.log('Subscription updated in database:', updatedSub);
           
           // Create payment record for cancellation
           let userId = parseInt(deletedSubscription.metadata?.userId || '0');
           
           if (userId > 0) {
-            const planName = deletedSubscription.items?.data?.[0]?.price?.nickname || 'Enterprise Monthly';
+            const planName = deletedSubscription.items?.data?.[0]?.price?.nickname || 'Canceled Plan';
             
-            await storage.createPaymentHistory({
+            const paymentRecord = await storage.createPaymentHistory({
               user_id: userId,
               stripe_payment_intent_id: `cancel_complete_${deletedSubscription.id}_${Date.now()}`,
               amount: 0,
@@ -217,9 +251,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'canceled',
               description: `Subscription fully canceled: ${planName}`,
             });
+            
+            console.log('Payment record created for cancellation:', paymentRecord);
+          } else {
+            console.warn('No user ID found in subscription metadata for cancellation tracking');
           }
         } catch (error) {
           console.error('Error updating cancelled subscription:', error);
+          console.error('Error details:', error.message);
         }
         break;
 
