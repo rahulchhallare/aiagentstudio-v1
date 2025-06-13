@@ -45,6 +45,7 @@ export const subscriptions = pgTable("subscriptions", {
   price_id: text("price_id").notNull(),
   current_period_start: timestamp("current_period_start").notNull(),
   current_period_end: timestamp("current_period_end").notNull(),
+  cancel_at_period_end: boolean("cancel_at_period_end").default(false),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

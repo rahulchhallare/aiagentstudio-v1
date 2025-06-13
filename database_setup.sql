@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   price_id TEXT NOT NULL,
   current_period_start TIMESTAMP NOT NULL,
   current_period_end TIMESTAMP NOT NULL,
+  cancel_at_period_end BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
