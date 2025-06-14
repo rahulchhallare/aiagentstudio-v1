@@ -159,22 +159,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       case 'customer.subscription.updated':
         const updatedSubscription = event.data.object;
-        console.log('Subscription updated:', {
+        console.log('Subscription updated webhook received:', {
           subscriptionId: updatedSubscription.id,
           status: updatedSubscription.status,
-          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end
+          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
+          currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000)
         });
 
         try {
-          // Update subscription in database
-          const dbUpdate = await storage.updateSubscription(updatedSubscription.id, {
+          // Update subscription in database - ensure cancel_at_period_end is properly handled
+          const updateData = {
             status: updatedSubscription.status,
             current_period_start: new Date(updatedSubscription.current_period_start * 1000),
             current_period_end: new Date(updatedSubscription.current_period_end * 1000),
-            cancel_at_period_end: updatedSubscription.cancel_at_period_end || false,
-          });
+            cancel_at_period_end: updatedSubscription.cancel_at_period_end === true,
+          };
           
-          console.log('Database subscription updated:', dbUpdate);
+          console.log('Updating database with:', updateData);
+          
+          const dbUpdate = await storage.updateSubscription(updatedSubscription.id, updateData);
+          
+          console.log('Database subscription updated successfully:', {
+            subscriptionId: updatedSubscription.id,
+            cancelAtPeriodEnd: updateData.cancel_at_period_end,
+            dbResult: dbUpdate
+          });
 
           // If subscription is marked for cancellation, create a payment record
           if (updatedSubscription.cancel_at_period_end && !updatedSubscription.metadata?.cancellation_recorded) {
@@ -965,19 +974,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { userId } = req.body;
 
+      console.log('Cancellation request received:', { subscriptionId: id, userId });
+
       // Get current subscription details before canceling
       const currentSubscription = await stripe.subscriptions.retrieve(id);
+      console.log('Current subscription before cancellation:', {
+        id: currentSubscription.id,
+        status: currentSubscription.status,
+        cancelAtPeriodEnd: currentSubscription.cancel_at_period_end
+      });
       
       // Cancel the subscription at the end of the billing period
       const subscription = await stripe.subscriptions.update(id, {
         cancel_at_period_end: true,
+        metadata: {
+          ...currentSubscription.metadata,
+          userId: userId?.toString() || currentSubscription.metadata?.userId,
+          cancellation_requested: new Date().toISOString()
+        }
+      });
+
+      console.log('Stripe subscription updated:', {
+        id: subscription.id,
+        status: subscription.status,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end
       });
 
       // Update the subscription status in your database
-      await storage.updateSubscription(id, {
+      const dbUpdate = await storage.updateSubscription(id, {
         status: subscription.status, // Keep current status, will be 'active' until period ends
         cancel_at_period_end: true,
+        current_period_end: new Date(subscription.current_period_end * 1000),
       });
+      
+      console.log('Database update result:', dbUpdate);
 
       // Create a payment record for the cancellation
       if (userId) {
