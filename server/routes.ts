@@ -176,6 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           
           console.log('Updating database with:', updateData);
+          console.log('Subscription ID for update:', updatedSubscription.id);
           
           const dbUpdate = await storage.updateSubscription(updatedSubscription.id, updateData);
           
@@ -184,6 +185,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             cancelAtPeriodEnd: updateData.cancel_at_period_end,
             dbResult: dbUpdate
           });
+          
+          // Verify the update by fetching the subscription
+          try {
+            const verifyUpdate = await storage.getSubscriptionByUserId(parseInt(updatedSubscription.metadata?.userId || '0'));
+            console.log('Verification check - subscription after update:', {
+              cancel_at_period_end: verifyUpdate?.cancel_at_period_end,
+              status: verifyUpdate?.status,
+              updated_at: verifyUpdate?.updated_at
+            });
+          } catch (verifyError) {
+            console.error('Error verifying update:', verifyError);
+          }
 
           // If subscription is marked for cancellation, create a payment record
           if (updatedSubscription.cancel_at_period_end && !updatedSubscription.metadata?.cancellation_recorded) {

@@ -330,6 +330,10 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateSubscription(stripeSubscriptionId: string, updates: any): Promise<any> {
+    console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
+    console.log('Stripe Subscription ID:', stripeSubscriptionId);
+    console.log('Updates to apply:', updates);
+    
     const { data, error } = await this.supabase
       .from('subscriptions')
       .update({ ...updates, updated_at: new Date() })
@@ -337,7 +341,15 @@ export class SupabaseStorage implements IStorage {
       .select()
       .single();
     
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('Supabase update error:', error);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      throw new Error(error.message);
+    }
+    
+    console.log('Supabase update successful:', data);
+    console.log('=== END UPDATE DEBUG ===');
     return data;
   }
 
