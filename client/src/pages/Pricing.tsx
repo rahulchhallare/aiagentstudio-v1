@@ -101,27 +101,35 @@ export default function Pricing() {
       return;
     }
 
-    // Use Stripe customer portal for managing subscription changes
     try {
-      const response = await fetch("/api/create-portal-session", {
-        method: "POST",
+      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ customerId: userSubscription.stripe_customer_id }),
+        body: JSON.stringify({
+          userId: user.id,
+        }),
       });
 
-      const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
+      if (response.ok) {
+        // Refresh subscription data
+        const fetchResponse = await fetch(`/api/subscription/user/${user.id}`);
+        if (fetchResponse.ok) {
+          const subscription = await fetchResponse.json();
+          setUserSubscription(subscription);
+        }
+        
+        // Show success message
+        alert('Your subscription has been scheduled for cancellation. You will continue to have access to Enterprise features until the end of your billing period, then you can subscribe to Pro.');
       } else {
-        console.error('No portal URL received');
-        alert('Failed to open billing portal. Please try again or contact support.');
+        const errorData = await response.text();
+        console.error('Failed to schedule cancellation:', errorData);
+        alert('Failed to schedule cancellation. Please try again or contact support.');
       }
     } catch (error) {
-      console.error('Error opening portal session:', error);
-      alert('Failed to open billing portal. Please try again or contact support.');
+      console.error('Error scheduling cancellation:', error);
+      alert('Failed to schedule cancellation. Please try again or contact support.');
     }
   };
 
@@ -283,7 +291,7 @@ export default function Pricing() {
       button: {
         text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
               (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
-              (currentPlan.includes('enterprise')) ? "Manage Subscription" :
+              (currentPlan.includes('enterprise')) ? "Cancel & Switch to Pro" :
               (currentPlan.includes('pro') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
               "Get Started",
         variant: "default" as const,
@@ -293,8 +301,10 @@ export default function Pricing() {
             return; // Do nothing if it's the current plan
           }
           if (currentPlan.includes('enterprise')) {
-            // Redirect to Stripe portal for subscription management
-            handleDowngradeToPro();
+            // Show confirmation for cancellation and handle it properly
+            if (confirm('Are you sure you want to cancel your Enterprise subscription? You will continue to have access until the end of your billing period, then you can subscribe to Pro.')) {
+              handleDowngradeToPro();
+            }
             return;
           }
           handleSubscribe("pro");
