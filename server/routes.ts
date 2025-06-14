@@ -956,7 +956,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get new price details
       const newPrice = await stripe.prices.retrieve(newPriceId);
-      const newPlanName = newPrice.nickname || 'New Plan';
+      
+      // Map price ID to proper plan name
+      let newPlanName = 'New Plan';
+      if (newPriceId === PRICE_IDS.PRO_MONTHLY) {
+        newPlanName = 'Pro Monthly';
+      } else if (newPriceId === PRICE_IDS.PRO_YEARLY) {
+        newPlanName = 'Pro Yearly';
+      } else if (newPriceId === PRICE_IDS.ENTERPRISE_MONTHLY) {
+        newPlanName = 'Enterprise Monthly';
+      } else if (newPriceId === PRICE_IDS.ENTERPRISE_YEARLY) {
+        newPlanName = 'Enterprise Yearly';
+      } else if (newPrice.nickname) {
+        newPlanName = newPrice.nickname;
+      }
 
       // Update the subscription
       const subscription = await stripe.subscriptions.update(id, {
