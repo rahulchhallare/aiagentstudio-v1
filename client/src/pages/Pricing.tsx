@@ -96,6 +96,46 @@ export default function Pricing() {
     }
   };
 
+  const handleDowngradeToPro = async () => {
+    if (!user || !userSubscription) {
+      return;
+    }
+
+    const priceId = priceIds.pro[billingInterval];
+    
+    try {
+      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/downgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newPriceId: priceId,
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh subscription data
+        const fetchResponse = await fetch(`/api/subscription/user/${user.id}`);
+        if (fetchResponse.ok) {
+          const subscription = await fetchResponse.json();
+          setUserSubscription(subscription);
+        }
+        
+        // Show success message
+        alert('Your subscription has been downgraded to Pro. Changes will take effect immediately.');
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to downgrade subscription:', errorData);
+        alert('Failed to downgrade subscription. Please try again or contact support.');
+      }
+    } catch (error) {
+      console.error('Error downgrading subscription:', error);
+      alert('Failed to downgrade subscription. Please try again or contact support.');
+    }
+  };
+
   // Fetch user subscription when user is available
   useEffect(() => {
     const fetchUserSubscription = async () => {
@@ -264,9 +304,9 @@ export default function Pricing() {
             return; // Do nothing if it's the current plan
           }
           if (currentPlan.includes('enterprise')) {
-            // Show confirmation for downgrade
+            // Show confirmation for downgrade and handle it properly
             if (confirm('Are you sure you want to downgrade from Enterprise to Pro? You will lose Enterprise features at the end of your billing period.')) {
-              handleSubscribe("pro");
+              handleDowngradeToPro();
             }
             return;
           }
