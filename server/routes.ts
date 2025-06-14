@@ -753,14 +753,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Customer ID is required" });
       }
 
+      // Check if customer exists first
+      const customer = await stripe.customers.retrieve(customerId);
+      if (!customer || customer.deleted) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${req.get('origin')}/billing`,
+        configuration: undefined, // Use default configuration
       });
 
       res.json({ url: portalSession.url });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating portal session:', error);
+      
+      // Check if it's a configuration error
+      if (error.message && error.message.includes('configuration')) {
+        return res.status(400).json({ 
+          message: 'Customer portal is not configured. Please configure your Stripe Customer Portal in the dashboard.',
+          configurationRequired: true
+        });
+      }
+      
       res.status(500).json({ message: 'Failed to create portal session' });
     }
   });

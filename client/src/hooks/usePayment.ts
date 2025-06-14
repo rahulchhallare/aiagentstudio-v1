@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +27,7 @@ export function usePayment() {
         userId: user.id,
         email: user.email,
       };
-      
+
       console.log('Request body:', requestBody);
 
       const response = await fetch('/api/create-checkout-session', {
@@ -40,7 +39,7 @@ export function usePayment() {
       });
 
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorData = await response.text();
         console.error('Response error:', errorData);
@@ -49,7 +48,7 @@ export function usePayment() {
 
       const responseData = await response.json();
       console.log('Response data:', responseData);
-      
+
       const { sessionId } = responseData;
 
       if (!sessionId) {
@@ -62,7 +61,7 @@ export function usePayment() {
       }
 
       console.log('Redirecting to checkout with session ID:', sessionId);
-      
+
       const { error } = await stripe.redirectToCheckout({
         sessionId,
       });
@@ -87,28 +86,34 @@ export function usePayment() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/create-portal-session', {
-        method: 'POST',
+      const response = await fetch("/api/create-portal-session", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          customerId,
-        }),
+        body: JSON.stringify({ customerId }),
       });
 
-      const { url } = await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error('Failed to create portal session');
+        if (data.configurationRequired) {
+          toast({
+            title: "Configuration Required",
+            description: "The billing portal is not configured yet. Please contact support or configure it in your Stripe dashboard.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(data.message || "Failed to create portal session");
       }
 
-      window.location.href = url;
+      window.location.href = data.url;
     } catch (error) {
       console.error('Error creating portal session:', error);
       toast({
         title: "Error",
-        description: "Failed to open billing portal. Please try again.",
+        description: "Failed to open billing portal. Please try again later.",
         variant: "destructive",
       });
     } finally {
