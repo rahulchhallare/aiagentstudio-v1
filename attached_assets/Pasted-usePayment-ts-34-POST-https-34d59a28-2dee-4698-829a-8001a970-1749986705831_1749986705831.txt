@@ -1,0 +1,46 @@
+usePayment.ts:34 
+            
+            
+           POST https://34d59a28-2dee-4698-829a-8001a9709ca3-00-18bl5upzhty49.janeway.replit.dev/api/create-checkout-session 400 (Bad Request)
+createCheckoutSession @ usePayment.ts:34
+handleSubscribe @ Pricing.tsx:54
+onClick @ Pricing.tsx:310
+callCallback2 @ chunk-RPCDYKBN.js?v=bd32ed25:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=bd32ed25:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=bd32ed25:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=bd32ed25:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=bd32ed25:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=bd32ed25:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=bd32ed25:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=bd32ed25:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=bd32ed25:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=bd32ed25:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=bd32ed25:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=bd32ed25:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=bd32ed25:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5449Understand this error
+usePayment.ts:42 Response status: 400
+usePayment.ts:46 Response error: {"message":"Invalid plan ID"}
+createCheckoutSession @ usePayment.ts:46
+await in createCheckoutSession
+handleSubscribe @ Pricing.tsx:54
+onClick @ Pricing.tsx:310
+callCallback2 @ chunk-RPCDYKBN.js?v=bd32ed25:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=bd32ed25:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=bd32ed25:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=bd32ed25:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=bd32ed25:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=bd32ed25:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=bd32ed25:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=bd32ed25:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=bd32ed25:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=bd32ed25:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=bd32ed25:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=bd32ed25:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=bd32ed25:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5449Understand this error
+usePayment.ts:124 Error creating checkout session: Error: Failed to create checkout session: 400 {"message":"Invalid plan ID"}
+    at createCheckoutSession (usePayment.ts:47:15)
+    at async handleSubscribe (Pricing.tsx:54:7)
