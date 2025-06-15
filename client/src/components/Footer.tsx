@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import logoPath from '@assets/image_1749638537646.png';
+import logoPath from "@assets/image_1749638537646.png";
 
 export default function Footer() {
   return (
@@ -139,6 +139,14 @@ export default function Footer() {
                   Security
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/refund-policy"
+                  className="hover:text-primary-600 transition-colors"
+                >
+                  Refund Policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -146,7 +154,11 @@ export default function Footer() {
         <div className="border-t border-gray-200 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
             <Link href="/" className="flex items-center">
-              <img src={logoPath} alt="AIAgentStudio.AI" className="h-8 w-auto" />
+              <img
+                src={logoPath}
+                alt="AIAgentStudio.AI"
+                className="h-8 w-auto"
+              />
             </Link>
           </div>
 

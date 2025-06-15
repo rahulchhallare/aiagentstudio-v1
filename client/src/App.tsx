@@ -31,6 +31,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import Security from "@/pages/Security";
 import UseCases from "@/pages/UseCases";
+import RefundPolicy from "@/pages/RefundPolicy";
 import Tutorials from "@/pages/Tutorials";
 import ApiReference from "@/pages/ApiReference";
 import CanvasHeader from "@/components/CanvasHeader";
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/terms-of-service" component={TermsOfService} />
       <Route path="/security" component={Security} />
+      <Route path="/refund-policy" component={RefundPolicy} />
       <Route path="/use-cases" component={UseCases} />
       <Route path="/tutorials" component={Tutorials} />
       <Route path="/api-reference" component={ApiReference} />
@@ -87,23 +89,23 @@ function App() {
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider>
             <div className="min-h-screen flex flex-col">
-              <CanvasHeader 
+              <CanvasHeader
                 onLoginClick={() => setIsLoginModalOpen(true)}
                 onSignupClick={() => setIsSignupModalOpen(true)}
               />
               <main className="flex-grow">
                 <Router />
               </main>
-              <LoginModal 
-                isOpen={isLoginModalOpen} 
+              <LoginModal
+                isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
                 onSignupClick={() => {
                   setIsLoginModalOpen(false);
                   setIsSignupModalOpen(true);
                 }}
               />
-              <SignupModal 
-                isOpen={isSignupModalOpen} 
+              <SignupModal
+                isOpen={isSignupModalOpen}
                 onClose={() => setIsSignupModalOpen(false)}
                 onLoginClick={() => {
                   setIsSignupModalOpen(false);
