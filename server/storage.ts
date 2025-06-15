@@ -316,6 +316,101 @@ export class SupabaseStorage implements IStorage {
     if (error) return [];
     return data || [];
   }
+
+  // Subscription methods
+  async createSubscription(subscription: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('subscriptions')
+      .insert(subscription)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async updateSubscription(stripeSubscriptionId: string, updates: any): Promise<any> {
+    console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
+    console.log('Stripe Subscription ID:', stripeSubscriptionId);
+    console.log('Updates to apply:', updates);
+    
+    const { data, error } = await this.supabase
+      .from('subscriptions')
+      .update({ ...updates, updated_at: new Date() })
+      .eq('stripe_subscription_id', stripeSubscriptionId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Supabase update error:', error);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      throw new Error(error.message);
+    }
+    
+    console.log('Supabase update successful:', data);
+    console.log('=== END UPDATE DEBUG ===');
+    return data;
+  }
+
+  async getSubscriptionByUserId(userId: number): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) return null;
+    return data;
+  }
+
+  // Payment history methods
+  async createPaymentHistory(payment: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('payment_history')
+      .insert(payment)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getPaymentHistoryByUserId(userId: number): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('payment_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) return [];
+    return data || [];
+  }
+
+  // Webhook event methods
+  async createWebhookEvent(event: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('webhook_events')
+      .insert(event)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getWebhookEvent(stripeEventId: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('webhook_events')
+      .select('*')
+      .eq('stripe_event_id', stripeEventId)
+      .single();
+    
+    if (error) return null;
+    return data;
+  }
 }
 
 // Use Supabase storage if credentials are available, otherwise fallback to MemStorage
