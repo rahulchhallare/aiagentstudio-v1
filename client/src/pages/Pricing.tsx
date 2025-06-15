@@ -20,15 +20,15 @@ export default function Pricing() {
   const { createCheckoutSession, isLoading } = usePayment();
   const { user } = useAuth();
 
-  // Price IDs from your Stripe dashboard - use actual price IDs
+  // Plan IDs for Razorpay - use frontend format that gets mapped to actual Razorpay plan IDs
   const priceIds = {
     pro: {
-      monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp",
-      yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp",
+      monthly: "pro-monthly", // Maps to plan_QhReRFpIgKH7uT
+      yearly: "pro-yearly",   // Maps to plan_pro_yearly
     },
     enterprise: {
-      monthly: import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ",
-      yearly: import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG",
+      monthly: "enterprise-monthly", // Maps to plan_enterprise_monthly
+      yearly: "enterprise-yearly",   // Maps to plan_enterprise_yearly
     },
   };
 
@@ -44,7 +44,7 @@ export default function Pricing() {
     console.log('Creating checkout session with price ID:', priceId);
     console.log('Available price IDs:', priceIds);
 
-    if (!priceId || !priceId.startsWith('price_')) {
+    if (!priceId) {
       console.error('Invalid price ID:', priceId);
       console.error('Plan type:', planType, 'Billing interval:', billingInterval);
       return;
@@ -184,29 +184,23 @@ export default function Pricing() {
     console.log('Status:', userSubscription.status);
     console.log('Full subscription:', userSubscription);
 
-    // Check against actual price IDs from our pricing config
-    const proMonthlyPriceId = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
-    const proYearlyPriceId = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
-    const enterpriseMonthlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ";
-    const enterpriseYearlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG";
-
-    // Check by price ID first (most reliable)
-    if (priceId === proMonthlyPriceId) {
+    // Check by price ID first (most reliable) - now using Razorpay plan IDs
+    if (priceId === 'plan_QhReRFpIgKH7uT' || priceId === 'pro-monthly') {
       console.log('✅ Detected Pro Monthly by price ID');
       return 'pro-monthly';
     }
 
-    if (priceId === proYearlyPriceId) {
+    if (priceId === 'plan_pro_yearly' || priceId === 'pro-yearly') {
       console.log('✅ Detected Pro Yearly by price ID');
       return 'pro-yearly';
     }
 
-    if (priceId === enterpriseMonthlyPriceId) {
+    if (priceId === 'plan_enterprise_monthly' || priceId === 'enterprise-monthly') {
       console.log('✅ Detected Enterprise Monthly by price ID');
       return 'enterprise-monthly';
     }
 
-    if (priceId === enterpriseYearlyPriceId) {
+    if (priceId === 'plan_enterprise_yearly' || priceId === 'enterprise-yearly') {
       console.log('✅ Detected Enterprise Yearly by price ID');
       return 'enterprise-yearly';
     }
