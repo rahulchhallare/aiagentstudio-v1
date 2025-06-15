@@ -798,7 +798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get new price details
       const newPrice = await stripe.prices.retrieve(newPriceId);
-      
+
       // Map price ID to proper plan name
       let newPlanName = 'New Plan';
       if (newPriceId === PRICE_IDS.PRO_MONTHLY) {
@@ -865,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'active', // Keep active until period ends
         cancel_at_period_end: true,
       });
-      
+
       console.log('Database update result:', dbUpdate);
 
       // Get subscription details for payment record

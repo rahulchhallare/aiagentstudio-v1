@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +7,22 @@ export function usePayment() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Map frontend plan names to actual Razorpay plan IDs
+  const mapPlanId = (planId: string): string => {
+    const planMapping: Record<string, string> = {
+      'pro-monthly': 'plan_pro_monthly',
+      'pro-yearly': 'plan_pro_yearly', 
+      'enterprise-monthly': 'plan_enterprise_monthly',
+      'enterprise-yearly': 'plan_enterprise_yearly',
+      'pro_monthly': 'plan_pro_monthly',
+      'pro_yearly': 'plan_pro_yearly',
+      'enterprise_monthly': 'plan_enterprise_monthly', 
+      'enterprise_yearly': 'plan_enterprise_yearly'
+    };
+
+    return planMapping[planId] || planId;
+  };
 
   const createCheckoutSession = async (planId: string) => {
     if (!user) {
@@ -23,8 +38,11 @@ export function usePayment() {
     setIsLoading(true);
 
     try {
+      const mappedPlanId = mapPlanId(planId);
+      console.log('Creating checkout session for plan:', planId, 'mapped to:', mappedPlanId);
+
       const requestBody = {
-        planId,
+        planId: mappedPlanId,
         userId: user.id,
         email: user.email,
       };
