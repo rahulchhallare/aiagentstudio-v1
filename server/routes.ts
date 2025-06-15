@@ -586,21 +586,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Plan ID, user ID, and email are required" });
       }
 
-      // Validate plan ID
-      const validPlanIds = Object.values(PLAN_IDS).filter(Boolean);
+      // Validate plan ID - accept both the PLAN_IDS values and the mapped format
+      const validPlanIds = [
+        ...Object.values(PLAN_IDS).filter(Boolean),
+        'plan_pro_monthly',
+        'plan_pro_yearly', 
+        'plan_enterprise_monthly',
+        'plan_enterprise_yearly'
+      ];
+      
       if (!validPlanIds.includes(planId)) {
+        console.log('Invalid plan ID received:', planId);
+        console.log('Valid plan IDs:', validPlanIds);
         return res.status(400).json({ message: "Invalid plan ID" });
       }
 
-      // Get plan pricing
+      // Get plan pricing - handle both original and mapped plan IDs
       let amount = 0;
-      if (planId === PLAN_IDS.PRO_MONTHLY) {
+      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly') {
         amount = PLAN_PRICING.PRO_MONTHLY;
-      } else if (planId === PLAN_IDS.PRO_YEARLY) {
+      } else if (planId === PLAN_IDS.PRO_YEARLY || planId === 'plan_pro_yearly') {
         amount = PLAN_PRICING.PRO_YEARLY;
-      } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+      } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY || planId === 'plan_enterprise_monthly') {
         amount = PLAN_PRICING.ENTERPRISE_MONTHLY;
-      } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY) {
+      } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY || planId === 'plan_enterprise_yearly') {
         amount = PLAN_PRICING.ENTERPRISE_YEARLY;
       }
 
