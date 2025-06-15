@@ -586,13 +586,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Plan ID, user ID, and email are required" });
       }
 
-      // Validate plan ID - accept both the PLAN_IDS values and the mapped format
+      // Validate plan ID - accept actual Razorpay plan IDs and mapped formats
       const validPlanIds = [
         ...Object.values(PLAN_IDS).filter(Boolean),
         'plan_pro_monthly',
         'plan_pro_yearly', 
         'plan_enterprise_monthly',
-        'plan_enterprise_yearly'
+        'plan_enterprise_yearly',
+        'plan_QhReRFpIgKH7uT' // Add the actual pro monthly plan ID
       ];
       
       if (!validPlanIds.includes(planId)) {
@@ -603,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get plan pricing - handle both original and mapped plan IDs
       let amount = 0;
-      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly') {
+      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly' || planId === 'plan_QhReRFpIgKH7uT') {
         amount = PLAN_PRICING.PRO_MONTHLY;
       } else if (planId === PLAN_IDS.PRO_YEARLY || planId === 'plan_pro_yearly') {
         amount = PLAN_PRICING.PRO_YEARLY;

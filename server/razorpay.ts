@@ -12,7 +12,7 @@ export const razorpay = new Razorpay({
 
 // Plan IDs for your subscription plans
 export const PLAN_IDS = {
-  PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID || "plan_pro_monthly",
+  PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID || "plan_QhReRFpIgKH7uT",
   PRO_YEARLY: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID || "plan_pro_yearly", 
   ENTERPRISE_MONTHLY: process.env.RAZORPAY_ENTERPRISE_MONTHLY_PLAN_ID || "plan_enterprise_monthly",
   ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID || "plan_enterprise_yearly",
