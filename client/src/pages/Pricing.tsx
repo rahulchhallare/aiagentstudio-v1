@@ -101,16 +101,13 @@ export default function Pricing() {
       return;
     }
 
-    const priceId = priceIds.pro[billingInterval];
-    
     try {
-      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/downgrade`, {
+      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          newPriceId: priceId,
           userId: user.id,
         }),
       });
@@ -124,15 +121,15 @@ export default function Pricing() {
         }
         
         // Show success message
-        alert('Your subscription has been downgraded to Pro. Changes will take effect immediately.');
+        alert('Your subscription has been scheduled for cancellation. You will continue to have access to Enterprise features until the end of your billing period, then you can subscribe to Pro.');
       } else {
         const errorData = await response.text();
-        console.error('Failed to downgrade subscription:', errorData);
-        alert('Failed to downgrade subscription. Please try again or contact support.');
+        console.error('Failed to schedule cancellation:', errorData);
+        alert('Failed to schedule cancellation. Please try again or contact support.');
       }
     } catch (error) {
-      console.error('Error downgrading subscription:', error);
-      alert('Failed to downgrade subscription. Please try again or contact support.');
+      console.error('Error scheduling cancellation:', error);
+      alert('Failed to schedule cancellation. Please try again or contact support.');
     }
   };
 
@@ -294,7 +291,7 @@ export default function Pricing() {
       button: {
         text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
               (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
-              (currentPlan.includes('enterprise')) ? "Downgrade to Pro" :
+              (currentPlan.includes('enterprise')) ? "Cancel & Switch to Pro" :
               (currentPlan.includes('pro') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
               "Get Started",
         variant: "default" as const,
@@ -304,8 +301,8 @@ export default function Pricing() {
             return; // Do nothing if it's the current plan
           }
           if (currentPlan.includes('enterprise')) {
-            // Show confirmation for downgrade and handle it properly
-            if (confirm('Are you sure you want to downgrade from Enterprise to Pro? You will lose Enterprise features at the end of your billing period.')) {
+            // Show confirmation for cancellation and handle it properly
+            if (confirm('Are you sure you want to cancel your Enterprise subscription? You will continue to have access until the end of your billing period, then you can subscribe to Pro.')) {
               handleDowngradeToPro();
             }
             return;
