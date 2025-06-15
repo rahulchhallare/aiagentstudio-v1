@@ -1,14 +1,15 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { stripePromise } from '@/lib/stripe';
+import { loadRazorpay, RAZORPAY_KEY_ID } from '@/lib/razorpay';
 
 export function usePayment() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const createCheckoutSession = async (priceId: string) => {
+  const createCheckoutSession = async (planId: string) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -18,12 +19,12 @@ export function usePayment() {
       return;
     }
 
-    console.log('Starting checkout session creation with price ID:', priceId);
+    console.log('Starting checkout session creation with plan ID:', planId);
     setIsLoading(true);
 
     try {
       const requestBody = {
-        priceId,
+        planId,
         userId: user.id,
         email: user.email,
       };
@@ -49,27 +50,76 @@ export function usePayment() {
       const responseData = await response.json();
       console.log('Response data:', responseData);
 
-      const { sessionId } = responseData;
+      const { orderId, amount, currency } = responseData;
 
-      if (!sessionId) {
-        throw new Error('No session ID received from server');
+      if (!orderId) {
+        throw new Error('No order ID received from server');
       }
 
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Stripe failed to load');
+      const Razorpay = await loadRazorpay();
+      if (!Razorpay) {
+        throw new Error('Razorpay failed to load');
       }
 
-      console.log('Redirecting to checkout with session ID:', sessionId);
+      console.log('Opening Razorpay checkout with order ID:', orderId);
 
-      const { error } = await stripe.redirectToCheckout({
-        sessionId,
-      });
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: amount,
+        currency: currency,
+        name: 'AIagentStudio.ai',
+        description: 'Subscription Payment',
+        order_id: orderId,
+        handler: async function (response: any) {
+          console.log('Payment success:', response);
+          // Verify payment on server
+          try {
+            const verifyResponse = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                userId: user.id,
+              }),
+            });
 
-      if (error) {
-        console.error('Stripe redirect error:', error);
-        throw error;
-      }
+            if (verifyResponse.ok) {
+              toast({
+                title: "Payment successful",
+                description: "Your subscription has been activated!",
+              });
+              // Redirect to billing page
+              window.location.href = '/billing';
+            } else {
+              throw new Error('Payment verification failed');
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            toast({
+              title: "Payment verification failed",
+              description: "Please contact support for assistance.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          name: user.username,
+          email: user.email,
+        },
+        notes: {
+          userId: user.id.toString(),
+        },
+        theme: {
+          color: '#3B82F6',
+        },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
       toast({
@@ -82,70 +132,31 @@ export function usePayment() {
     }
   };
 
-  const createPortalSession = async (customerId: string) => {
+  const cancelSubscription = async (subscriptionId: string) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/create-portal-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ customerId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.configurationRequired) {
-          toast({
-            title: "Configuration Required",
-            description: "The billing portal is not configured yet. Please contact support or configure it in your Stripe dashboard.",
-            variant: "destructive",
-          });
-          return;
-        }
-        throw new Error(data.message || "Failed to create portal session");
-      }
-
-      window.location.href = data.url;
-    } catch (error) {
-      console.error('Error creating portal session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to open billing portal. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateCustomer = async (customerId: string, invoiceSettings: any) => {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`/api/customer/${customerId}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/subscription/${subscriptionId}/cancel`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          invoice_settings: invoiceSettings,
+          userId: user?.id,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update customer');
+        throw new Error('Failed to cancel subscription');
       }
 
-      const { customer } = await response.json();
-      return customer;
+      const result = await response.json();
+      return result;
     } catch (error) {
-      console.error('Error updating customer:', error);
+      console.error('Error cancelling subscription:', error);
       toast({
         title: "Error",
-        description: "Failed to update customer settings. Please try again.",
+        description: "Failed to cancel subscription. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -185,8 +196,7 @@ export function usePayment() {
 
   return {
     createCheckoutSession,
-    createPortalSession,
-    updateCustomer,
+    cancelSubscription,
     updateSubscription,
     isLoading,
   };

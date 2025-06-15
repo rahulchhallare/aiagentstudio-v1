@@ -43,13 +43,13 @@ export default function Pricing() {
     console.log('Billing interval:', billingInterval);
     console.log('Creating checkout session with price ID:', priceId);
     console.log('Available price IDs:', priceIds);
-    
+
     if (!priceId || !priceId.startsWith('price_')) {
       console.error('Invalid price ID:', priceId);
       console.error('Plan type:', planType, 'Billing interval:', billingInterval);
       return;
     }
-    
+
     try {
       await createCheckoutSession(priceId);
     } catch (error) {
@@ -63,7 +63,7 @@ export default function Pricing() {
     }
 
     try {
-      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
+      const response = await fetch(`/api/subscription/${userSubscription.razorpay_subscription_id || userSubscription.stripe_subscription_id}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export default function Pricing() {
         } else {
           setUserSubscription(null);
         }
-        
+
         // Show success message
         alert('Your subscription has been cancelled. You will continue to have access until the end of your billing period, then you will be moved to the Free plan.');
       } else {
@@ -102,7 +102,7 @@ export default function Pricing() {
     }
 
     try {
-      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
+      const response = await fetch(`/api/subscription/${userSubscription.razorpay_subscription_id || userSubscription.stripe_subscription_id}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export default function Pricing() {
           const subscription = await fetchResponse.json();
           setUserSubscription(subscription);
         }
-        
+
         // Show success message
         alert('Your subscription has been scheduled for cancellation. You will continue to have access to Enterprise features until the end of your billing period, then you can subscribe to Pro.');
       } else {
@@ -147,7 +147,7 @@ export default function Pricing() {
       try {
         const response = await fetch(`/api/subscription/user/${user.id}`);
         console.log('📡 Subscription API response status:', response.status);
-        
+
         if (response.ok) {
           const subscription = await response.json();
           console.log('✅ Subscription data received:', subscription);
@@ -177,40 +177,40 @@ export default function Pricing() {
 
     const planName = userSubscription.plan_name?.toLowerCase() || '';
     const priceId = userSubscription.price_id || '';
-    
+
     console.log('=== PLAN DETECTION DEBUG ===');
     console.log('Plan name:', planName);
     console.log('Price ID:', priceId);
     console.log('Status:', userSubscription.status);
     console.log('Full subscription:', userSubscription);
-    
+
     // Check against actual price IDs from our pricing config
     const proMonthlyPriceId = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
     const proYearlyPriceId = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
     const enterpriseMonthlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ";
     const enterpriseYearlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG";
-    
+
     // Check by price ID first (most reliable)
     if (priceId === proMonthlyPriceId) {
       console.log('✅ Detected Pro Monthly by price ID');
       return 'pro-monthly';
     }
-    
+
     if (priceId === proYearlyPriceId) {
       console.log('✅ Detected Pro Yearly by price ID');
       return 'pro-yearly';
     }
-    
+
     if (priceId === enterpriseMonthlyPriceId) {
       console.log('✅ Detected Enterprise Monthly by price ID');
       return 'enterprise-monthly';
     }
-    
+
     if (priceId === enterpriseYearlyPriceId) {
       console.log('✅ Detected Enterprise Yearly by price ID');
       return 'enterprise-yearly';
     }
-    
+
     // Fallback to plan name detection
     if (planName.includes('pro')) {
       if (planName.includes('monthly')) {
@@ -225,7 +225,7 @@ export default function Pricing() {
       console.log('✅ Detected Pro by plan name (using current billing interval)');
       return billingInterval === 'yearly' ? 'pro-yearly' : 'pro-monthly';
     }
-    
+
     if (planName.includes('enterprise')) {
       if (planName.includes('monthly')) {
         console.log('✅ Detected Enterprise Monthly by plan name');
