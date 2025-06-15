@@ -11,11 +11,11 @@ export function usePayment() {
   // Map frontend plan names to actual Razorpay plan IDs
   const mapPlanId = (planId: string): string => {
     const planMapping: Record<string, string> = {
-      'pro-monthly': 'plan_pro_monthly',
+      'pro-monthly': 'plan_QhReRFpIgKH7uT', // Use actual Razorpay plan ID
       'pro-yearly': 'plan_pro_yearly', 
       'enterprise-monthly': 'plan_enterprise_monthly',
       'enterprise-yearly': 'plan_enterprise_yearly',
-      'pro_monthly': 'plan_pro_monthly',
+      'pro_monthly': 'plan_QhReRFpIgKH7uT', // Use actual Razorpay plan ID
       'pro_yearly': 'plan_pro_yearly',
       'enterprise_monthly': 'plan_enterprise_monthly', 
       'enterprise_yearly': 'plan_enterprise_yearly'

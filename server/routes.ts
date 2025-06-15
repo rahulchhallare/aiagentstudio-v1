@@ -593,7 +593,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'plan_pro_yearly', 
         'plan_enterprise_monthly',
         'plan_enterprise_yearly',
-        'plan_QhReRFpIgKH7uT' // Add the actual pro monthly plan ID
+        'plan_QhReRFpIgKH7uT', // Actual pro monthly plan ID
+        'pro-monthly',
+        'pro-yearly',
+        'enterprise-monthly', 
+        'enterprise-yearly'
       ];
       
       if (!validPlanIds.includes(planId)) {
@@ -604,13 +608,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get plan pricing - handle both original and mapped plan IDs
       let amount = 0;
-      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly' || planId === 'plan_QhReRFpIgKH7uT') {
+      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly' || planId === 'plan_QhReRFpIgKH7uT' || planId === 'pro-monthly') {
         amount = PLAN_PRICING.PRO_MONTHLY;
-      } else if (planId === PLAN_IDS.PRO_YEARLY || planId === 'plan_pro_yearly') {
+      } else if (planId === PLAN_IDS.PRO_YEARLY || planId === 'plan_pro_yearly' || planId === 'pro-yearly') {
         amount = PLAN_PRICING.PRO_YEARLY;
-      } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY || planId === 'plan_enterprise_monthly') {
+      } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY || planId === 'plan_enterprise_monthly' || planId === 'enterprise-monthly') {
         amount = PLAN_PRICING.ENTERPRISE_MONTHLY;
-      } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY || planId === 'plan_enterprise_yearly') {
+      } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY || planId === 'plan_enterprise_yearly' || planId === 'enterprise-yearly') {
         amount = PLAN_PRICING.ENTERPRISE_YEARLY;
       }
 
