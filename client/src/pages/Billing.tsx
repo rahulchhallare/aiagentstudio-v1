@@ -21,6 +21,7 @@ export default function Billing() {
   const [subscription, setSubscription] = useState<any>(null);
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
 
   // Redirect to welcome page if not authenticated
   useEffect(() => {
@@ -291,8 +292,6 @@ export default function Billing() {
   };
 
   const currentPlan = getCurrentPlan();
-
-  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
 
   const plans = [
     {
