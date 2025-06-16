@@ -100,6 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 status: subscription.status,
                 plan_name: planName,
                 plan_id: subscription.plan_id,
+                price_id: subscription.plan_id, // Add price_id field
                 current_period_start: new Date(subscription.current_start * 1000),
                 current_period_end: new Date(subscription.current_end * 1000),
               });
@@ -692,6 +693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'active',
           plan_name: planName,
           plan_id: planId,
+          price_id: planId, // Add price_id field (same as plan_id for Razorpay)
           current_period_start: now,
           current_period_end: periodEnd,
         });
