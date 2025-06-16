@@ -217,6 +217,45 @@ export function usePayment() {
     }
   };
 
+  const upgradeSubscription = async (subscriptionId: string, newPlanId: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/subscription/${subscriptionId}/upgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newPlanId,
+          userId: user?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upgrade subscription');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Upgrade Successful!",
+        description: result.message,
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error upgrading subscription:', error);
+      toast({
+        title: "Upgrade Failed",
+        description: "Failed to upgrade subscription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const createPortalSession = async (customerId?: string) => {
     // For Razorpay, we don't have a direct equivalent to Stripe's customer portal
     // This function is kept for compatibility but subscription management is handled directly in the billing page
@@ -227,6 +266,7 @@ export function usePayment() {
     createCheckoutSession,
     cancelSubscription,
     updateSubscription,
+    upgradeSubscription,
     createPortalSession,
     isLoading,
   };

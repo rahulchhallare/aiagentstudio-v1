@@ -14,7 +14,7 @@ export default function Billing() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { createCheckoutSession, createPortalSession, isLoading: paymentLoading } = usePayment();
+  const { cancelSubscription, upgradeSubscription, isLoading: paymentLoading } = usePayment();
   const { toast } = useToast();
   const [subscription, setSubscription] = useState<any>(null);
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
@@ -63,7 +63,7 @@ export default function Billing() {
     if (!subscription || !user) return;
 
     const confirmMessage = `Are you sure you want to cancel your ${subscription.plan_name} subscription? You will continue to have access until ${new Date(subscription.current_period_end).toLocaleDateString()}, then your account will be downgraded to the Free plan.`;
-    
+
     if (!confirm(confirmMessage)) return;
 
     try {
@@ -98,6 +98,46 @@ export default function Billing() {
       toast({
         title: "Error",
         description: "Failed to cancel subscription. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpgradeSubscription = async (newPlanId: string) => {
+    if (!subscription || !user) return;
+    try {
+      const response = await fetch(`/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          newPlanId: newPlanId,
+        }),
+      });
+  
+      if (response.ok) {
+        toast({
+          title: "Subscription upgraded",
+          description: "Your subscription has been upgraded.",
+        });
+        // Refresh billing data
+        fetchBillingData();
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to upgrade subscription:', errorData);
+        toast({
+          title: "Error",
+          description: "Failed to upgrade subscription. Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error upgrading subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upgrade subscription. Please try again or contact support.",
         variant: "destructive",
       });
     }
@@ -413,19 +453,13 @@ export default function Billing() {
                         >
                           {paymentLoading ? 'Loading...' : 'Downgrade to Free'}
                         </Button>
-                      ) : plan.name === 'Pro' && currentPlan.name === 'Enterprise' ? (
+                      ) : plan.name === 'Enterprise' && currentPlan.name === 'Pro' ? (
                         <Button 
-                          variant="outline" 
                           className="w-full"
-                          onClick={() => {
-                            const confirmMessage = "To downgrade from Enterprise to Pro, you'll need to cancel your current subscription and then subscribe to Pro. Would you like to cancel your Enterprise subscription now?";
-                            if (confirm(confirmMessage)) {
-                              handleCancelSubscription();
-                            }
-                          }}
-                          disabled={!subscription || paymentLoading}
+                          onClick={() => handleUpgradeSubscription('enterprise-monthly')}
+                          disabled={paymentLoading}
                         >
-                          {paymentLoading ? 'Loading...' : 'Downgrade to Pro'}
+                          {paymentLoading ? 'Upgrading...' : 'Upgrade to Enterprise'}
                         </Button>
                       ) : (
                         <Button 

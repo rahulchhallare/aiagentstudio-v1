@@ -868,6 +868,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upgrade subscription
+  app.post('/api/subscription/:id/upgrade', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPlanId, userId } = req.body;
+
+      if (!newPlanId || !userId) {
+        return res.status(400).json({ error: 'New plan ID and user ID are required' });
+      }
+
+      console.log('Upgrade request received:', { subscriptionId: id, newPlanId, userId });
+
+      // Get current subscription details
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
+      }
+
+      // Map plan ID to plan name and pricing
+      let newPlanName = 'Unknown Plan';
+      let newAmount = 0;
+      
+      if (newPlanId === PLAN_IDS.PRO_MONTHLY || newPlanId === 'pro-monthly') {
+        newPlanName = 'Pro Monthly';
+        newAmount = PLAN_PRICING.PRO_MONTHLY;
+      } else if (newPlanId === PLAN_IDS.PRO_YEARLY || newPlanId === 'pro-yearly') {
+        newPlanName = 'Pro Yearly';
+        newAmount = PLAN_PRICING.PRO_YEARLY;
+      } else if (newPlanId === PLAN_IDS.ENTERPRISE_MONTHLY || newPlanId === 'enterprise-monthly') {
+        newPlanName = 'Enterprise Monthly';
+        newAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
+      } else if (newPlanId === PLAN_IDS.ENTERPRISE_YEARLY || newPlanId === 'enterprise-yearly') {
+        newPlanName = 'Enterprise Yearly';
+        newAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      }
+
+      // Calculate prorated amount
+      const currentPeriodStart = new Date(subscription.current_period_start);
+      const currentPeriodEnd = new Date(subscription.current_period_end);
+      const now = new Date();
+      
+      // Calculate remaining days in current period
+      const totalDays = Math.ceil((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
+      const remainingDays = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Calculate current plan daily rate
+      let currentAmount = 0;
+      const currentPlanId = subscription.plan_id;
+      if (currentPlanId === PLAN_IDS.PRO_MONTHLY) {
+        currentAmount = PLAN_PRICING.PRO_MONTHLY;
+      } else if (currentPlanId === PLAN_IDS.PRO_YEARLY) {
+        currentAmount = PLAN_PRICING.PRO_YEARLY;
+      } else if (currentPlanId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+        currentAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
+      } else if (currentPlanId === PLAN_IDS.ENTERPRISE_YEARLY) {
+        currentAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      }
+
+      const currentDailyRate = currentAmount / totalDays;
+      const newDailyRate = newAmount / totalDays; // Assuming same period type
+      
+      // Calculate prorated upgrade cost
+      const unusedCredit = Math.round(currentDailyRate * remainingDays);
+      const upgradeCharge = Math.round(newDailyRate * remainingDays);
+      const proratedAmount = upgradeCharge - unusedCredit;
+
+      // Update subscription in database immediately for instant access
+      const updatedSubscription = await storage.updateSubscription(subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id, {
+        status: 'active',
+        plan_name: newPlanName,
+        plan_id: newPlanId,
+        price_id: newPlanId,
+        // Keep the same period dates for prorated upgrade
+        current_period_start: subscription.current_period_start,
+        current_period_end: subscription.current_period_end,
+      });
+
+      // Create payment record for the upgrade
+      if (proratedAmount > 0) {
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          razorpay_payment_id: `upgrade_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
+          amount: proratedAmount,
+          currency: 'inr',
+          status: 'succeeded',
+          description: `Subscription upgraded from ${subscription.plan_name} to ${newPlanName} (prorated)`,
+        });
+      } else {
+        // If downgrade, record as credit
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          razorpay_payment_id: `upgrade_credit_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
+          amount: Math.abs(proratedAmount),
+          currency: 'inr',
+          status: 'succeeded',
+          description: `Credit applied for upgrade from ${subscription.plan_name} to ${newPlanName}`,
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        subscription: updatedSubscription,
+        prorationDetails: {
+          currentPlan: subscription.plan_name,
+          newPlan: newPlanName,
+          remainingDays,
+          unusedCredit: unusedCredit / 100, // Convert to rupees
+          upgradeCharge: upgradeCharge / 100,
+          netAmount: proratedAmount / 100,
+        },
+        message: `Successfully upgraded from ${subscription.plan_name} to ${newPlanName}. You now have immediate access to ${newPlanName} features!` 
+      });
+    } catch (error) {
+      console.error('Error upgrading subscription:', error);
+      res.status(500).json({ error: 'Failed to upgrade subscription' });
+    }
+  });
+
   // Cancel subscription (downgrade to free)
   app.post('/api/subscription/:id/cancel', async (req: Request, res: Response) => {
     try {
