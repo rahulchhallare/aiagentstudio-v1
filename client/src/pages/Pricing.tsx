@@ -285,7 +285,7 @@ export default function Pricing() {
       button: {
         text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
               (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
-              (currentPlan.includes('enterprise')) ? "Cancel & Switch to Pro" :
+              (currentPlan.includes('enterprise')) ? "Downgrade to Pro" :
               (currentPlan.includes('pro') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
               "Get Started",
         variant: "default" as const,

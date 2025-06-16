@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard, Receipt, AlertTriangle } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export default function Billing() {
   const [, navigate] = useLocation();
@@ -290,6 +292,8 @@ export default function Billing() {
 
   const currentPlan = getCurrentPlan();
 
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
+
   const plans = [
     {
       name: 'Free',
@@ -301,12 +305,16 @@ export default function Billing() {
         'Basic templates',
         'Community support'
       ],
-      isCurrent: currentPlan.name === 'Free'
+      isCurrent: currentPlan.name === 'Free',
+      planId: null
     },
     {
       name: 'Pro',
-      price: '$29',
-      interval: 'month',
+      price: billingInterval === 'monthly' ? '$29' : '$290',
+      interval: billingInterval === 'monthly' ? 'month' : 'year',
+      yearlyPrice: '$290',
+      monthlyPrice: '$29',
+      savings: billingInterval === 'yearly' ? 'Save $58 per year' : '',
       features: [
         'Up to 10 AI agents',
         '1,000 API requests per month',
@@ -316,12 +324,18 @@ export default function Billing() {
         'Custom branding'
       ],
       popular: true,
-      isCurrent: currentPlan.name === 'Pro'
+      isCurrent: (currentPlan.name === 'Pro' && 
+                 ((billingInterval === 'monthly' && currentPlan.interval === 'month') || 
+                  (billingInterval === 'yearly' && currentPlan.interval === 'year'))),
+      planId: billingInterval === 'monthly' ? 'pro-monthly' : 'pro-yearly'
     },
     {
       name: 'Enterprise',
-      price: '$99',
-      interval: 'month',
+      price: billingInterval === 'monthly' ? '$99' : '$990',
+      interval: billingInterval === 'monthly' ? 'month' : 'year',
+      yearlyPrice: '$990',
+      monthlyPrice: '$99',
+      savings: billingInterval === 'yearly' ? 'Save $198 per year' : '',
       features: [
         'Unlimited AI agents',
         '10,000 API requests per month',
@@ -331,7 +345,10 @@ export default function Billing() {
         'Custom model training',
         'SLA guarantees'
       ],
-      isCurrent: currentPlan.name === 'Enterprise'
+      isCurrent: (currentPlan.name === 'Enterprise' && 
+                 ((billingInterval === 'monthly' && currentPlan.interval === 'month') || 
+                  (billingInterval === 'yearly' && currentPlan.interval === 'year'))),
+      planId: billingInterval === 'monthly' ? 'enterprise-monthly' : 'enterprise-yearly'
     }
   ];
 
@@ -415,8 +432,23 @@ export default function Billing() {
                 </CardContent>
               </Card>
 
-              <h2 className="text-xl font-bold mb-4">Available Plans</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Available Plans</h2>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="billing-toggle" className={`text-sm ${billingInterval === "monthly" ? "font-medium" : ""}`}>
+                    Monthly
+                  </Label>
+                  <Switch
+                    id="billing-toggle"
+                    checked={billingInterval === "yearly"}
+                    onCheckedChange={(checked) => setBillingInterval(checked ? "yearly" : "monthly")}
+                  />
+                  <Label htmlFor="billing-toggle" className={`text-sm ${billingInterval === "yearly" ? "font-medium" : ""}`}>
+                    Yearly <span className="text-green-600 text-xs font-medium">Save 20%</span>
+                  </Label>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
                 {plans.map((plan, index) => (
                   <Card key={index} className={plan.popular ? 'border-primary-500 relative' : ''}>
                     {plan.popular && (
@@ -429,6 +461,9 @@ export default function Billing() {
                       <CardDescription>
                         <span className="text-3xl font-bold">{plan.price}</span>
                         <span className="text-sm">/{plan.interval}</span>
+                        {plan.savings && (
+                          <p className="text-green-600 font-medium text-sm mt-1">{plan.savings}</p>
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -456,10 +491,19 @@ export default function Billing() {
                       ) : plan.name === 'Enterprise' && currentPlan.name === 'Pro' ? (
                         <Button 
                           className="w-full"
-                          onClick={() => handleUpgradeSubscription('enterprise-monthly')}
+                          onClick={() => handleUpgradeSubscription(plan.planId || 'enterprise-monthly')}
                           disabled={paymentLoading}
                         >
-                          {paymentLoading ? 'Upgrading...' : 'Upgrade to Enterprise'}
+                          {paymentLoading ? 'Upgrading...' : `Upgrade to Enterprise ${billingInterval === 'yearly' ? 'Yearly' : 'Monthly'}`}
+                        </Button>
+                      ) : plan.name === 'Pro' && currentPlan.name === 'Enterprise' ? (
+                        <Button 
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => handleCancelSubscription()}
+                          disabled={paymentLoading}
+                        >
+                          {paymentLoading ? 'Processing...' : `Downgrade to Pro ${billingInterval === 'yearly' ? 'Yearly' : 'Monthly'}`}
                         </Button>
                       ) : (
                         <Button 
