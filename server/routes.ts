@@ -876,22 +876,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Cancellation request received:', { subscriptionId: id, userId });
 
+      // First get the subscription details to find the correct ID
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
+      }
+
+      // Use the actual subscription ID from the database
+      const subscriptionIdToUpdate = subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id;
+      
+      console.log('Using subscription ID for update:', subscriptionIdToUpdate);
+
       // Update the subscription status in database
-      const dbUpdate = await storage.updateSubscription(id, {
+      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
         status: 'active', // Keep active until period ends
         cancel_at_period_end: true,
       });
 
       console.log('Database update result:', dbUpdate);
 
-      // Get subscription details for payment record
-      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
-
       // Create a payment record for the cancellation
-      if (userId && subscription) {
+      if (userId) {
         await storage.createPaymentHistory({
           user_id: parseInt(userId),
-          razorpay_payment_id: `cancel_scheduled_${id}_${Date.now()}`,
+          razorpay_payment_id: `cancel_scheduled_${subscriptionIdToUpdate}_${Date.now()}`,
           amount: 0, // Cancellation doesn't involve a charge
           currency: 'inr',
           status: 'pending_cancellation',
