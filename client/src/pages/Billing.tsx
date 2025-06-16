@@ -371,6 +371,9 @@ export default function Billing() {
 
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 overflow-y-auto">
+        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 text-center text-sm">
+          <p className="font-medium">Prices shown in USD. Payments processed in INR equivalent through Razorpay.</p>
+        </div>
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Billing</h1>

@@ -374,6 +374,9 @@ export default function Pricing() {
           <p className="font-medium">🧪 Test Mode Active - Use test card: 4242 4242 4242 4242</p>
         </div>
       )}
+      <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 text-center">
+        <p className="font-medium">💰 Prices shown in USD. Indian customers will be charged equivalent amount in INR (₹) through Razorpay.</p>
+      </div>
       <div className="container max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>

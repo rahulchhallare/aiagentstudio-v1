@@ -18,10 +18,22 @@ export const PLAN_IDS = {
   ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID || "plan_enterprise_yearly",
 };
 
+// USD to INR conversion rate (approximate - you may want to use a live rate)
+const USD_TO_INR_RATE = 83; // 1 USD = 83 INR (approximate)
+
 // Pricing for plans (in paise - Razorpay uses paise as base unit)
+// Converted from USD prices: $29 = ₹2407, $290 = ₹24070, $99 = ₹8217, $990 = ₹82170
 export const PLAN_PRICING = {
-  PRO_MONTHLY: 2900, // ₹29
-  PRO_YEARLY: 29000, // ₹290
-  ENTERPRISE_MONTHLY: 9900, // ₹99
-  ENTERPRISE_YEARLY: 99000, // ₹990
+  PRO_MONTHLY: Math.round(29 * USD_TO_INR_RATE * 100), // $29 = ₹2407 = 240700 paise
+  PRO_YEARLY: Math.round(290 * USD_TO_INR_RATE * 100), // $290 = ₹24070 = 2407000 paise
+  ENTERPRISE_MONTHLY: Math.round(99 * USD_TO_INR_RATE * 100), // $99 = ₹8217 = 821700 paise
+  ENTERPRISE_YEARLY: Math.round(990 * USD_TO_INR_RATE * 100), // $990 = ₹82170 = 8217000 paise
+};
+
+// USD prices for display on website
+export const USD_PRICES = {
+  PRO_MONTHLY: 29,
+  PRO_YEARLY: 290,
+  ENTERPRISE_MONTHLY: 99,
+  ENTERPRISE_YEARLY: 990,
 };

@@ -107,8 +107,8 @@ export function usePayment() {
 
             if (verifyResponse.ok) {
               toast({
-                title: "Payment successful",
-                description: "Your subscription has been activated!",
+                title: "Payment successful!",
+                description: "Your subscription has been activated. Amount charged in INR equivalent to USD pricing.",
               });
               // Redirect to billing page
               window.location.href = '/billing';
@@ -237,12 +237,12 @@ export function usePayment() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Upgrade Successful!",
         description: result.message,
       });
-      
+
       return result;
     } catch (error) {
       console.error('Error upgrading subscription:', error);
