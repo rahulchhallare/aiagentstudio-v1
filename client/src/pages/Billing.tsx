@@ -448,7 +448,7 @@ export default function Billing() {
                   </Label>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {plans.map((plan, index) => (
                   <Card key={index} className={plan.popular ? 'border-primary-500 relative' : ''}>
                     {plan.popular && (
