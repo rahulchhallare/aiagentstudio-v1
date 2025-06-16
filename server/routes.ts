@@ -898,13 +898,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create a payment record for the cancellation
       if (userId) {
+        // Convert current_period_end to Date if it's a string
+        let periodEndDate = subscription.current_period_end;
+        if (typeof periodEndDate === 'string') {
+          periodEndDate = new Date(periodEndDate);
+        }
+        
+        const formattedEndDate = periodEndDate instanceof Date && !isNaN(periodEndDate.getTime()) 
+          ? periodEndDate.toLocaleDateString() 
+          : 'end of billing period';
+
         await storage.createPaymentHistory({
           user_id: parseInt(userId),
           razorpay_payment_id: `cancel_scheduled_${subscriptionIdToUpdate}_${Date.now()}`,
           amount: 0, // Cancellation doesn't involve a charge
           currency: 'inr',
           status: 'pending_cancellation',
-          description: `Subscription cancellation scheduled: ${subscription.plan_name} - Access continues until ${subscription.current_period_end?.toLocaleDateString()}`,
+          description: `Subscription cancellation scheduled: ${subscription.plan_name} - Access continues until ${formattedEndDate}`,
         });
       }
 
