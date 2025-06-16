@@ -36,7 +36,7 @@ export default function Billing() {
 
   const fetchBillingData = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       // Fetch subscription data
@@ -88,7 +88,7 @@ export default function Billing() {
     // Determine plan based on plan_name first, then fallback to price_id
     const planName = subscription.plan_name?.toLowerCase() || '';
     const priceId = subscription.price_id || '';
-    
+
     // Check for Pro plans
     if (planName.includes('pro monthly') || priceId.includes('pro') && planName.includes('monthly')) {
       return {
@@ -105,7 +105,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     if (planName.includes('pro yearly') || priceId.includes('pro') && planName.includes('yearly')) {
       return {
         name: 'Pro',
@@ -121,7 +121,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     // Check for Enterprise plans
     if (planName.includes('enterprise monthly') || priceId.includes('enterprise') && planName.includes('monthly')) {
       return {
@@ -139,7 +139,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     if (planName.includes('enterprise yearly') || priceId.includes('enterprise') && planName.includes('yearly')) {
       return {
         name: 'Enterprise',
@@ -173,7 +173,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     if (planName.includes('enterprise')) {
       return {
         name: 'Enterprise',
@@ -268,7 +268,7 @@ export default function Billing() {
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Sidebar */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
+
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 overflow-y-auto">
         <div className="p-6">
@@ -276,7 +276,7 @@ export default function Billing() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Billing</h1>
             <p className="text-gray-600">Manage your subscription plan and billing details</p>
           </div>
-          
+
           <Tabs defaultValue="subscription" className="w-full">
             <TabsList className="grid grid-cols-3 w-full md:w-auto mb-8">
               <TabsTrigger value="subscription" className="flex items-center">
@@ -292,7 +292,7 @@ export default function Billing() {
                 <span>Usage</span>
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="subscription">
               <Card className="mb-8">
                 <CardHeader>
@@ -318,7 +318,7 @@ export default function Billing() {
                       {subscription && subscription.status === 'active' ? (
                         <Button 
                           variant="outline"
-                          onClick={() => createPortalSession(subscription.stripe_customer_id)}
+                          onClick={() => createPortalSession(subscription.razorpay_customer_id)}
                           disabled={paymentLoading}
                         >
                           {paymentLoading ? 'Loading...' : 'Manage Subscription'}
@@ -330,7 +330,7 @@ export default function Billing() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <h2 className="text-xl font-bold mb-4">Available Plans</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {plans.map((plan, index) => (
@@ -364,7 +364,7 @@ export default function Billing() {
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => subscription && createPortalSession(subscription.stripe_customer_id)}
+                          onClick={() => subscription && createPortalSession(subscription.razorpay_customer_id)}
                           disabled={!subscription || paymentLoading}
                         >
                           {paymentLoading ? 'Loading...' : 'Downgrade'}
@@ -373,7 +373,7 @@ export default function Billing() {
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => subscription && createPortalSession(subscription.stripe_customer_id)}
+                          onClick={() => subscription && createPortalSession(subscription.razorpay_customer_id)}
                           disabled={!subscription || paymentLoading}
                         >
                           {paymentLoading ? 'Loading...' : 'Downgrade to Pro'}
@@ -395,7 +395,7 @@ export default function Billing() {
                 ))}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="invoices">
               <Card>
                 <CardHeader>
@@ -444,7 +444,7 @@ export default function Billing() {
                 </CardFooter>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="usage">
               <Card>
                 <CardHeader>
@@ -463,7 +463,7 @@ export default function Billing() {
                       </div>
                       <p className="text-sm text-gray-500 mt-1">43% of your monthly limit</p>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Active Agents</h3>
                       <div className="flex items-center">
@@ -474,7 +474,7 @@ export default function Billing() {
                       </div>
                       <p className="text-sm text-gray-500 mt-1">50% of your allowed agents</p>
                     </div>
-                    
+
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <h3 className="font-medium">Need more resources?</h3>
                       <p className="text-sm text-gray-600 mt-1 mb-3">Upgrade your plan to get higher limits and additional features.</p>

@@ -161,6 +161,7 @@ export function usePayment() {
         },
         body: JSON.stringify({
           userId: user?.id,
+          razorpay_subscription_id: subscriptionId,
         }),
       });
 
@@ -169,6 +170,10 @@ export function usePayment() {
       }
 
       const result = await response.json();
+      toast({
+        title: "Success",
+        description: "Subscription cancelled successfully.",
+      });
       return result;
     } catch (error) {
       console.error('Error cancelling subscription:', error);
@@ -212,10 +217,17 @@ export function usePayment() {
     }
   };
 
+  const createPortalSession = async (customerId?: string) => {
+    // For Razorpay, we don't have a direct equivalent to Stripe's customer portal
+    // Instead, we can redirect to the billing page or show subscription management options
+    window.location.href = '/billing';
+  };
+
   return {
     createCheckoutSession,
     cancelSubscription,
     updateSubscription,
+    createPortalSession,
     isLoading,
   };
 }
