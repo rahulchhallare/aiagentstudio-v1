@@ -13,11 +13,46 @@ import { z } from "zod";
 import { OAuth2Client } from 'google-auth-library';
 import { razorpay, PLAN_IDS, PLAN_PRICING } from './razorpay';
 import crypto from 'crypto';
+import axios from 'axios';
 
 
 // Helper to validate request body with Zod schema
 function validateBody<T>(schema: z.ZodType<T>, body: unknown): T {
   return schema.parse(body);
+}
+
+// Function to fetch live plan pricing
+async function getPlanPricing(): Promise<{
+  PRO_MONTHLY: number;
+  PRO_YEARLY: number;
+  ENTERPRISE_MONTHLY: number;
+  ENTERPRISE_YEARLY: number;
+}> {
+  try {
+    // Fetch current exchange rates from a reliable API
+    const response = await axios.get(
+      `https://open.er-api.com/v6/latest/USD`
+    );
+    const exchangeRates = response.data.rates;
+    const inrRate = exchangeRates.INR;
+
+    // Adjust plan pricing based on current exchange rate (example)
+    const PRO_MONTHLY = Math.round(29 * inrRate * 100); // $29 USD
+    const PRO_YEARLY = Math.round(299 * inrRate * 100); // $299 USD
+    const ENTERPRISE_MONTHLY = Math.round(99 * inrRate * 100); // $99 USD
+    const ENTERPRISE_YEARLY = Math.round(999 * inrRate * 100); // $999 USD
+
+    return {
+      PRO_MONTHLY,
+      PRO_YEARLY,
+      ENTERPRISE_MONTHLY,
+      ENTERPRISE_YEARLY,
+    };
+  } catch (error) {
+    console.error("Error fetching exchange rates:", error);
+    // Return default pricing in case of API failure
+    return PLAN_PRICING;
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -600,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'enterprise-monthly', 
         'enterprise-yearly'
       ];
-      
+
       if (!validPlanIds.includes(planId)) {
         console.log('Invalid plan ID received:', planId);
         console.log('Valid plan IDs:', validPlanIds);
@@ -718,10 +753,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current USD to INR exchange rate
+  app.get('/api/exchange-rate', async (req: Request, res: Response) => {
+    try {
+      const livePricing = await getPlanPricing();
+      // Calculate the current rate from live pricing
+      const currentRate = livePricing.PRO_MONTHLY / (29 * 100); // Reverse calculate from pro monthly
 
+      res.json({
+        rate: currentRate,
+        timestamp: Date.now(),
+        message: 'Current USD to INR exchange rate'
+      });
+    } catch (error) {
+      console.error('Error fetching exchange rate:', error);
+      res.status(500).json({ error: 'Failed to fetch exchange rate' });
+    }
+  });
 
-  // Get user subscription
-  app.get("/api/subscription/user/:userId", async (req: Request, res: Response) => {
+  // Get subscription by user ID
+  app.get('/api/subscription/user/:userId', async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
 
@@ -882,7 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get current subscription details
       const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
-      
+
       if (!subscription) {
         return res.status(404).json({ error: 'Subscription not found' });
       }
@@ -890,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map plan ID to plan name and pricing
       let newPlanName = 'Unknown Plan';
       let newAmount = 0;
-      
+
       if (newPlanId === PLAN_IDS.PRO_MONTHLY || newPlanId === 'pro-monthly') {
         newPlanName = 'Pro Monthly';
         newAmount = PLAN_PRICING.PRO_MONTHLY;
@@ -909,11 +960,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentPeriodStart = new Date(subscription.current_period_start);
       const currentPeriodEnd = new Date(subscription.current_period_end);
       const now = new Date();
-      
+
       // Calculate remaining days in current period
       const totalDays = Math.ceil((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
       const remainingDays = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Calculate current plan daily rate
       let currentAmount = 0;
       const currentPlanId = subscription.plan_id;
@@ -929,7 +980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const currentDailyRate = currentAmount / totalDays;
       const newDailyRate = newAmount / totalDays; // Assuming same period type
-      
+
       // Calculate prorated upgrade cost
       const unusedCredit = Math.round(currentDailyRate * remainingDays);
       const upgradeCharge = Math.round(newDailyRate * remainingDays);
@@ -997,14 +1048,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // First get the subscription details to find the correct ID
       const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
-      
+
       if (!subscription) {
         return res.status(404).json({ error: 'Subscription not found' });
       }
 
       // Use the actual subscription ID from the database
       const subscriptionIdToUpdate = subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id;
-      
+
       console.log('Using subscription ID for update:', subscriptionIdToUpdate);
 
       // Update the subscription status in database
@@ -1022,7 +1073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (typeof periodEndDate === 'string') {
           periodEndDate = new Date(periodEndDate);
         }
-        
+
         const formattedEndDate = periodEndDate instanceof Date && !isNaN(periodEndDate.getTime()) 
           ? periodEndDate.toLocaleDateString() 
           : 'end of billing period';
@@ -1045,6 +1096,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error cancelling subscription:', error);
       res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+  });
+
+  // Create subscription
+  app.post('/api/subscription/create', async (req: Request, res: Response) => {
+    const { userId, planId, customerEmail, customerName } = req.body;
+
+    try {
+      // Get live pricing based on plan
+      const livePricing = await getPlanPricing();
+      let amount: number;
+      let planName: string;
+      let interval: string;
+
+      switch (planId) {
+        case 'pro-monthly':
+          amount = livePricing.PRO_MONTHLY;
+          planName = 'Pro Monthly';
+          interval = 'monthly';
+          break;
+        case 'pro-yearly':
+          amount = livePricing.PRO_YEARLY;
+          planName = 'Pro Yearly';
+          interval = 'yearly';
+          break;
+        case 'enterprise-monthly':
+          amount = livePricing.ENTERPRISE_MONTHLY;
+          planName = 'Enterprise Monthly';
+          interval = 'monthly';
+          break;
+        case 'enterprise-yearly':
+          amount = livePricing.ENTERPRISE_YEARLY;
+          planName = 'Enterprise Yearly';
+          interval = 'yearly';
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid plan ID' });
+      }
+
+      // // Create a customer in Stripe
+      // const customer = await stripe.customers.create({
+      //   email: customerEmail,
+      //   name: customerName,
+      // });
+
+      // // Create a subscription in Stripe
+      // const subscription = await stripe.subscriptions.create({
+      //   customer: customer.id,
+      //   items: [{ plan: planId }],
+      //   payment_behavior: 'default_incomplete',
+      //   expand: ['latest_invoice.payment_intent'],
+      // });
+
+      // // Save the subscription to the database
+      // await storage.createSubscription({
+      //   user_id: userId,
+      //   stripe_subscription_id: subscription.id,
+      //   stripe_customer_id: customer.id,
+      //   status: subscription.status,
+      //   plan_name: planName,
+      //   price_id: planId,
+      //   current_period_start: new Date(subscription.current_period_start * 1000),
+      //   current_period_end: new Date(subscription.current_period_end * 1000),
+      // });
+
+      // res.json({
+      //   success: true,
+      //   subscriptionId: subscription.id,
+      //   clientSecret: (subscription.latest_invoice?.payment_intent as any)?.client_secret,
+      //   message: `Successfully subscribed to ${planName}!`
+      // });
+
+      res.status(500).json({ message: 'This route is not implemented yet. Use /api/create-checkout-session and /api/verify-payment instead.' });
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ error: 'Failed to create subscription' });
     }
   });
 

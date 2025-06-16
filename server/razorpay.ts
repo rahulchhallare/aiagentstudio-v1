@@ -18,16 +18,76 @@ export const PLAN_IDS = {
   ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID || "plan_enterprise_yearly",
 };
 
-// USD to INR conversion rate (approximate - you may want to use a live rate)
-const USD_TO_INR_RATE = 83; // 1 USD = 83 INR (approximate)
+// Cache for exchange rate (refreshed every hour)
+let cachedExchangeRate: { rate: number; timestamp: number } | null = null;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
-// Pricing for plans (in paise - Razorpay uses paise as base unit)
-// Converted from USD prices: $29 = ₹2407, $290 = ₹24070, $99 = ₹8217, $990 = ₹82170
+// Function to get live USD to INR exchange rate
+async function getUSDToINRRate(): Promise<number> {
+  // Check if we have a valid cached rate
+  if (cachedExchangeRate && 
+      Date.now() - cachedExchangeRate.timestamp < CACHE_DURATION) {
+    console.log('Using cached exchange rate:', cachedExchangeRate.rate);
+    return cachedExchangeRate.rate;
+  }
+
+  try {
+    // Using exchangerate-api.com (free tier: 1500 requests/month)
+    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    
+    if (!response.ok) {
+      throw new Error(`Exchange rate API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const rate = data.rates.INR;
+    
+    if (!rate || typeof rate !== 'number') {
+      throw new Error('Invalid exchange rate data received');
+    }
+    
+    // Cache the rate
+    cachedExchangeRate = {
+      rate: rate,
+      timestamp: Date.now()
+    };
+    
+    console.log('Fetched new exchange rate:', rate);
+    return rate;
+    
+  } catch (error) {
+    console.error('Failed to fetch live exchange rate:', error);
+    
+    // Fallback to cached rate if available
+    if (cachedExchangeRate) {
+      console.log('Using cached fallback rate:', cachedExchangeRate.rate);
+      return cachedExchangeRate.rate;
+    }
+    
+    // Final fallback to hardcoded rate
+    console.log('Using hardcoded fallback rate: 83');
+    return 83;
+  }
+}
+
+// Function to get plan pricing with live rates
+export async function getPlanPricing() {
+  const exchangeRate = await getUSDToINRRate();
+  
+  return {
+    PRO_MONTHLY: Math.round(29 * exchangeRate * 100), // Convert to paise
+    PRO_YEARLY: Math.round(290 * exchangeRate * 100),
+    ENTERPRISE_MONTHLY: Math.round(99 * exchangeRate * 100),
+    ENTERPRISE_YEARLY: Math.round(990 * exchangeRate * 100),
+  };
+}
+
+// Static pricing for immediate use (will be updated by live rates)
 export const PLAN_PRICING = {
-  PRO_MONTHLY: Math.round(29 * USD_TO_INR_RATE * 100), // $29 = ₹2407 = 240700 paise
-  PRO_YEARLY: Math.round(290 * USD_TO_INR_RATE * 100), // $290 = ₹24070 = 2407000 paise
-  ENTERPRISE_MONTHLY: Math.round(99 * USD_TO_INR_RATE * 100), // $99 = ₹8217 = 821700 paise
-  ENTERPRISE_YEARLY: Math.round(990 * USD_TO_INR_RATE * 100), // $990 = ₹82170 = 8217000 paise
+  PRO_MONTHLY: 240700, // Fallback values in paise
+  PRO_YEARLY: 2407000,
+  ENTERPRISE_MONTHLY: 821700,
+  ENTERPRISE_YEARLY: 8217000,
 };
 
 // USD prices for display on website

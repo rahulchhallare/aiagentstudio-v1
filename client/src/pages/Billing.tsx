@@ -12,6 +12,43 @@ import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
+// Component to show current exchange rate
+function ExchangeRateInfo() {
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        const response = await fetch('/api/exchange-rate');
+        if (response.ok) {
+          const data = await response.json();
+          setExchangeRate(data.rate);
+        }
+      } catch (error) {
+        console.error('Failed to fetch exchange rate:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExchangeRate();
+  }, []);
+
+  return (
+    <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 text-center text-sm">
+      <p className="font-medium">
+        Prices shown in USD. Payments processed in INR equivalent through Razorpay.
+        {!loading && exchangeRate && (
+          <span className="block text-xs mt-1">
+            Current rate: 1 USD = ₹{exchangeRate.toFixed(2)} (Live rate updated hourly)
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
 export default function Billing() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
@@ -371,9 +408,7 @@ export default function Billing() {
 
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 overflow-y-auto">
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 text-center text-sm">
-          <p className="font-medium">Prices shown in USD. Payments processed in INR equivalent through Razorpay.</p>
-        </div>
+        <ExchangeRateInfo />
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Billing</h1>
