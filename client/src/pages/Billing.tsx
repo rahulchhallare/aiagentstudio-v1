@@ -59,6 +59,50 @@ export default function Billing() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    if (!subscription || !user) return;
+
+    const confirmMessage = `Are you sure you want to cancel your ${subscription.plan_name} subscription? You will continue to have access until ${new Date(subscription.current_period_end).toLocaleDateString()}, then your account will be downgraded to the Free plan.`;
+    
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await fetch(`/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Subscription cancelled",
+          description: "Your subscription has been cancelled. You'll retain access until the end of your billing period.",
+        });
+        // Refresh billing data
+        fetchBillingData();
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to cancel subscription:', errorData);
+        toast({
+          title: "Error",
+          description: "Failed to cancel subscription. Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel subscription. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -318,13 +362,13 @@ export default function Billing() {
                       {subscription && subscription.status === 'active' ? (
                         <Button 
                           variant="outline"
-                          onClick={() => createPortalSession(subscription.razorpay_customer_id)}
+                          onClick={() => handleCancelSubscription()}
                           disabled={paymentLoading}
                         >
-                          {paymentLoading ? 'Loading...' : 'Manage Subscription'}
+                          {paymentLoading ? 'Loading...' : 'Cancel Subscription'}
                         </Button>
                       ) : (
-                        <Button variant="outline">Change Plan</Button>
+                        <Button variant="outline" onClick={() => navigate('/pricing')}>Change Plan</Button>
                       )}
                     </div>
                   </div>
@@ -364,16 +408,21 @@ export default function Billing() {
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => subscription && createPortalSession(subscription.razorpay_customer_id)}
+                          onClick={() => handleCancelSubscription()}
                           disabled={!subscription || paymentLoading}
                         >
-                          {paymentLoading ? 'Loading...' : 'Downgrade'}
+                          {paymentLoading ? 'Loading...' : 'Downgrade to Free'}
                         </Button>
                       ) : plan.name === 'Pro' && currentPlan.name === 'Enterprise' ? (
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => subscription && createPortalSession(subscription.razorpay_customer_id)}
+                          onClick={() => {
+                            const confirmMessage = "To downgrade from Enterprise to Pro, you'll need to cancel your current subscription and then subscribe to Pro. Would you like to cancel your Enterprise subscription now?";
+                            if (confirm(confirmMessage)) {
+                              handleCancelSubscription();
+                            }
+                          }}
                           disabled={!subscription || paymentLoading}
                         >
                           {paymentLoading ? 'Loading...' : 'Downgrade to Pro'}

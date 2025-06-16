@@ -219,8 +219,8 @@ export function usePayment() {
 
   const createPortalSession = async (customerId?: string) => {
     // For Razorpay, we don't have a direct equivalent to Stripe's customer portal
-    // Instead, we can redirect to the billing page or show subscription management options
-    window.location.href = '/billing';
+    // This function is kept for compatibility but subscription management is handled directly in the billing page
+    console.log('Portal session not applicable for Razorpay - use billing page controls instead');
   };
 
   return {
