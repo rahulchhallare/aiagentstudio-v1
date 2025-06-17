@@ -692,8 +692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planId: actualRazorpayPlanId,
           originalPlanId: planId,
           email: email,
-        },
-        notify: 1 // Send email notification to customer
+        }
       });
 
       console.log('Created Razorpay subscription:', subscription.id);

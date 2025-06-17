@@ -144,8 +144,7 @@ export async function createRazorpaySubscription(planId: string, customerId: str
       notes: {
         userId: userId.toString(),
         planId: planId
-      },
-      notify: 1 // Send email notification to customer
+      }
     });
     return subscription;
   } catch (error) {
