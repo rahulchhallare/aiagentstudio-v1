@@ -72,6 +72,16 @@ async function getPlanPricing(): Promise<{
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Test webhook endpoint
+  app.get('/api/webhook/test', (req: Request, res: Response) => {
+    res.json({
+      status: 'success',
+      message: 'Webhook endpoint is working correctly',
+      timestamp: new Date().toISOString(),
+      webhookUrl: `${req.protocol}://${req.get('host')}/api/webhook/razorpay`
+    });
+  });
+
   // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
   app.post("/api/webhook/razorpay", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -1288,16 +1298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // // Save the subscription to the database
       // await storage.createSubscription({
       //   user_id: userId,
-
-  // Test webhook endpoint
-  app.get('/api/webhook/test', (req: Request, res: Response) => {
-    res.json({
-      status: 'success',
-      message: 'Webhook endpoint is working correctly',
-      timestamp: new Date().toISOString(),
-      webhookUrl: `${req.protocol}://${req.get('host')}/api/webhook/razorpay`
-    });
-  });
 
   // Validate Razorpay plan configuration
   app.get('/api/validate-plans', async (req: Request, res: Response) => {
