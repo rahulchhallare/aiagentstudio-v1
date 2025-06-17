@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
   app.post("/api/webhook/razorpay", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim();
     const signature = req.headers['x-razorpay-signature'];
 
     if (!webhookSecret || !signature) {
