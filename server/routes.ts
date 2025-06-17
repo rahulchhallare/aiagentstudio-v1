@@ -691,6 +691,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Create success and failure URLs
+      const host = req.get("host") || "localhost:5000";
+      const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
+      const successUrl = `${protocol}://${host}/billing?subscription_success=true`;
+      const failureUrl = `${protocol}://${host}/pricing?subscription_failed=true`;
+
       // Create Razorpay subscription
       const subscription = await razorpay.subscriptions.create({
         plan_id: actualRazorpayPlanId,
@@ -703,10 +709,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planId: actualRazorpayPlanId,
           originalPlanId: planId,
           email: email,
+          success_url: successUrl,
+          failure_url: failureUrl,
         }
       });
 
       console.log('Created Razorpay subscription:', subscription.id);
+
+      // Create redirect URL with subscription ID for success tracking
+      const host = req.get("host") || "localhost:5000";
+      const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
+      const successUrl = `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`;
+      const failureUrl = `${protocol}://${host}/pricing?subscription_failed=true`;
 
       res.json({ 
         subscriptionId: subscription.id,
@@ -714,7 +728,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: subscription.plan?.amount || 0,
         currency: 'INR',
         status: subscription.status,
-        short_url: subscription.short_url // Razorpay hosted checkout page
+        short_url: subscription.short_url, // Razorpay hosted checkout page
+        success_url: successUrl,
+        failure_url: failureUrl
       });
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
