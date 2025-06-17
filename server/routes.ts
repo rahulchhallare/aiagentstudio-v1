@@ -734,7 +734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const successUrl = `${protocol}://${host}/billing?subscription_success=true`;
       const failureUrl = `${protocol}://${host}/pricing?subscription_failed=true`;
 
-      // Create Razorpay subscription with proper callback URLs
+      // Create Razorpay subscription
       const subscription = await razorpay.subscriptions.create({
         plan_id: actualRazorpayPlanId,
         customer_id: customer.id,
@@ -746,10 +746,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planId: actualRazorpayPlanId,
           originalPlanId: planId,
           email: email,
-        },
-        notify: {
-          sms: false,
-          email: true
         }
       });
 
