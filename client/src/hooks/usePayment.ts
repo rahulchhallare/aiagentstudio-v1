@@ -97,20 +97,39 @@ export function usePayment() {
       const responseData = await response.json();
       console.log('Response data:', responseData);
 
-      const { subscriptionId, customerId, amount, currency, status, short_url } = responseData;
+      const { subscriptionId, customerId, amount, currency, status, short_url, fallback_payment, message } = responseData;
 
       if (!subscriptionId) {
         throw new Error('No subscription ID received from server');
+      }
+
+      // Check for fallback payment scenario
+      if (fallback_payment) {
+        toast({
+          title: "Payment setup required",
+          description: message || "Subscription created. Please complete payment setup.",
+          variant: "default",
+        });
+        
+        // Redirect to billing page for manual payment setup
+        window.location.href = short_url || '/billing';
+        return;
       }
 
       // For Razorpay subscriptions, redirect to hosted checkout page
       if (short_url) {
         console.log('Redirecting to Razorpay hosted checkout:', short_url);
         
-        // Redirect directly to Razorpay hosted page
-        // The success/failure handling will be done via webhook and redirect URL params
-        window.location.href = short_url;
-        return;
+        // Check if the URL is a valid Razorpay hosted page
+        if (short_url.includes('rzp.io') || short_url.includes('razorpay.com')) {
+          // Redirect directly to Razorpay hosted page
+          window.location.href = short_url;
+          return;
+        } else {
+          // Handle internal fallback URLs
+          window.location.href = short_url;
+          return;
+        }
       }
 
       // Fallback: Use Razorpay checkout (for existing customers)

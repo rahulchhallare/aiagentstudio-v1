@@ -788,6 +788,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Subscription status:', subscription.status);
       console.log('Subscription short_url:', subscription.short_url);
       console.log('Subscription authenticate_url:', subscription.authenticate_url);
+      console.log('Subscription customer_id:', subscription.customer_id);
+      console.log('Subscription plan_id:', subscription.plan_id);
 
       // Check if subscription needs authentication
       if (subscription.status === 'created' && !subscription.short_url) {
@@ -797,9 +799,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const fetchedSub = await razorpay.subscriptions.fetch(subscription.id);
           console.log('Fetched subscription short_url:', fetchedSub.short_url);
           console.log('Fetched subscription authenticate_url:', fetchedSub.authenticate_url);
+          
+          // If we got a URL from the refetch, use it
+          if (fetchedSub.short_url) {
+            subscription.short_url = fetchedSub.short_url;
+          }
+          if (fetchedSub.authenticate_url) {
+            subscription.authenticate_url = fetchedSub.authenticate_url;
+          }
         } catch (fetchError) {
           console.error('Error fetching subscription:', fetchError);
         }
+      }
+
+      // Additional validation for hosted page availability
+      if (!subscription.short_url && !subscription.authenticate_url) {
+        console.error('No hosted page URL available for subscription:', subscription.id);
+        console.log('Full subscription object:', JSON.stringify(subscription, null, 2));
+        
+        // Create a manual payment link as fallback
+        const fallbackUrl = `${protocol}://${host}/billing?subscription_id=${subscription.id}&payment_required=true`;
+        console.log('Using fallback URL:', fallbackUrl);
+        
+        return res.json({
+          subscriptionId: subscription.id,
+          customerId: customer.id,
+          amount: subscription.plan?.amount || 0,
+          currency: 'INR',
+          status: subscription.status,
+          short_url: fallbackUrl,
+          fallback_payment: true,
+          success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+          failure_url: failureUrl,
+          message: 'Subscription created. Please complete payment manually.',
+          debug: {
+            plan_id: actualRazorpayPlanId,
+            has_short_url: false,
+            has_authenticate_url: false,
+            fallback_used: true
+          }
+        });
       }
 
       // For Razorpay hosted checkout, we need to configure the success and failure URLs
@@ -853,13 +892,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Log more details for debugging
-      if (error.error?.description?.includes('not available')) {
+      if (error.error?.description?.includes('not available') || 
+          error.error?.description?.includes('hosted page')) {
+        console.error('Hosted page error details:', {
+          error: error.error,
+          planId: actualRazorpayPlanId,
+          customerId: customer?.id,
+          customerEmail: email
+        });
+        
         return res.status(400).json({ 
           message: 'Subscription hosted page not available',
-          error: 'There might be an issue with the plan configuration or customer setup',
+          error: 'The hosted payment page could not be generated. This might be due to plan configuration or customer verification requirements.',
           code: 'HOSTED_PAGE_ERROR',
           planId: actualRazorpayPlanId,
-          customerId: customer?.id
+          customerId: customer?.id,
+          suggestion: 'Please try again or contact support if the issue persists.'
         });
       }
 
