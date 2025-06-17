@@ -35,6 +35,24 @@ export function usePayment() {
       return;
     }
 
+    if (!planId) {
+      toast({
+        title: "Invalid plan",
+        description: "Please select a valid plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user.id || !user.email) {
+      toast({
+        title: "User information missing",
+        description: "Please ensure you are properly logged in.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log('Starting checkout session creation with plan ID:', planId);
     setIsLoading(true);
 
@@ -50,6 +68,11 @@ export function usePayment() {
 
       console.log('Request body:', requestBody);
 
+      // Validate request body before sending
+      if (!requestBody.planId || !requestBody.userId || !requestBody.email) {
+        throw new Error(`Missing required fields: planId=${requestBody.planId}, userId=${requestBody.userId}, email=${requestBody.email}`);
+      }
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -61,9 +84,14 @@ export function usePayment() {
       console.log('Response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.text();
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
         console.error('Response error:', errorData);
-        throw new Error(`Failed to create checkout session: ${response.status} ${errorData}`);
+        
+        if (response.status === 400) {
+          throw new Error(errorData.message || 'Invalid request parameters');
+        }
+        
+        throw new Error(`Failed to create checkout session: ${response.status} ${errorData.message || 'Unknown error'}`);
       }
 
       const responseData = await response.json();
