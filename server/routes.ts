@@ -1289,6 +1289,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // await storage.createSubscription({
       //   user_id: userId,
 
+  // Test webhook endpoint
+  app.get('/api/webhook/test', (req: Request, res: Response) => {
+    res.json({
+      status: 'success',
+      message: 'Webhook endpoint is working correctly',
+      timestamp: new Date().toISOString(),
+      webhookUrl: `${req.protocol}://${req.get('host')}/api/webhook/razorpay`
+    });
+  });
+
   // Validate Razorpay plan configuration
   app.get('/api/validate-plans', async (req: Request, res: Response) => {
     try {
