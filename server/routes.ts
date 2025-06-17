@@ -143,10 +143,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               // Check if subscription already exists
               const existingSubscription = await storage.getSubscriptionByUserId(userId);
-              
+
               if (existingSubscription && existingSubscription.razorpay_subscription_id === subscription.id) {
                 console.log('Subscription already exists, updating payment history only');
-                
+
                 // Create payment record only
                 await storage.createPaymentHistory({
                   user_id: userId,
@@ -758,7 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
-      
+
       // Handle specific Razorpay errors
       if (error.error?.code === 'BAD_REQUEST_ERROR') {
         return res.status(400).json({ 
@@ -767,7 +767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           code: 'RAZORPAY_BAD_REQUEST'
         });
       }
-      
+
       if (error.error?.description?.includes('does not exist')) {
         return res.status(400).json({ 
           message: 'Plan or customer configuration error',
@@ -775,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           code: 'RESOURCE_NOT_FOUND'
         });
       }
-      
+
       res.status(500).json({ 
         message: 'Failed to create checkout session',
         error: error.message || 'Unknown error'
@@ -790,7 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For subscriptions, we primarily rely on webhooks for payment processing
       // This endpoint is mainly for subscription status verification
-      
+
       if (razorpay_subscription_id) {
         // Verify subscription status
         let subscription;
@@ -803,14 +803,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             error: 'SUBSCRIPTION_NOT_FOUND'
           });
         }
-        
+
         if (subscription.status === 'active' || subscription.status === 'authenticated') {
           // Map plan ID to plan name using helper function
           const planName = getPlanNameFromId(subscription.plan_id);
 
           // Check if subscription already exists in database
           const existingSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
-          
+
           if (!existingSubscription || existingSubscription.razorpay_subscription_id !== subscription.id) {
             // Save subscription to database
             await storage.createSubscription({
@@ -824,7 +824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               current_period_start: new Date(subscription.current_start * 1000),
               current_period_end: new Date(subscription.current_end * 1000),
             });
-            
+
             console.log(`New subscription created for user ${userId}: ${planName}`);
           } else {
             console.log(`Subscription already exists for user ${userId}`);
@@ -1180,7 +1180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Razorpay subscription cancelled:', cancelledSubscription.status);
       } catch (razorpayError: any) {
         console.error('Error cancelling Razorpay subscription:', razorpayError);
-        
+
         // If subscription doesn't exist in Razorpay, that's fine - continue with database update
         if (razorpayError.error?.code === 'BAD_REQUEST_ERROR' && 
             razorpayError.error?.description?.includes('does not exist')) {
@@ -1289,27 +1289,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // await storage.createSubscription({
       //   user_id: userId,
 
-  // Test webhook endpoint
-  app.get('/api/webhook/test', async (req: Request, res: Response) => {
-    try {
-      const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-      
-      res.json({
-        webhook_configured: !!webhookSecret,
-        endpoint_url: `${req.protocol}://${req.get('host')}/api/webhook/razorpay`,
-        timestamp: new Date().toISOString(),
-        message: webhookSecret ? 'Webhook endpoint is properly configured' : 'Webhook secret not configured'
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to test webhook configuration' });
-    }
-  });
-
   // Validate Razorpay plan configuration
   app.get('/api/validate-plans', async (req: Request, res: Response) => {
     try {
       const validationResults = [];
-      
+
       for (const [planKey, planId] of Object.entries(PLAN_IDS)) {
         try {
           if (!planId) {
@@ -1320,7 +1304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             continue;
           }
-          
+
           const plan = await razorpay.plans.fetch(planId);
           validationResults.push({
             plan: planKey,
@@ -1340,9 +1324,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       const allValid = validationResults.every(result => result.status === 'valid');
-      
+
       res.json({
         success: allValid,
         plans: validationResults,
