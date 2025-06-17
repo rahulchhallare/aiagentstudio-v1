@@ -68,29 +68,41 @@ export function usePayment() {
       const responseData = await response.json();
       console.log('Response data:', responseData);
 
-      const { orderId, amount, currency } = responseData;
+      const { subscriptionId, customerId, amount, currency, status, short_url } = responseData;
 
-      if (!orderId) {
-        throw new Error('No order ID received from server');
+      if (!subscriptionId) {
+        throw new Error('No subscription ID received from server');
       }
 
+      // For Razorpay subscriptions, redirect to hosted checkout page
+      if (short_url) {
+        console.log('Redirecting to Razorpay hosted checkout:', short_url);
+        
+        // Add success/failure handlers as URL parameters
+        const successUrl = `${window.location.origin}/billing?subscription_success=true&subscription_id=${subscriptionId}`;
+        const failureUrl = `${window.location.origin}/pricing?subscription_failed=true`;
+        
+        // Redirect to Razorpay hosted page with callback URLs
+        window.location.href = `${short_url}&redirect=true&success_url=${encodeURIComponent(successUrl)}&failure_url=${encodeURIComponent(failureUrl)}`;
+        return;
+      }
+
+      // Fallback: Use Razorpay checkout (for existing customers)
       const Razorpay = await loadRazorpay();
       if (!Razorpay) {
         throw new Error('Razorpay failed to load');
       }
 
-      console.log('Opening Razorpay checkout with order ID:', orderId);
+      console.log('Opening Razorpay checkout with subscription ID:', subscriptionId);
 
       const options = {
         key: RAZORPAY_KEY_ID,
-        amount: amount,
-        currency: currency,
+        subscription_id: subscriptionId,
         name: 'AIagentStudio.ai',
         description: 'Subscription Payment',
-        order_id: orderId,
         handler: async function (response: any) {
-          console.log('Payment success:', response);
-          // Verify payment on server
+          console.log('Subscription payment success:', response);
+          // Verify subscription on server
           try {
             const verifyResponse = await fetch('/api/verify-payment', {
               method: 'POST',
@@ -98,7 +110,7 @@ export function usePayment() {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_subscription_id: response.razorpay_subscription_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 userId: user.id,
@@ -107,18 +119,18 @@ export function usePayment() {
 
             if (verifyResponse.ok) {
               toast({
-                title: "Payment successful!",
-                description: "Your subscription has been activated. Amount charged in INR equivalent to USD pricing.",
+                title: "Subscription activated!",
+                description: "Your subscription has been activated successfully. Recurring payments will be processed automatically.",
               });
               // Redirect to billing page
               window.location.href = '/billing';
             } else {
-              throw new Error('Payment verification failed');
+              throw new Error('Subscription verification failed');
             }
           } catch (error) {
-            console.error('Payment verification error:', error);
+            console.error('Subscription verification error:', error);
             toast({
-              title: "Payment verification failed",
+              title: "Subscription verification failed",
               description: "Please contact support for assistance.",
               variant: "destructive",
             });

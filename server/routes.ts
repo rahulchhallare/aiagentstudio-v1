@@ -642,58 +642,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid plan ID" });
       }
 
-      // Fetch plan details directly from Razorpay
-      let amount = 0;
-      let planDetails = null;
-      
+      // Create or get customer
+      let customer;
       try {
-        // First try to fetch the plan from Razorpay
-        planDetails = await razorpay.plans.fetch(actualRazorpayPlanId);
-        amount = planDetails.item.amount; // Amount in paise
-        console.log('Fetched plan from Razorpay:', {
-          planId: actualRazorpayPlanId,
-          amount: amount,
-          currency: planDetails.item.currency
-        });
-      } catch (razorpayError) {
-        console.log('Failed to fetch plan from Razorpay, using live pricing calculation:', razorpayError.message);
-        
-        // Fallback: Use live exchange rate calculation
-        const livePricing = await getPlanPricing();
-        
-        if (actualRazorpayPlanId === PLAN_IDS.PRO_MONTHLY) {
-          amount = livePricing.PRO_MONTHLY;
-        } else if (actualRazorpayPlanId === PLAN_IDS.PRO_YEARLY) {
-          amount = livePricing.PRO_YEARLY;
-        } else if (actualRazorpayPlanId === PLAN_IDS.ENTERPRISE_MONTHLY) {
-          amount = livePricing.ENTERPRISE_MONTHLY;
-        } else if (actualRazorpayPlanId === PLAN_IDS.ENTERPRISE_YEARLY) {
-          amount = livePricing.ENTERPRISE_YEARLY;
+        // Try to find existing customer by email
+        const customers = await razorpay.customers.all({ email: email });
+        if (customers.items && customers.items.length > 0) {
+          customer = customers.items[0];
+          console.log('Found existing customer:', customer.id);
+        } else {
+          throw new Error('No existing customer found');
         }
-        
-        console.log('Using live pricing calculation:', {
-          planId: actualRazorpayPlanId,
-          amount: amount
+      } catch (error) {
+        // Create new customer if not found
+        customer = await razorpay.customers.create({
+          name: email.split('@')[0],
+          email: email,
+          contact: '',
+          notes: {
+            userId: userId.toString()
+          }
         });
+        console.log('Created new customer:', customer.id);
       }
 
-      // Create Razorpay order
-      const order = await razorpay.orders.create({
-        amount: amount, // Amount in paise
-        currency: 'INR',
-        receipt: `order_${userId}_${Date.now()}`,
+      // Create Razorpay subscription
+      const subscription = await razorpay.subscriptions.create({
+        plan_id: actualRazorpayPlanId,
+        customer_id: customer.id,
+        quantity: 1,
+        total_count: 120, // 10 years worth of billing cycles
+        addons: [],
         notes: {
           userId: userId.toString(),
           planId: actualRazorpayPlanId,
-          originalPlanId: planId, // Keep original for reference
+          originalPlanId: planId,
           email: email,
         },
+        notify: 1 // Send email notification to customer
       });
 
+      console.log('Created Razorpay subscription:', subscription.id);
+
       res.json({ 
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
+        subscriptionId: subscription.id,
+        customerId: customer.id,
+        amount: subscription.plan?.amount || 0,
+        currency: 'INR',
+        status: subscription.status,
+        short_url: subscription.short_url // Razorpay hosted checkout page
       });
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -701,79 +698,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Verify payment
+  // Verify subscription payment (activated via webhook mainly, this is for direct verification)
   app.post("/api/verify-payment", async (req: Request, res: Response) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+      const { razorpay_subscription_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
-      // Verify signature
-      const body = razorpay_order_id + "|" + razorpay_payment_id;
-      const expectedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-        .update(body.toString())
-        .digest("hex");
+      // For subscriptions, we primarily rely on webhooks for payment processing
+      // This endpoint is mainly for subscription status verification
+      
+      if (razorpay_subscription_id) {
+        // Verify subscription status
+        const subscription = await razorpay.subscriptions.fetch(razorpay_subscription_id);
+        
+        if (subscription.status === 'active') {
+          // Map plan ID to plan name
+          let planName = 'Unknown Plan';
+          const planId = subscription.plan_id;
+          if (planId === PLAN_IDS.PRO_MONTHLY) {
+            planName = 'Pro Monthly';
+          } else if (planId === PLAN_IDS.PRO_YEARLY) {
+            planName = 'Pro Yearly';
+          } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+            planName = 'Enterprise Monthly';
+          } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY) {
+            planName = 'Enterprise Yearly';
+          }
 
-      if (expectedSignature !== razorpay_signature) {
-        return res.status(400).json({ message: "Invalid payment signature" });
-      }
+          // Check if subscription already exists in database
+          const existingSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
+          
+          if (!existingSubscription || existingSubscription.razorpay_subscription_id !== subscription.id) {
+            // Save subscription to database
+            await storage.createSubscription({
+              user_id: parseInt(userId),
+              razorpay_subscription_id: subscription.id,
+              razorpay_customer_id: subscription.customer_id,
+              status: subscription.status,
+              plan_name: planName,
+              plan_id: subscription.plan_id,
+              price_id: subscription.plan_id,
+              current_period_start: new Date(subscription.current_start * 1000),
+              current_period_end: new Date(subscription.current_end * 1000),
+            });
+          }
 
-      // Get payment details
-      const payment = await razorpay.payments.fetch(razorpay_payment_id);
-      const order = await razorpay.orders.fetch(razorpay_order_id);
-
-      if (payment.status === 'captured') {
-        // Map plan ID to plan name
-        let planName = 'Unknown Plan';
-        const planId = order.notes.planId;
-        if (planId === PLAN_IDS.PRO_MONTHLY) {
-          planName = 'Pro Monthly';
-        } else if (planId === PLAN_IDS.PRO_YEARLY) {
-          planName = 'Pro Yearly';
-        } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY) {
-          planName = 'Enterprise Monthly';
-        } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY) {
-          planName = 'Enterprise Yearly';
-        }
-
-        // Calculate subscription period
-        const now = new Date();
-        const periodEnd = new Date(now);
-        if (planId?.includes('yearly')) {
-          periodEnd.setFullYear(now.getFullYear() + 1);
+          res.json({ 
+            success: true, 
+            message: 'Subscription verified successfully',
+            subscription: {
+              id: subscription.id,
+              status: subscription.status,
+              plan_name: planName
+            }
+          });
         } else {
-          periodEnd.setMonth(now.getMonth() + 1);
+          res.status(400).json({ message: `Subscription status: ${subscription.status}` });
         }
-
-        // Save subscription to database
-        await storage.createSubscription({
-          user_id: parseInt(userId),
-          razorpay_subscription_id: payment.id, // Use payment ID as subscription ID for now
-          razorpay_customer_id: payment.customer_id || 'unknown',
-          status: 'active',
-          plan_name: planName,
-          plan_id: planId,
-          price_id: planId, // Add price_id field (same as plan_id for Razorpay)
-          current_period_start: now,
-          current_period_end: periodEnd,
-        });
-
-        // Save payment history
-        await storage.createPaymentHistory({
-          user_id: parseInt(userId),
-          razorpay_payment_id: payment.id,
-          amount: payment.amount,
-          currency: payment.currency,
-          status: 'succeeded',
-          description: `Subscription payment for ${planName}`,
-        });
-
-        res.json({ success: true, message: 'Payment verified successfully' });
       } else {
-        res.status(400).json({ message: 'Payment not captured' });
+        res.status(400).json({ message: 'Subscription ID required for verification' });
       }
     } catch (error) {
-      console.error('Error verifying payment:', error);
-      res.status(500).json({ message: 'Failed to verify payment' });
+      console.error('Error verifying subscription:', error);
+      res.status(500).json({ message: 'Failed to verify subscription' });
     }
   });
 
@@ -1081,6 +1067,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscriptionIdToUpdate = subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id;
 
       console.log('Using subscription ID for update:', subscriptionIdToUpdate);
+
+      // Cancel the subscription in Razorpay
+      try {
+        const cancelledSubscription = await razorpay.subscriptions.cancel(subscriptionIdToUpdate, {
+          cancel_at_cycle_end: 1 // Cancel at the end of current billing cycle
+        });
+        console.log('Razorpay subscription cancelled:', cancelledSubscription.status);
+      } catch (razorpayError) {
+        console.error('Error cancelling Razorpay subscription:', razorpayError);
+        // Continue with database update even if Razorpay call fails
+      }
 
       // Update the subscription status in database
       const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {

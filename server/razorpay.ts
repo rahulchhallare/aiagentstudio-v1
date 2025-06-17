@@ -108,3 +108,78 @@ export const USD_PRICES = {
   ENTERPRISE_MONTHLY: 99,
   ENTERPRISE_YEARLY: 990,
 };
+
+// Subscription management functions
+export async function createRazorpayCustomer(email: string, name: string, userId: number) {
+  try {
+    const customer = await razorpay.customers.create({
+      name: name,
+      email: email,
+      contact: '',
+      notes: {
+        userId: userId.toString()
+      }
+    });
+    return customer;
+  } catch (error) {
+    console.error('Error creating Razorpay customer:', error);
+    throw error;
+  }
+}
+
+export async function createRazorpaySubscription(planId: string, customerId: string, userId: number) {
+  try {
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: planId,
+      customer_id: customerId,
+      quantity: 1,
+      total_count: 120, // 10 years worth of billing cycles
+      addons: [],
+      notes: {
+        userId: userId.toString(),
+        planId: planId
+      },
+      notify: 1 // Send email notification to customer
+    });
+    return subscription;
+  } catch (error) {
+    console.error('Error creating Razorpay subscription:', error);
+    throw error;
+  }
+}
+
+export async function cancelRazorpaySubscription(subscriptionId: string, cancelAtCycleEnd: boolean = true) {
+  try {
+    const subscription = await razorpay.subscriptions.cancel(subscriptionId, {
+      cancel_at_cycle_end: cancelAtCycleEnd ? 1 : 0
+    });
+    return subscription;
+  } catch (error) {
+    console.error('Error cancelling Razorpay subscription:', error);
+    throw error;
+  }
+}
+
+export async function pauseRazorpaySubscription(subscriptionId: string) {
+  try {
+    const subscription = await razorpay.subscriptions.pause(subscriptionId, {
+      pause_at: 'now'
+    });
+    return subscription;
+  } catch (error) {
+    console.error('Error pausing Razorpay subscription:', error);
+    throw error;
+  }
+}
+
+export async function resumeRazorpaySubscription(subscriptionId: string) {
+  try {
+    const subscription = await razorpay.subscriptions.resume(subscriptionId, {
+      resume_at: 'now'
+    });
+    return subscription;
+  } catch (error) {
+    console.error('Error resuming Razorpay subscription:', error);
+    throw error;
+  }
+}
