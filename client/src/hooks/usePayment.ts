@@ -79,18 +79,9 @@ export function usePayment() {
       if (short_url) {
         console.log('Redirecting to Razorpay hosted checkout:', short_url);
         
-        // Use success/failure URLs from server response if available
-        const { success_url, failure_url } = responseData;
-        
-        if (success_url && failure_url) {
-          // Redirect to Razorpay hosted page with callback URLs
-          window.location.href = `${short_url}&redirect=true&success_url=${encodeURIComponent(success_url)}&failure_url=${encodeURIComponent(failure_url)}`;
-        } else {
-          // Fallback to original method
-          const successUrl = `${window.location.origin}/billing?subscription_success=true&subscription_id=${subscriptionId}`;
-          const failureUrl = `${window.location.origin}/pricing?subscription_failed=true`;
-          window.location.href = `${short_url}&redirect=true&success_url=${encodeURIComponent(successUrl)}&failure_url=${encodeURIComponent(failureUrl)}`;
-        }
+        // Redirect directly to Razorpay hosted page
+        // The success/failure handling will be done via webhook and redirect URL params
+        window.location.href = short_url;
         return;
       }
 
