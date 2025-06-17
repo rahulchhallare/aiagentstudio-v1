@@ -680,6 +680,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Created new customer:', customer.id);
       }
 
+      // Verify plan exists before creating subscription
+      try {
+        await razorpay.plans.fetch(actualRazorpayPlanId);
+      } catch (planError: any) {
+        console.error(`Plan ${actualRazorpayPlanId} not found:`, planError);
+        return res.status(400).json({ 
+          message: `Plan configuration error: ${planId}. Please contact support.`,
+          error: 'PLAN_NOT_FOUND'
+        });
+      }
+
       // Create Razorpay subscription
       const subscription = await razorpay.subscriptions.create({
         plan_id: actualRazorpayPlanId,
@@ -705,9 +716,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: subscription.status,
         short_url: subscription.short_url // Razorpay hosted checkout page
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating checkout session:', error);
-      res.status(500).json({ message: 'Failed to create checkout session' });
+      
+      // Handle specific Razorpay errors
+      if (error.error?.code === 'BAD_REQUEST_ERROR') {
+        return res.status(400).json({ 
+          message: 'Invalid request to Razorpay',
+          error: error.error.description || 'Bad request error',
+          code: 'RAZORPAY_BAD_REQUEST'
+        });
+      }
+      
+      if (error.error?.description?.includes('does not exist')) {
+        return res.status(400).json({ 
+          message: 'Plan or customer configuration error',
+          error: 'Please check your plan configuration or contact support',
+          code: 'RESOURCE_NOT_FOUND'
+        });
+      }
+      
+      res.status(500).json({ 
+        message: 'Failed to create checkout session',
+        error: error.message || 'Unknown error'
+      });
     }
   });
 
@@ -721,7 +753,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (razorpay_subscription_id) {
         // Verify subscription status
-        const subscription = await razorpay.subscriptions.fetch(razorpay_subscription_id);
+        let subscription;
+        try {
+          subscription = await razorpay.subscriptions.fetch(razorpay_subscription_id);
+        } catch (fetchError: any) {
+          console.error('Error fetching subscription:', fetchError);
+          return res.status(400).json({ 
+            message: 'Invalid subscription ID or subscription not found.',
+            error: 'SUBSCRIPTION_NOT_FOUND'
+          });
+        }
         
         if (subscription.status === 'active' || subscription.status === 'authenticated') {
           // Map plan ID to plan name using helper function
@@ -1097,9 +1138,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           cancel_at_cycle_end: 1 // Cancel at the end of current billing cycle
         });
         console.log('Razorpay subscription cancelled:', cancelledSubscription.status);
-      } catch (razorpayError) {
+      } catch (razorpayError: any) {
         console.error('Error cancelling Razorpay subscription:', razorpayError);
-        // Continue with database update even if Razorpay call fails
+        
+        // If subscription doesn't exist in Razorpay, that's fine - continue with database update
+        if (razorpayError.error?.code === 'BAD_REQUEST_ERROR' && 
+            razorpayError.error?.description?.includes('does not exist')) {
+          console.log('Subscription not found in Razorpay, proceeding with database update');
+        } else {
+          // For other errors, we might want to return early
+          return res.status(400).json({ 
+            error: 'Failed to cancel subscription in Razorpay',
+            details: razorpayError.error?.description || razorpayError.message
+          });
+        }
       }
 
       // Update the subscription status in database
