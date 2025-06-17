@@ -716,11 +716,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Created Razorpay subscription:', subscription.id);
 
-      // Create redirect URL with subscription ID for success tracking
-      const host = req.get("host") || "localhost:5000";
-      const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
-      const successUrl = `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`;
-      const failureUrl = `${protocol}://${host}/pricing?subscription_failed=true`;
+      // Update success URL to include subscription ID for tracking
+      const finalSuccessUrl = `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`;
 
       res.json({ 
         subscriptionId: subscription.id,
@@ -729,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currency: 'INR',
         status: subscription.status,
         short_url: subscription.short_url, // Razorpay hosted checkout page
-        success_url: successUrl,
+        success_url: finalSuccessUrl,
         failure_url: failureUrl
       });
     } catch (error: any) {
