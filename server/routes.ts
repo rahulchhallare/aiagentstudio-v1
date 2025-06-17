@@ -11,7 +11,7 @@ import {
 import { executeFlow } from "./agent-execution";
 import { z } from "zod";
 import { OAuth2Client } from 'google-auth-library';
-import { razorpay, PLAN_IDS, PLAN_PRICING } from './razorpay';
+import { razorpay, PLAN_IDS, PLAN_PRICING, getRazorpayPlanPricing } from './razorpay';
 import crypto from 'crypto';
 import axios from 'axios';
 
@@ -622,36 +622,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Plan ID, user ID, and email are required" });
       }
 
-      // Validate plan ID - accept actual Razorpay plan IDs and mapped formats
-      const validPlanIds = [
-        ...Object.values(PLAN_IDS).filter(Boolean),
-        'plan_pro_monthly',
-        'plan_pro_yearly', 
-        'plan_enterprise_monthly',
-        'plan_enterprise_yearly',
-        'plan_QhReRFpIgKH7uT', // Actual pro monthly plan ID
-        'pro-monthly',
-        'pro-yearly',
-        'enterprise-monthly', 
-        'enterprise-yearly'
-      ];
+      // Map frontend plan IDs to actual Razorpay plan IDs
+      let actualRazorpayPlanId = planId;
+      if (planId === 'pro-monthly') {
+        actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+      } else if (planId === 'pro-yearly') {
+        actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+      } else if (planId === 'enterprise-monthly') {
+        actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+      } else if (planId === 'enterprise-yearly') {
+        actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+      }
 
-      if (!validPlanIds.includes(planId)) {
-        console.log('Invalid plan ID received:', planId);
-        console.log('Valid plan IDs:', validPlanIds);
+      // Validate that we have a valid Razorpay plan ID
+      const validRazorpayPlanIds = Object.values(PLAN_IDS).filter(Boolean);
+      if (!validRazorpayPlanIds.includes(actualRazorpayPlanId)) {
+        console.log('Invalid Razorpay plan ID:', actualRazorpayPlanId);
+        console.log('Valid Razorpay plan IDs:', validRazorpayPlanIds);
         return res.status(400).json({ message: "Invalid plan ID" });
       }
 
-      // Get plan pricing - handle both original and mapped plan IDs
+      // Fetch plan details directly from Razorpay
       let amount = 0;
-      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly' || planId === 'plan_QhReRFpIgKH7uT' || planId === 'pro-monthly') {
-        amount = PLAN_PRICING.PRO_MONTHLY;
-      } else if (planId === PLAN_IDS.PRO_YEARLY || planId === 'plan_pro_yearly' || planId === 'pro-yearly') {
-        amount = PLAN_PRICING.PRO_YEARLY;
-      } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY || planId === 'plan_enterprise_monthly' || planId === 'enterprise-monthly') {
-        amount = PLAN_PRICING.ENTERPRISE_MONTHLY;
-      } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY || planId === 'plan_enterprise_yearly' || planId === 'enterprise-yearly') {
-        amount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      let planDetails = null;
+      
+      try {
+        // First try to fetch the plan from Razorpay
+        planDetails = await razorpay.plans.fetch(actualRazorpayPlanId);
+        amount = planDetails.item.amount; // Amount in paise
+        console.log('Fetched plan from Razorpay:', {
+          planId: actualRazorpayPlanId,
+          amount: amount,
+          currency: planDetails.item.currency
+        });
+      } catch (razorpayError) {
+        console.log('Failed to fetch plan from Razorpay, using live pricing calculation:', razorpayError.message);
+        
+        // Fallback: Use live exchange rate calculation
+        const livePricing = await getPlanPricing();
+        
+        if (actualRazorpayPlanId === PLAN_IDS.PRO_MONTHLY) {
+          amount = livePricing.PRO_MONTHLY;
+        } else if (actualRazorpayPlanId === PLAN_IDS.PRO_YEARLY) {
+          amount = livePricing.PRO_YEARLY;
+        } else if (actualRazorpayPlanId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+          amount = livePricing.ENTERPRISE_MONTHLY;
+        } else if (actualRazorpayPlanId === PLAN_IDS.ENTERPRISE_YEARLY) {
+          amount = livePricing.ENTERPRISE_YEARLY;
+        }
+        
+        console.log('Using live pricing calculation:', {
+          planId: actualRazorpayPlanId,
+          amount: amount
+        });
       }
 
       // Create Razorpay order
@@ -661,7 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         receipt: `order_${userId}_${Date.now()}`,
         notes: {
           userId: userId.toString(),
-          planId: planId,
+          planId: actualRazorpayPlanId,
+          originalPlanId: planId, // Keep original for reference
           email: email,
         },
       });

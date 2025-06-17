@@ -70,7 +70,18 @@ async function getUSDToINRRate(): Promise<number> {
   }
 }
 
-// Function to get plan pricing with live rates
+// Function to fetch plan pricing directly from Razorpay
+export async function getRazorpayPlanPricing(planId: string): Promise<number> {
+  try {
+    const plan = await razorpay.plans.fetch(planId);
+    return plan.item.amount; // Amount in paise
+  } catch (error) {
+    console.error(`Failed to fetch Razorpay plan ${planId}:`, error);
+    throw new Error(`Unable to fetch plan pricing for ${planId}`);
+  }
+}
+
+// Function to get plan pricing with live rates (fallback)
 export async function getPlanPricing() {
   const exchangeRate = await getUSDToINRRate();
   
