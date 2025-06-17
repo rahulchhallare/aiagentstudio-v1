@@ -735,6 +735,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const failureUrl = `${protocol}://${host}/pricing?subscription_failed=true`;
 
       // Create Razorpay subscription
+      console.log('Creating subscription with plan ID:', actualRazorpayPlanId, 'for customer:', customer.id);
+      
       const subscription = await razorpay.subscriptions.create({
         plan_id: actualRazorpayPlanId,
         customer_id: customer.id,
@@ -749,7 +751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      console.log('Created Razorpay subscription:', subscription.id);
+      console.log('Created Razorpay subscription:', subscription.id, 'with short_url:', subscription.short_url);
 
       // For Razorpay hosted checkout, we need to configure the success and failure URLs
       // This is done by updating the hosted checkout page configuration
@@ -773,13 +775,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
 
       // Handle specific Razorpay errors
       if (error.error?.code === 'BAD_REQUEST_ERROR') {
         return res.status(400).json({ 
           message: 'Invalid request to Razorpay',
           error: error.error.description || 'Bad request error',
-          code: 'RAZORPAY_BAD_REQUEST'
+          code: 'RAZORPAY_BAD_REQUEST',
+          planId: actualRazorpayPlanId,
+          details: error.error
         });
       }
 
@@ -787,13 +792,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ 
           message: 'Plan or customer configuration error',
           error: 'Please check your plan configuration or contact support',
-          code: 'RESOURCE_NOT_FOUND'
+          code: 'RESOURCE_NOT_FOUND',
+          planId: actualRazorpayPlanId
+        });
+      }
+
+      // Log more details for debugging
+      if (error.error?.description?.includes('not available')) {
+        return res.status(400).json({ 
+          message: 'Subscription hosted page not available',
+          error: 'There might be an issue with the plan configuration or customer setup',
+          code: 'HOSTED_PAGE_ERROR',
+          planId: actualRazorpayPlanId,
+          customerId: customer?.id
         });
       }
 
       res.status(500).json({ 
         message: 'Failed to create checkout session',
-        error: error.message || 'Unknown error'
+        error: error.message || 'Unknown error',
+        planId: actualRazorpayPlanId
       });
     }
   });
