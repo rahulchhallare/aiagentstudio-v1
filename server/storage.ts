@@ -161,11 +161,11 @@ export class SupabaseStorage implements IStorage {
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase credentials not found in environment variables');
     }
-    
+
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
@@ -175,7 +175,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -186,7 +186,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('username', username)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -197,7 +197,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('email', email)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -208,7 +208,7 @@ export class SupabaseStorage implements IStorage {
       .insert(insertUser)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -218,7 +218,7 @@ export class SupabaseStorage implements IStorage {
       .from('users')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw new Error(error.message);
     return data || [];
   }
@@ -229,7 +229,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -240,7 +240,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) return [];
     return data || [];
   }
@@ -251,7 +251,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('deploy_id', deployId)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -263,7 +263,7 @@ export class SupabaseStorage implements IStorage {
         .insert(insertAgent)
         .select()
         .single();
-      
+
       if (error) {
         console.error('Supabase agent creation error:', error);
         throw new Error(error.message);
@@ -282,7 +282,7 @@ export class SupabaseStorage implements IStorage {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -292,7 +292,7 @@ export class SupabaseStorage implements IStorage {
       .from('agents')
       .delete()
       .eq('id', id);
-    
+
     return !error;
   }
 
@@ -302,7 +302,7 @@ export class SupabaseStorage implements IStorage {
       .insert(insertWaitlist)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -312,7 +312,7 @@ export class SupabaseStorage implements IStorage {
       .from('waitlist')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) return [];
     return data || [];
   }
@@ -324,7 +324,7 @@ export class SupabaseStorage implements IStorage {
       .insert(subscription)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -333,10 +333,10 @@ export class SupabaseStorage implements IStorage {
     console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
     console.log('Subscription ID:', subscriptionId);
     console.log('Updates to apply:', updates);
-    
+
     // Try to update by razorpay_subscription_id first, then by stripe_subscription_id
     let data, error;
-    
+
     // First try Razorpay subscription ID
     const razorpayResult = await this.supabase
       .from('subscriptions')
@@ -344,13 +344,13 @@ export class SupabaseStorage implements IStorage {
       .eq('razorpay_subscription_id', subscriptionId)
       .select()
       .single();
-    
+
     if (!razorpayResult.error && razorpayResult.data) {
       console.log('Updated by razorpay_subscription_id:', razorpayResult.data);
       console.log('=== END UPDATE DEBUG ===');
       return razorpayResult.data;
     }
-    
+
     // If not found by Razorpay ID, try Stripe ID
     const stripeResult = await this.supabase
       .from('subscriptions')
@@ -358,17 +358,17 @@ export class SupabaseStorage implements IStorage {
       .eq('stripe_subscription_id', subscriptionId)
       .select()
       .single();
-    
+
     data = stripeResult.data;
     error = stripeResult.error;
-    
+
     if (error) {
       console.error('Supabase update error:', error);
       console.error('Error details:', error.details);
       console.error('Error hint:', error.hint);
       throw new Error(error.message);
     }
-    
+
     console.log('Supabase update successful:', data);
     console.log('=== END UPDATE DEBUG ===');
     return data;
@@ -382,7 +382,7 @@ export class SupabaseStorage implements IStorage {
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
-    
+
     if (error) return null;
     return data;
   }
@@ -394,7 +394,7 @@ export class SupabaseStorage implements IStorage {
       .insert(payment)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -405,7 +405,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) return [];
     return data || [];
   }
@@ -417,7 +417,7 @@ export class SupabaseStorage implements IStorage {
       .insert(event)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -428,9 +428,20 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('stripe_event_id', stripeEventId)
       .single();
-    
+
     if (error) return null;
     return data;
+  }
+
+  async getWebhookEventById(eventId: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('webhook_events')
+      .select('*')
+      .eq('razorpay_event_id', eventId)
+      .single();
+
+      if (error) return null;
+      return data;
   }
 }
 

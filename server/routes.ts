@@ -93,7 +93,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const event = JSON.parse(req.body.toString());
-      console.log('Razorpay webhook received:', event.event);
+      console.log('Razorpay webhook received:', event.event, 'Event ID:', event.payload?.payment?.entity?.id || event.payload?.subscription?.entity?.id);
+
+      // Check if this event was already processed
+      const existingEvent = await storage.getWebhookEventById(event.payload?.payment?.entity?.id || event.payload?.subscription?.entity?.id || 'unknown');
+      if (existingEvent) {
+        console.log('Event already processed, skipping:', event.event);
+        return res.json({ status: 'already_processed' });
+      }
 
       // Handle the event
       switch (event.event) {
@@ -125,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'subscription.charged':
           const subscription = event.payload.subscription.entity;
           const paymentEntity = event.payload.payment.entity;
-          console.log('Subscription charged:', subscription);
+          console.log('Subscription charged:', subscription.id, 'Payment:', paymentEntity.id);
 
           try {
             const userId = parseInt(subscription.notes?.userId || '0');
@@ -134,33 +141,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Map plan ID to plan name
               const planName = getPlanNameFromId(subscription.plan_id);
 
-              // Update or create subscription record
-              await storage.createSubscription({
-                user_id: userId,
-                razorpay_subscription_id: subscription.id,
-                razorpay_customer_id: subscription.customer_id,
-                status: subscription.status,
-                plan_name: planName,
-                plan_id: subscription.plan_id,
-                price_id: subscription.plan_id, // Add price_id field
-                current_period_start: new Date(subscription.current_start * 1000),
-                current_period_end: new Date(subscription.current_end * 1000),
-              });
+              // Check if subscription already exists
+              const existingSubscription = await storage.getSubscriptionByUserId(userId);
+              
+              if (existingSubscription && existingSubscription.razorpay_subscription_id === subscription.id) {
+                console.log('Subscription already exists, updating payment history only');
+                
+                // Create payment record only
+                await storage.createPaymentHistory({
+                  user_id: userId,
+                  razorpay_payment_id: paymentEntity.id,
+                  amount: paymentEntity.amount,
+                  currency: paymentEntity.currency,
+                  status: 'succeeded',
+                  description: `Subscription renewal payment for ${planName}`,
+                });
+              } else {
+                // Create new subscription
+                await storage.createSubscription({
+                  user_id: userId,
+                  razorpay_subscription_id: subscription.id,
+                  razorpay_customer_id: subscription.customer_id,
+                  status: subscription.status,
+                  plan_name: planName,
+                  plan_id: subscription.plan_id,
+                  price_id: subscription.plan_id,
+                  current_period_start: new Date(subscription.current_start * 1000),
+                  current_period_end: new Date(subscription.current_end * 1000),
+                });
 
-              // Create payment record
-              await storage.createPaymentHistory({
-                user_id: userId,
-                razorpay_payment_id: paymentEntity.id,
-                amount: paymentEntity.amount,
-                currency: paymentEntity.currency,
-                status: 'succeeded',
-                description: `Subscription payment for ${planName}`,
-              });
+                // Create payment record
+                await storage.createPaymentHistory({
+                  user_id: userId,
+                  razorpay_payment_id: paymentEntity.id,
+                  amount: paymentEntity.amount,
+                  currency: paymentEntity.currency,
+                  status: 'succeeded',
+                  description: `Subscription payment for ${planName}`,
+                });
+              }
 
-              console.log('Subscription and payment records created');
+              console.log('Subscription and payment processing completed for user:', userId);
+            } else {
+              console.error('Invalid userId in subscription notes:', subscription.notes?.userId);
             }
           } catch (error) {
             console.error('Error saving subscription charge data:', error);
+            throw error; // Re-throw to ensure webhook fails and retries
           }
           break;
 
@@ -1261,6 +1288,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // // Save the subscription to the database
       // await storage.createSubscription({
       //   user_id: userId,
+
+  // Test webhook endpoint
+  app.get('/api/webhook/test', async (req: Request, res: Response) => {
+    try {
+      const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+      
+      res.json({
+        webhook_configured: !!webhookSecret,
+        endpoint_url: `${req.protocol}://${req.get('host')}/api/webhook/razorpay`,
+        timestamp: new Date().toISOString(),
+        message: webhookSecret ? 'Webhook endpoint is properly configured' : 'Webhook secret not configured'
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to test webhook configuration' });
+    }
+  });
 
   // Validate Razorpay plan configuration
   app.get('/api/validate-plans', async (req: Request, res: Response) => {
