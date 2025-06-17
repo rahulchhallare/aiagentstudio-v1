@@ -156,7 +156,7 @@ export default function Billing() {
           newPlanId: newPlanId,
         }),
       });
-  
+
       if (response.ok) {
         toast({
           title: "Subscription upgraded",
@@ -400,6 +400,46 @@ export default function Billing() {
   };
 
   const invoices = formatPaymentHistory();
+
+  useEffect(() => {
+    if (user) {
+      fetchBillingData();
+    }
+
+    // Handle Razorpay subscription success redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('subscription_success') === 'true') {
+      const subscriptionId = urlParams.get('subscription_id');
+      if (subscriptionId) {
+        toast({
+          title: "Payment Successful!",
+          description: "Your subscription has been activated. Welcome to your new plan!",
+        });
+
+        // Verify the subscription
+        fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            razorpay_subscription_id: subscriptionId,
+            userId: user?.id,
+          }),
+        }).then(() => {
+          // Refresh subscription data
+          if (user) {
+            fetchBillingData();
+          }
+        }).catch(error => {
+          console.error('Error verifying subscription:', error);
+        });
+
+        // Clean up URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [user, toast]);
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
