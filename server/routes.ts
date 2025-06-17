@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
   app.post("/api/webhook/razorpay", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim();
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim().replace(/\s+/g, '');
     const signature = req.headers['x-razorpay-signature'];
 
     if (!webhookSecret || !signature) {
@@ -197,6 +197,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } catch (error) {
             console.error('Error saving subscription charge data:', error);
+
+  // Debug endpoint for subscription troubleshooting
+  app.get('/api/debug/subscription/:subscriptionId', async (req: Request, res: Response) => {
+    try {
+      const { subscriptionId } = req.params;
+      
+      const subscription = await razorpay.subscriptions.fetch(subscriptionId);
+      
+      res.json({
+        subscription: {
+          id: subscription.id,
+          status: subscription.status,
+          plan_id: subscription.plan_id,
+          customer_id: subscription.customer_id,
+          short_url: subscription.short_url,
+          authenticate_url: subscription.authenticate_url,
+          current_start: subscription.current_start,
+          current_end: subscription.current_end,
+          charge_at: subscription.charge_at,
+          created_at: subscription.created_at
+        }
+      });
+    } catch (error: any) {
+      console.error('Error fetching subscription for debug:', error);
+      res.status(400).json({ 
+        error: error.message,
+        code: error.error?.code,
+        description: error.error?.description
+      });
+    }
+  });
+
+
             throw error; // Re-throw to ensure webhook fails and retries
           }
           break;
@@ -751,7 +784,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      console.log('Created Razorpay subscription:', subscription.id, 'with short_url:', subscription.short_url);
+      console.log('Created Razorpay subscription:', subscription.id);
+      console.log('Subscription status:', subscription.status);
+      console.log('Subscription short_url:', subscription.short_url);
+      console.log('Subscription authenticate_url:', subscription.authenticate_url);
+
+      // Check if subscription needs authentication
+      if (subscription.status === 'created' && !subscription.short_url) {
+        console.warn('Subscription created but no hosted page URL available');
+        // Try to fetch the subscription again to get updated URLs
+        try {
+          const fetchedSub = await razorpay.subscriptions.fetch(subscription.id);
+          console.log('Fetched subscription short_url:', fetchedSub.short_url);
+          console.log('Fetched subscription authenticate_url:', fetchedSub.authenticate_url);
+        } catch (fetchError) {
+          console.error('Error fetching subscription:', fetchError);
+        }
+      }
 
       // For Razorpay hosted checkout, we need to configure the success and failure URLs
       // This is done by updating the hosted checkout page configuration
@@ -769,9 +818,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: subscription.plan?.amount || 0,
         currency: 'INR',
         status: subscription.status,
-        short_url: subscription.short_url, // Razorpay hosted checkout page
+        short_url: subscription.short_url || subscription.authenticate_url, // Use authenticate_url as fallback
+        authenticate_url: subscription.authenticate_url,
         success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
-        failure_url: failureUrl
+        failure_url: failureUrl,
+        debug: {
+          plan_id: actualRazorpayPlanId,
+          has_short_url: !!subscription.short_url,
+          has_authenticate_url: !!subscription.authenticate_url
+        }
       });
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
