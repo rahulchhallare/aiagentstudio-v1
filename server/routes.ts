@@ -216,11 +216,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
           current_start: subscription.current_start,
           current_end: subscription.current_end,
           charge_at: subscription.charge_at,
-          created_at: subscription.created_at
+          created_at: subscription.created_at,
+          start_at: subscription.start_at,
+          customer_notify: subscription.customer_notify,
+          total_count: subscription.total_count,
+          paid_count: subscription.paid_count,
+          remaining_count: subscription.remaining_count,
+          has_scheduled_changes: subscription.has_scheduled_changes,
+          offer_id: subscription.offer_id
         }
       });
     } catch (error: any) {
       console.error('Error fetching subscription for debug:', error);
+      res.status(400).json({ 
+        error: error.message,
+        code: error.error?.code,
+        description: error.error?.description
+      });
+    }
+  });
+
+  // Compare subscription creation methods
+  app.post('/api/debug/create-subscription-like-manual', async (req: Request, res: Response) => {
+    try {
+      const { planId, userId, email } = req.body;
+
+      if (!planId || !userId || !email) {
+        return res.status(400).json({ message: "Plan ID, user ID, and email are required" });
+      }
+
+      // Map frontend plan IDs to actual Razorpay plan IDs (same as main endpoint)
+      let actualRazorpayPlanId: string;
+      switch (planId) {
+        case 'pro-monthly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+          break;
+        case 'pro-yearly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+          break;
+        case 'enterprise-monthly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+          break;
+        case 'enterprise-yearly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      // Create customer first
+      const customer = await razorpay.customers.create({
+        name: email.split('@')[0],
+        email: email,
+        contact: '',
+        notes: {
+          userId: userId.toString()
+        }
+      });
+
+      // Create subscription with minimal settings (like manual creation)
+      const subscription = await razorpay.subscriptions.create({
+        plan_id: actualRazorpayPlanId,
+        customer_id: customer.id,
+        quantity: 1,
+        customer_notify: 1,
+        notes: {
+          userId: userId.toString(),
+          email: email,
+        }
+      });
+
+      res.json({
+        subscription_id: subscription.id,
+        status: subscription.status,
+        short_url: subscription.short_url,
+        authenticate_url: subscription.authenticate_url,
+        created_via: 'minimal_api_call',
+        comparison_note: 'This mimics manual dashboard creation with minimal parameters'
+      });
+    } catch (error: any) {
+      console.error('Error creating minimal subscription:', error);
       res.status(400).json({ 
         error: error.message,
         code: error.error?.code,
@@ -775,13 +850,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customer_id: customer.id,
         quantity: 1,
         total_count: 120, // 10 years worth of billing cycles
+        customer_notify: 1, // Enable customer notifications
         addons: [],
         notes: {
           userId: userId.toString(),
           planId: actualRazorpayPlanId,
           originalPlanId: planId,
           email: email,
-        }
+        },
+        offer_id: undefined, // Explicitly set to avoid issues
+        start_at: Math.floor(Date.now() / 1000) + 300 // Start 5 minutes from now to allow processing
       });
 
       console.log('Created Razorpay subscription:', subscription.id);
@@ -815,9 +893,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Additional validation for hosted page availability
       if (!subscription.short_url && !subscription.authenticate_url) {
         console.error('No hosted page URL available for subscription:', subscription.id);
-        console.log('Full subscription object:', JSON.stringify(subscription, null, 2));
+        console.log('Trying alternative subscription creation method...');
         
-        // Create a manual payment link as fallback
+        try {
+          // Cancel the problematic subscription
+          await razorpay.subscriptions.cancel(subscription.id);
+          
+          // Create a new subscription with minimal parameters (like manual creation)
+          const simpleSubscription = await razorpay.subscriptions.create({
+            plan_id: actualRazorpayPlanId,
+            customer_id: customer.id,
+            customer_notify: 1,
+            notes: {
+              userId: userId.toString(),
+              email: email,
+            }
+          });
+          
+          console.log('Alternative subscription created:', simpleSubscription.id);
+          console.log('Alternative subscription short_url:', simpleSubscription.short_url);
+          
+          if (simpleSubscription.short_url || simpleSubscription.authenticate_url) {
+            // Use the alternative subscription
+            return res.json({ 
+              subscriptionId: simpleSubscription.id,
+              customerId: customer.id,
+              amount: simpleSubscription.plan?.amount || 0,
+              currency: 'INR',
+              status: simpleSubscription.status,
+              short_url: simpleSubscription.short_url || simpleSubscription.authenticate_url,
+              authenticate_url: simpleSubscription.authenticate_url,
+              success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${simpleSubscription.id}`,
+              failure_url: failureUrl,
+              method_used: 'alternative_creation',
+              debug: {
+                plan_id: actualRazorpayPlanId,
+                has_short_url: !!simpleSubscription.short_url,
+                has_authenticate_url: !!simpleSubscription.authenticate_url,
+                original_failed: true
+              }
+            });
+          }
+        } catch (alternativeError) {
+          console.error('Alternative subscription creation also failed:', alternativeError);
+        }
+        
+        // Create a manual payment link as final fallback
         const fallbackUrl = `${protocol}://${host}/billing?subscription_id=${subscription.id}&payment_required=true`;
         console.log('Using fallback URL:', fallbackUrl);
         
