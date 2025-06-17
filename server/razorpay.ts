@@ -10,13 +10,19 @@ export const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Plan IDs for your subscription plans
+// Plan IDs for your subscription plans - these should be set in your Replit secrets
 export const PLAN_IDS = {
-  PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID || "plan_QhReRFpIgKH7uT",
-  PRO_YEARLY: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID || "plan_pro_yearly", 
-  ENTERPRISE_MONTHLY: process.env.RAZORPAY_ENTERPRISE_MONTHLY_PLAN_ID || "plan_enterprise_monthly",
-  ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID || "plan_enterprise_yearly",
+  PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID!,
+  PRO_YEARLY: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID!,
+  ENTERPRISE_MONTHLY: process.env.RAZORPAY_ENTERPRISE_MONTHLY_PLAN_ID!,
+  ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID!,
 };
+
+// Validate that all required plan IDs are set
+const missingPlanIds = Object.entries(PLAN_IDS).filter(([key, value]) => !value);
+if (missingPlanIds.length > 0) {
+  console.warn('Missing Razorpay plan IDs:', missingPlanIds.map(([key]) => key));
+}
 
 // Cache for exchange rate (refreshed every hour)
 let cachedExchangeRate: { rate: number; timestamp: number } | null = null;

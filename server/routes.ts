@@ -11,6 +11,22 @@ import {
 import { executeFlow } from "./agent-execution";
 import { z } from "zod";
 import { OAuth2Client } from 'google-auth-library';
+
+// Helper function to map Razorpay plan ID to plan name
+function getPlanNameFromId(planId: string): string {
+  if (planId === PLAN_IDS.PRO_MONTHLY) {
+    return 'Pro Monthly';
+  } else if (planId === PLAN_IDS.PRO_YEARLY) {
+    return 'Pro Yearly';
+  } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+    return 'Enterprise Monthly';
+  } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY) {
+    return 'Enterprise Yearly';
+  }
+  return 'Unknown Plan';
+}
+
+
 import { razorpay, PLAN_IDS, PLAN_PRICING, getRazorpayPlanPricing } from './razorpay';
 import crypto from 'crypto';
 import axios from 'axios';
@@ -116,16 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             if (userId > 0) {
               // Map plan ID to plan name
-              let planName = 'Unknown Plan';
-              if (subscription.plan_id === PLAN_IDS.PRO_MONTHLY) {
-                planName = 'Pro Monthly';
-              } else if (subscription.plan_id === PLAN_IDS.PRO_YEARLY) {
-                planName = 'Pro Yearly';
-              } else if (subscription.plan_id === PLAN_IDS.ENTERPRISE_MONTHLY) {
-                planName = 'Enterprise Monthly';
-              } else if (subscription.plan_id === PLAN_IDS.ENTERPRISE_YEARLY) {
-                planName = 'Enterprise Yearly';
-              }
+              const planName = getPlanNameFromId(subscription.plan_id);
 
               // Update or create subscription record
               await storage.createSubscription({
@@ -623,24 +630,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Map frontend plan IDs to actual Razorpay plan IDs
-      let actualRazorpayPlanId = planId;
-      if (planId === 'pro-monthly') {
-        actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
-      } else if (planId === 'pro-yearly') {
-        actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
-      } else if (planId === 'enterprise-monthly') {
-        actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
-      } else if (planId === 'enterprise-yearly') {
-        actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+      let actualRazorpayPlanId: string;
+      switch (planId) {
+        case 'pro-monthly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+          break;
+        case 'pro-yearly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+          break;
+        case 'enterprise-monthly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+          break;
+        case 'enterprise-yearly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid plan ID. Supported plans: pro-monthly, pro-yearly, enterprise-monthly, enterprise-yearly" });
       }
 
-      // Validate that we have a valid Razorpay plan ID
-      const validRazorpayPlanIds = Object.values(PLAN_IDS).filter(Boolean);
-      if (!validRazorpayPlanIds.includes(actualRazorpayPlanId)) {
-        console.log('Invalid Razorpay plan ID:', actualRazorpayPlanId);
-        console.log('Valid Razorpay plan IDs:', validRazorpayPlanIds);
-        return res.status(400).json({ message: "Invalid plan ID" });
+      // Validate that we have a valid Razorpay plan ID from environment
+      if (!actualRazorpayPlanId) {
+        console.error(`Missing Razorpay plan ID for ${planId}. Check your environment variables.`);
+        return res.status(500).json({ message: "Plan configuration error. Please contact support." });
       }
+
+      console.log(`Creating subscription for plan: ${planId} -> Razorpay ID: ${actualRazorpayPlanId}`);
 
       // Create or get customer
       let customer;
@@ -710,19 +724,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verify subscription status
         const subscription = await razorpay.subscriptions.fetch(razorpay_subscription_id);
         
-        if (subscription.status === 'active') {
-          // Map plan ID to plan name
-          let planName = 'Unknown Plan';
-          const planId = subscription.plan_id;
-          if (planId === PLAN_IDS.PRO_MONTHLY) {
-            planName = 'Pro Monthly';
-          } else if (planId === PLAN_IDS.PRO_YEARLY) {
-            planName = 'Pro Yearly';
-          } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY) {
-            planName = 'Enterprise Monthly';
-          } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY) {
-            planName = 'Enterprise Yearly';
-          }
+        if (subscription.status === 'active' || subscription.status === 'authenticated') {
+          // Map plan ID to plan name using helper function
+          const planName = getPlanNameFromId(subscription.plan_id);
 
           // Check if subscription already exists in database
           const existingSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
@@ -740,6 +744,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               current_period_start: new Date(subscription.current_start * 1000),
               current_period_end: new Date(subscription.current_end * 1000),
             });
+            
+            console.log(`New subscription created for user ${userId}: ${planName}`);
+          } else {
+            console.log(`Subscription already exists for user ${userId}`);
           }
 
           res.json({ 
@@ -752,7 +760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
         } else {
-          res.status(400).json({ message: `Subscription status: ${subscription.status}` });
+          res.status(400).json({ message: `Subscription status: ${subscription.status}. Please complete the payment.` });
         }
       } else {
         res.status(400).json({ message: 'Subscription ID required for verification' });
@@ -948,22 +956,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Subscription not found' });
       }
 
-      // Map plan ID to plan name and pricing
-      let newPlanName = 'Unknown Plan';
-      let newAmount = 0;
+      // Map frontend plan ID to actual Razorpay plan ID and get pricing
+      let actualRazorpayPlanId: string;
+      let newPlanName: string;
+      let newAmount: number;
 
-      if (newPlanId === PLAN_IDS.PRO_MONTHLY || newPlanId === 'pro-monthly') {
-        newPlanName = 'Pro Monthly';
-        newAmount = PLAN_PRICING.PRO_MONTHLY;
-      } else if (newPlanId === PLAN_IDS.PRO_YEARLY || newPlanId === 'pro-yearly') {
-        newPlanName = 'Pro Yearly';
-        newAmount = PLAN_PRICING.PRO_YEARLY;
-      } else if (newPlanId === PLAN_IDS.ENTERPRISE_MONTHLY || newPlanId === 'enterprise-monthly') {
-        newPlanName = 'Enterprise Monthly';
-        newAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
-      } else if (newPlanId === PLAN_IDS.ENTERPRISE_YEARLY || newPlanId === 'enterprise-yearly') {
-        newPlanName = 'Enterprise Yearly';
-        newAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      switch (newPlanId) {
+        case 'pro-monthly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+          newPlanName = 'Pro Monthly';
+          newAmount = PLAN_PRICING.PRO_MONTHLY;
+          break;
+        case 'pro-yearly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+          newPlanName = 'Pro Yearly';
+          newAmount = PLAN_PRICING.PRO_YEARLY;
+          break;
+        case 'enterprise-monthly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+          newPlanName = 'Enterprise Monthly';
+          newAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
+          break;
+        case 'enterprise-yearly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+          newPlanName = 'Enterprise Yearly';
+          newAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid plan ID for upgrade' });
+      }
+
+      if (!actualRazorpayPlanId) {
+        return res.status(500).json({ error: 'Plan configuration error. Please contact support.' });
       }
 
       // Calculate prorated amount
@@ -1000,8 +1024,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedSubscription = await storage.updateSubscription(subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id, {
         status: 'active',
         plan_name: newPlanName,
-        plan_id: newPlanId,
-        price_id: newPlanId,
+        plan_id: actualRazorpayPlanId,
+        price_id: actualRazorpayPlanId,
         // Keep the same period dates for prorated upgrade
         current_period_start: subscription.current_period_start,
         current_period_end: subscription.current_period_end,
@@ -1173,6 +1197,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // // Save the subscription to the database
       // await storage.createSubscription({
       //   user_id: userId,
+
+  // Validate Razorpay plan configuration
+  app.get('/api/validate-plans', async (req: Request, res: Response) => {
+    try {
+      const validationResults = [];
+      
+      for (const [planKey, planId] of Object.entries(PLAN_IDS)) {
+        try {
+          if (!planId) {
+            validationResults.push({
+              plan: planKey,
+              status: 'missing',
+              error: 'Plan ID not set in environment variables'
+            });
+            continue;
+          }
+          
+          const plan = await razorpay.plans.fetch(planId);
+          validationResults.push({
+            plan: planKey,
+            planId: planId,
+            status: 'valid',
+            amount: plan.item.amount,
+            currency: plan.item.currency,
+            interval: plan.period,
+            intervalCount: plan.interval
+          });
+        } catch (error: any) {
+          validationResults.push({
+            plan: planKey,
+            planId: planId,
+            status: 'invalid',
+            error: error.message
+          });
+        }
+      }
+      
+      const allValid = validationResults.every(result => result.status === 'valid');
+      
+      res.json({
+        success: allValid,
+        plans: validationResults,
+        message: allValid ? 'All plans are properly configured' : 'Some plans need attention'
+      });
+    } catch (error) {
+      console.error('Error validating plans:', error);
+      res.status(500).json({ error: 'Failed to validate plans' });
+    }
+  });
+
+
       //   stripe_subscription_id: subscription.id,
       //   stripe_customer_id: customer.id,
       //   status: subscription.status,

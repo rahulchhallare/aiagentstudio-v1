@@ -8,17 +8,18 @@ export function usePayment() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Map frontend plan names to actual Razorpay plan IDs
+  // Map frontend plan names to backend plan identifiers
+  // The actual Razorpay plan IDs will be resolved on the server side
   const mapPlanId = (planId: string): string => {
     const planMapping: Record<string, string> = {
-      'pro-monthly': 'plan_QhReRFpIgKH7uT', // Use actual Razorpay plan ID
-      'pro-yearly': 'plan_pro_yearly', 
-      'enterprise-monthly': 'plan_enterprise_monthly',
-      'enterprise-yearly': 'plan_enterprise_yearly',
-      'pro_monthly': 'plan_QhReRFpIgKH7uT', // Use actual Razorpay plan ID
-      'pro_yearly': 'plan_pro_yearly',
-      'enterprise_monthly': 'plan_enterprise_monthly', 
-      'enterprise_yearly': 'plan_enterprise_yearly'
+      'pro-monthly': 'pro-monthly',
+      'pro-yearly': 'pro-yearly', 
+      'enterprise-monthly': 'enterprise-monthly',
+      'enterprise-yearly': 'enterprise-yearly',
+      'pro_monthly': 'pro-monthly',
+      'pro_yearly': 'pro-yearly',
+      'enterprise_monthly': 'enterprise-monthly', 
+      'enterprise_yearly': 'enterprise-yearly'
     };
 
     return planMapping[planId] || planId;
