@@ -9,16 +9,56 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard, Receipt, AlertTriangle } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+
+// Component to show current exchange rate
+function ExchangeRateInfo() {
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        const response = await fetch('/api/exchange-rate');
+        if (response.ok) {
+          const data = await response.json();
+          setExchangeRate(data.rate);
+        }
+      } catch (error) {
+        console.error('Failed to fetch exchange rate:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExchangeRate();
+  }, []);
+
+  return (
+    <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 text-center text-sm">
+      <p className="font-medium">
+        Prices shown in USD. Payments processed in INR equivalent through Razorpay.
+        {!loading && exchangeRate && (
+          <span className="block text-xs mt-1">
+            Current rate: 1 USD = ₹{exchangeRate.toFixed(2)} (Live rate updated hourly)
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
 
 export default function Billing() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { createCheckoutSession, createPortalSession, isLoading: paymentLoading } = usePayment();
+  const { cancelSubscription, upgradeSubscription, isLoading: paymentLoading } = usePayment();
   const { toast } = useToast();
   const [subscription, setSubscription] = useState<any>(null);
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
 
   // Redirect to welcome page if not authenticated
   useEffect(() => {
@@ -36,7 +76,7 @@ export default function Billing() {
 
   const fetchBillingData = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       // Fetch subscription data
@@ -56,6 +96,90 @@ export default function Billing() {
       console.error('Error fetching billing data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!subscription || !user) return;
+
+    const confirmMessage = `Are you sure you want to cancel your ${subscription.plan_name} subscription? You will continue to have access until ${new Date(subscription.current_period_end).toLocaleDateString()}, then your account will be downgraded to the Free plan.`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await fetch(`/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Subscription cancelled",
+          description: "Your subscription has been cancelled. You'll retain access until the end of your billing period.",
+        });
+        // Refresh billing data
+        fetchBillingData();
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to cancel subscription:', errorData);
+        toast({
+          title: "Error",
+          description: "Failed to cancel subscription. Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel subscription. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpgradeSubscription = async (newPlanId: string) => {
+    if (!subscription || !user) return;
+    try {
+      const response = await fetch(`/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          newPlanId: newPlanId,
+        }),
+      });
+  
+      if (response.ok) {
+        toast({
+          title: "Subscription upgraded",
+          description: "Your subscription has been upgraded.",
+        });
+        // Refresh billing data
+        fetchBillingData();
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to upgrade subscription:', errorData);
+        toast({
+          title: "Error",
+          description: "Failed to upgrade subscription. Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error upgrading subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upgrade subscription. Please try again or contact support.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -88,7 +212,7 @@ export default function Billing() {
     // Determine plan based on plan_name first, then fallback to price_id
     const planName = subscription.plan_name?.toLowerCase() || '';
     const priceId = subscription.price_id || '';
-    
+
     // Check for Pro plans
     if (planName.includes('pro monthly') || priceId.includes('pro') && planName.includes('monthly')) {
       return {
@@ -105,7 +229,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     if (planName.includes('pro yearly') || priceId.includes('pro') && planName.includes('yearly')) {
       return {
         name: 'Pro',
@@ -121,7 +245,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     // Check for Enterprise plans
     if (planName.includes('enterprise monthly') || priceId.includes('enterprise') && planName.includes('monthly')) {
       return {
@@ -139,7 +263,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     if (planName.includes('enterprise yearly') || priceId.includes('enterprise') && planName.includes('yearly')) {
       return {
         name: 'Enterprise',
@@ -173,7 +297,7 @@ export default function Billing() {
         ]
       };
     }
-    
+
     if (planName.includes('enterprise')) {
       return {
         name: 'Enterprise',
@@ -217,12 +341,16 @@ export default function Billing() {
         'Basic templates',
         'Community support'
       ],
-      isCurrent: currentPlan.name === 'Free'
+      isCurrent: currentPlan.name === 'Free',
+      planId: null
     },
     {
       name: 'Pro',
-      price: '$29',
-      interval: 'month',
+      price: billingInterval === 'monthly' ? '$29' : '$290',
+      interval: billingInterval === 'monthly' ? 'month' : 'year',
+      yearlyPrice: '$290',
+      monthlyPrice: '$29',
+      savings: billingInterval === 'yearly' ? 'Save $58 per year' : '',
       features: [
         'Up to 10 AI agents',
         '1,000 API requests per month',
@@ -232,12 +360,18 @@ export default function Billing() {
         'Custom branding'
       ],
       popular: true,
-      isCurrent: currentPlan.name === 'Pro'
+      isCurrent: (currentPlan.name === 'Pro' && 
+                 ((billingInterval === 'monthly' && currentPlan.interval === 'month') || 
+                  (billingInterval === 'yearly' && currentPlan.interval === 'year'))),
+      planId: billingInterval === 'monthly' ? 'pro-monthly' : 'pro-yearly'
     },
     {
       name: 'Enterprise',
-      price: '$99',
-      interval: 'month',
+      price: billingInterval === 'monthly' ? '$99' : '$990',
+      interval: billingInterval === 'monthly' ? 'month' : 'year',
+      yearlyPrice: '$990',
+      monthlyPrice: '$99',
+      savings: billingInterval === 'yearly' ? 'Save $198 per year' : '',
       features: [
         'Unlimited AI agents',
         '10,000 API requests per month',
@@ -247,7 +381,10 @@ export default function Billing() {
         'Custom model training',
         'SLA guarantees'
       ],
-      isCurrent: currentPlan.name === 'Enterprise'
+      isCurrent: (currentPlan.name === 'Enterprise' && 
+                 ((billingInterval === 'monthly' && currentPlan.interval === 'month') || 
+                  (billingInterval === 'yearly' && currentPlan.interval === 'year'))),
+      planId: billingInterval === 'monthly' ? 'enterprise-monthly' : 'enterprise-yearly'
     }
   ];
 
@@ -268,15 +405,16 @@ export default function Billing() {
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Sidebar */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
+
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 transition-all duration-300 overflow-y-auto">
+        <ExchangeRateInfo />
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Billing</h1>
             <p className="text-gray-600">Manage your subscription plan and billing details</p>
           </div>
-          
+
           <Tabs defaultValue="subscription" className="w-full">
             <TabsList className="grid grid-cols-3 w-full md:w-auto mb-8">
               <TabsTrigger value="subscription" className="flex items-center">
@@ -292,7 +430,7 @@ export default function Billing() {
                 <span>Usage</span>
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="subscription">
               <Card className="mb-8">
                 <CardHeader>
@@ -318,20 +456,35 @@ export default function Billing() {
                       {subscription && subscription.status === 'active' ? (
                         <Button 
                           variant="outline"
-                          onClick={() => createPortalSession(subscription.stripe_customer_id)}
+                          onClick={() => handleCancelSubscription()}
                           disabled={paymentLoading}
                         >
-                          {paymentLoading ? 'Loading...' : 'Manage Subscription'}
+                          {paymentLoading ? 'Loading...' : 'Cancel Subscription'}
                         </Button>
                       ) : (
-                        <Button variant="outline">Change Plan</Button>
+                        <Button variant="outline" onClick={() => navigate('/pricing')}>Change Plan</Button>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
-              <h2 className="text-xl font-bold mb-4">Available Plans</h2>
+
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Available Plans</h2>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="billing-toggle" className={`text-sm ${billingInterval === "monthly" ? "font-medium" : ""}`}>
+                    Monthly
+                  </Label>
+                  <Switch
+                    id="billing-toggle"
+                    checked={billingInterval === "yearly"}
+                    onCheckedChange={(checked) => setBillingInterval(checked ? "yearly" : "monthly")}
+                  />
+                  <Label htmlFor="billing-toggle" className={`text-sm ${billingInterval === "yearly" ? "font-medium" : ""}`}>
+                    Yearly <span className="text-green-600 text-xs font-medium">Save 20%</span>
+                  </Label>
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {plans.map((plan, index) => (
                   <Card key={index} className={plan.popular ? 'border-primary-500 relative' : ''}>
@@ -345,6 +498,9 @@ export default function Billing() {
                       <CardDescription>
                         <span className="text-3xl font-bold">{plan.price}</span>
                         <span className="text-sm">/{plan.interval}</span>
+                        {plan.savings && (
+                          <p className="text-green-600 font-medium text-sm mt-1">{plan.savings}</p>
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -364,19 +520,27 @@ export default function Billing() {
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => subscription && createPortalSession(subscription.stripe_customer_id)}
+                          onClick={() => handleCancelSubscription()}
                           disabled={!subscription || paymentLoading}
                         >
-                          {paymentLoading ? 'Loading...' : 'Downgrade'}
+                          {paymentLoading ? 'Loading...' : 'Downgrade to Free'}
+                        </Button>
+                      ) : plan.name === 'Enterprise' && currentPlan.name === 'Pro' ? (
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleUpgradeSubscription(plan.planId || 'enterprise-monthly')}
+                          disabled={paymentLoading}
+                        >
+                          {paymentLoading ? 'Upgrading...' : `Upgrade to Enterprise ${billingInterval === 'yearly' ? 'Yearly' : 'Monthly'}`}
                         </Button>
                       ) : plan.name === 'Pro' && currentPlan.name === 'Enterprise' ? (
                         <Button 
-                          variant="outline" 
+                          variant="outline"
                           className="w-full"
-                          onClick={() => subscription && createPortalSession(subscription.stripe_customer_id)}
-                          disabled={!subscription || paymentLoading}
+                          onClick={() => handleCancelSubscription()}
+                          disabled={paymentLoading}
                         >
-                          {paymentLoading ? 'Loading...' : 'Downgrade to Pro'}
+                          {paymentLoading ? 'Processing...' : `Downgrade to Pro ${billingInterval === 'yearly' ? 'Yearly' : 'Monthly'}`}
                         </Button>
                       ) : (
                         <Button 
@@ -395,7 +559,7 @@ export default function Billing() {
                 ))}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="invoices">
               <Card>
                 <CardHeader>
@@ -444,7 +608,7 @@ export default function Billing() {
                 </CardFooter>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="usage">
               <Card>
                 <CardHeader>
@@ -463,7 +627,7 @@ export default function Billing() {
                       </div>
                       <p className="text-sm text-gray-500 mt-1">43% of your monthly limit</p>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Active Agents</h3>
                       <div className="flex items-center">
@@ -474,7 +638,7 @@ export default function Billing() {
                       </div>
                       <p className="text-sm text-gray-500 mt-1">50% of your allowed agents</p>
                     </div>
-                    
+
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <h3 className="font-medium">Need more resources?</h3>
                       <p className="text-sm text-gray-600 mt-1 mb-3">Upgrade your plan to get higher limits and additional features.</p>

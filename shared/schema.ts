@@ -10,8 +10,8 @@ export const users = pgTable("users", {
   avatar_url: text("avatar_url"),
   subscription_status: text("subscription_status").default("inactive"),
   subscription_plan: text("subscription_plan").default("free"),
-  stripe_customer_id: text("stripe_customer_id"),
-  stripe_subscription_id: text("stripe_subscription_id"),
+  razorpay_customer_id: text("razorpay_customer_id"),
+  razorpay_subscription_id: text("razorpay_subscription_id"),
   subscription_expires_at: timestamp("subscription_expires_at"),
   created_at: timestamp("created_at").defaultNow(),
 });
@@ -38,8 +38,8 @@ export const waitlist = pgTable("waitlist", {
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id").notNull().references(() => users.id),
-  stripe_subscription_id: text("stripe_subscription_id").notNull().unique(),
-  stripe_customer_id: text("stripe_customer_id").notNull(),
+  razorpay_subscription_id: text("razorpay_subscription_id").notNull().unique(),
+  razorpay_customer_id: text("razorpay_customer_id").notNull(),
   status: text("status").notNull(),
   plan_name: text("plan_name").notNull(),
   price_id: text("price_id").notNull(),
@@ -53,9 +53,9 @@ export const subscriptions = pgTable("subscriptions", {
 export const payment_history = pgTable("payment_history", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id").notNull().references(() => users.id),
-  stripe_payment_intent_id: text("stripe_payment_intent_id").notNull().unique(),
+  razorpay_payment_id: text("razorpay_payment_id").notNull().unique(),
   amount: integer("amount").notNull(),
-  currency: text("currency").notNull().default("usd"),
+  currency: text("currency").notNull().default("INR"),
   status: text("status").notNull(),
   description: text("description"),
   created_at: timestamp("created_at").defaultNow(),
@@ -63,7 +63,7 @@ export const payment_history = pgTable("payment_history", {
 
 export const webhook_events = pgTable("webhook_events", {
   id: serial("id").primaryKey(),
-  stripe_event_id: text("stripe_event_id").notNull().unique(),
+  razorpay_event_id: text("razorpay_event_id").notNull().unique(),
   event_type: text("event_type").notNull(),
   processed: boolean("processed").default(false),
   created_at: timestamp("created_at").defaultNow(),
@@ -93,8 +93,8 @@ export const insertWaitlistSchema = createInsertSchema(waitlist).pick({
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
   user_id: true,
-  stripe_subscription_id: true,
-  stripe_customer_id: true,
+  razorpay_subscription_id: true,
+  razorpay_customer_id: true,
   status: true,
   plan_name: true,
   price_id: true,
@@ -104,7 +104,7 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
 
 export const insertPaymentHistorySchema = createInsertSchema(payment_history).pick({
   user_id: true,
-  stripe_payment_intent_id: true,
+  razorpay_payment_id: true,
   amount: true,
   currency: true,
   status: true,
@@ -112,7 +112,7 @@ export const insertPaymentHistorySchema = createInsertSchema(payment_history).pi
 });
 
 export const insertWebhookEventSchema = createInsertSchema(webhook_events).pick({
-  stripe_event_id: true,
+  razorpay_event_id: true,
   event_type: true,
   processed: true,
 });

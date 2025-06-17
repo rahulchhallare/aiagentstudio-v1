@@ -11,7 +11,9 @@ import {
 import { executeFlow } from "./agent-execution";
 import { z } from "zod";
 import { OAuth2Client } from 'google-auth-library';
-import { stripe, PRICE_IDS } from './stripe';
+import { razorpay, PLAN_IDS, PLAN_PRICING } from './razorpay';
+import crypto from 'crypto';
+import axios from 'axios';
 
 
 // Helper to validate request body with Zod schema
@@ -19,287 +21,179 @@ function validateBody<T>(schema: z.ZodType<T>, body: unknown): T {
   return schema.parse(body);
 }
 
+// Function to fetch live plan pricing
+async function getPlanPricing(): Promise<{
+  PRO_MONTHLY: number;
+  PRO_YEARLY: number;
+  ENTERPRISE_MONTHLY: number;
+  ENTERPRISE_YEARLY: number;
+}> {
+  try {
+    // Fetch current exchange rates from a reliable API
+    const response = await axios.get(
+      `https://open.er-api.com/v6/latest/USD`
+    );
+    const exchangeRates = response.data.rates;
+    const inrRate = exchangeRates.INR;
+
+    // Adjust plan pricing based on current exchange rate (example)
+    const PRO_MONTHLY = Math.round(29 * inrRate * 100); // $29 USD
+    const PRO_YEARLY = Math.round(299 * inrRate * 100); // $299 USD
+    const ENTERPRISE_MONTHLY = Math.round(99 * inrRate * 100); // $99 USD
+    const ENTERPRISE_YEARLY = Math.round(999 * inrRate * 100); // $999 USD
+
+    return {
+      PRO_MONTHLY,
+      PRO_YEARLY,
+      ENTERPRISE_MONTHLY,
+      ENTERPRISE_YEARLY,
+    };
+  } catch (error) {
+    console.error("Error fetching exchange rates:", error);
+    // Return default pricing in case of API failure
+    return PLAN_PRICING;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Stripe webhook - MUST be defined BEFORE any JSON body parser middleware
-  // This route needs raw body for signature verification
-  app.post("/api/webhook/stripe", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
-    const sig = req.headers['stripe-signature'];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
+  app.post("/api/webhook/razorpay", express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
 
-    if (!sig || !endpointSecret) {
-      return res.status(400).json({ message: 'Missing signature or webhook secret' });
+    if (!webhookSecret || !signature) {
+      return res.status(400).json({ message: 'Missing webhook secret or signature' });
     }
-
-    let event;
 
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err: any) {
-      console.log(`Webhook signature verification failed:`, err.message);
-      return res.status(400).json({ message: 'Webhook signature verification failed' });
-    }
+      // Verify webhook signature
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(req.body)
+        .digest('hex');
 
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object;
-        console.log('Payment was successful!', session);
+      if (expectedSignature !== signature) {
+        return res.status(400).json({ message: 'Invalid webhook signature' });
+      }
 
-        try {
-          // Get the subscription details
-          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-          const userId = parseInt(session.metadata?.userId || '0');
+      const event = JSON.parse(req.body.toString());
+      console.log('Razorpay webhook received:', event.event);
 
-          if (userId > 0) {
-            const priceId = subscription.items.data[0].price.id;
+      // Handle the event
+      switch (event.event) {
+        case 'payment.captured':
+          const payment = event.payload.payment.entity;
+          console.log('Payment captured:', payment);
 
-            // Map price ID to plan name
-            let planName = 'Free';
-            if (priceId === PRICE_IDS.PRO_MONTHLY) {
-              planName = 'Pro Monthly';
-            } else if (priceId === PRICE_IDS.PRO_YEARLY) {
-              planName = 'Pro Yearly';
-            } else if (priceId === PRICE_IDS.ENTERPRISE_MONTHLY) {
-              planName = 'Enterprise Monthly';
-            } else if (priceId === PRICE_IDS.ENTERPRISE_YEARLY) {
-              planName = 'Enterprise Yearly';
-            } else {
-              // Fallback to nickname if available
-              planName = subscription.items.data[0].price.nickname || 'Unknown Plan';
-            }
-
-            // Save subscription to database
-            await storage.createSubscription({
-              user_id: userId,
-              stripe_subscription_id: subscription.id,
-              stripe_customer_id: subscription.customer as string,
-              status: subscription.status,
-              plan_name: planName,
-              price_id: priceId,
-              current_period_start: new Date(subscription.current_period_start * 1000),
-              current_period_end: new Date(subscription.current_period_end * 1000),
-            });
-
-            // Save payment history - use session amount if payment_intent is not available
-            // Get plan name for payment description (reuse existing priceId variable)
-
-            let paymentRecord = {
-              user_id: userId,
-              amount: session.amount_total || 0,
-              currency: session.currency || 'usd',
-              status: 'succeeded',
-              description: `Subscription payment for ${planName}`,
-            };
-
-            if (session.payment_intent) {
-              try {
-                const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
-                paymentRecord = {
-                  ...paymentRecord,
-                  stripe_payment_intent_id: paymentIntent.id,
-                  amount: paymentIntent.amount,
-                  currency: paymentIntent.currency,
-                  status: paymentIntent.status,
-                };
-              } catch (piError) {
-                console.error('Error retrieving payment intent:', piError);
-                // Use session ID as fallback
-                paymentRecord.stripe_payment_intent_id = session.id;
-              }
-            } else {
-              // Use session ID as payment reference when payment_intent is not available
-              paymentRecord.stripe_payment_intent_id = session.id;
-            }
-
-            await storage.createPaymentHistory(paymentRecord);
-            console.log('Payment history created:', paymentRecord);
-          }
-        } catch (error) {
-          console.error('Error saving checkout session data:', error);
-        }
-        break;
-
-      case 'invoice.payment_succeeded':
-        const invoice = event.data.object;
-        console.log('Invoice payment succeeded!', invoice);
-
-        try {
-          // Try to get userId from subscription if not in metadata
-          let userId = parseInt(invoice.metadata?.userId || '0');
-
-          if (userId === 0 && invoice.subscription) {
-            try {
-              const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-              // Get user from subscription metadata or customer
-              userId = parseInt(subscription.metadata?.userId || '0');
-            } catch (subError) {
-              console.error('Error retrieving subscription for user ID:', subError);
-            }
-          }
-
-          if (userId > 0) {
-            const paymentRecord = {
-              user_id: userId,
-              stripe_payment_intent_id: invoice.payment_intent as string || invoice.id,
-              amount: invoice.amount_paid,
-              currency: invoice.currency,
-              status: 'succeeded',
-              description: `Invoice payment for subscription ${invoice.subscription}`,
-            };
-
-            await storage.createPaymentHistory(paymentRecord);
-            console.log('Invoice payment history created:', paymentRecord);
-          } else {
-            console.warn('Could not determine user ID for invoice:', invoice.id);
-          }
-        } catch (error) {
-          console.error('Error saving invoice payment data:', error);
-        }
-        break;
-
-      case 'customer.subscription.updated':
-        const updatedSubscription = event.data.object;
-        console.log('Subscription updated webhook received:', {
-          subscriptionId: updatedSubscription.id,
-          status: updatedSubscription.status,
-          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
-          currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000)
-        });
-
-        try {
-          // Update subscription in database - ensure cancel_at_period_end is properly handled
-          const updateData = {
-            status: updatedSubscription.status,
-            current_period_start: new Date(updatedSubscription.current_period_start * 1000),
-            current_period_end: new Date(updatedSubscription.current_period_end * 1000),
-            cancel_at_period_end: updatedSubscription.cancel_at_period_end === true,
-          };
-          
-          console.log('Updating database with:', updateData);
-          console.log('Subscription ID for update:', updatedSubscription.id);
-          
-          const dbUpdate = await storage.updateSubscription(updatedSubscription.id, updateData);
-          
-          console.log('Database subscription updated successfully:', {
-            subscriptionId: updatedSubscription.id,
-            cancelAtPeriodEnd: updateData.cancel_at_period_end,
-            dbResult: dbUpdate
-          });
-          
-          // Verify the update by fetching the subscription
           try {
-            const verifyUpdate = await storage.getSubscriptionByUserId(parseInt(updatedSubscription.metadata?.userId || '0'));
-            console.log('Verification check - subscription after update:', {
-              cancel_at_period_end: verifyUpdate?.cancel_at_period_end,
-              status: verifyUpdate?.status,
-              updated_at: verifyUpdate?.updated_at
-            });
-          } catch (verifyError) {
-            console.error('Error verifying update:', verifyError);
-          }
+            const userId = parseInt(payment.notes?.userId || '0');
 
-          // If subscription is marked for cancellation, create a payment record
-          if (updatedSubscription.cancel_at_period_end && !updatedSubscription.metadata?.cancellation_recorded) {
-            let userId = parseInt(updatedSubscription.metadata?.userId || '0');
-            
             if (userId > 0) {
-              const planName = updatedSubscription.items.data[0].price.nickname || 'Current Plan';
-              
+              // Create payment history record
               await storage.createPaymentHistory({
                 user_id: userId,
-                stripe_payment_intent_id: `cancel_scheduled_${updatedSubscription.id}_${Date.now()}`,
-                amount: 0,
-                currency: 'usd',
-                status: 'pending_cancellation',
-                description: `Subscription cancellation scheduled: ${planName} - Access continues until ${new Date(updatedSubscription.current_period_end * 1000).toLocaleDateString()}`,
-              });
-              
-              console.log('Cancellation payment record created');
-            }
-          }
-
-          // Check if this is a plan change and create payment record
-          if (updatedSubscription.metadata?.plan_change === 'true') {
-            const planName = updatedSubscription.items.data[0].price.nickname || 'Updated Plan';
-            
-            // Try to get userId from subscription metadata
-            let userId = parseInt(updatedSubscription.metadata?.userId || '0');
-            
-            if (userId > 0) {
-              await storage.createPaymentHistory({
-                user_id: userId,
-                stripe_payment_intent_id: `sub_update_${updatedSubscription.id}_${Date.now()}`,
-                amount: 0, // Amount will be handled by separate invoice events
-                currency: 'usd',
+                razorpay_payment_id: payment.id,
+                amount: payment.amount,
+                currency: payment.currency,
                 status: 'succeeded',
-                description: `Subscription updated to ${planName}`,
+                description: `Payment for ${payment.description || 'subscription'}`,
               });
+
+              console.log('Payment history created for payment:', payment.id);
             }
+          } catch (error) {
+            console.error('Error saving payment data:', error);
           }
-        } catch (error) {
-          console.error('Error updating subscription:', error);
-          console.error('Error details:', error.message);
-        }
-        break;
+          break;
 
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object;
-        console.log('Subscription deletion webhook received:', {
-          subscriptionId: deletedSubscription.id,
-          status: deletedSubscription.status,
-          cancelAtPeriodEnd: deletedSubscription.cancel_at_period_end
-        });
+        case 'subscription.charged':
+          const subscription = event.payload.subscription.entity;
+          const paymentEntity = event.payload.payment.entity;
+          console.log('Subscription charged:', subscription);
 
-        try {
-          // Update subscription status to canceled
-          const updatedSub = await storage.updateSubscription(deletedSubscription.id, {
-            status: 'canceled',
-            cancel_at_period_end: false, // Reset since it's now actually canceled
-          });
-          
-          console.log('Subscription updated in database:', updatedSub);
-          
-          // Create payment record for cancellation
-          let userId = parseInt(deletedSubscription.metadata?.userId || '0');
-          
-          if (userId > 0) {
-            const planName = deletedSubscription.items?.data?.[0]?.price?.nickname || 'Canceled Plan';
-            
-            const paymentRecord = await storage.createPaymentHistory({
-              user_id: userId,
-              stripe_payment_intent_id: `cancel_complete_${deletedSubscription.id}_${Date.now()}`,
-              amount: 0,
-              currency: 'usd',
-              status: 'canceled',
-              description: `Subscription fully canceled: ${planName}`,
+          try {
+            const userId = parseInt(subscription.notes?.userId || '0');
+
+            if (userId > 0) {
+              // Map plan ID to plan name
+              let planName = 'Unknown Plan';
+              if (subscription.plan_id === PLAN_IDS.PRO_MONTHLY) {
+                planName = 'Pro Monthly';
+              } else if (subscription.plan_id === PLAN_IDS.PRO_YEARLY) {
+                planName = 'Pro Yearly';
+              } else if (subscription.plan_id === PLAN_IDS.ENTERPRISE_MONTHLY) {
+                planName = 'Enterprise Monthly';
+              } else if (subscription.plan_id === PLAN_IDS.ENTERPRISE_YEARLY) {
+                planName = 'Enterprise Yearly';
+              }
+
+              // Update or create subscription record
+              await storage.createSubscription({
+                user_id: userId,
+                razorpay_subscription_id: subscription.id,
+                razorpay_customer_id: subscription.customer_id,
+                status: subscription.status,
+                plan_name: planName,
+                plan_id: subscription.plan_id,
+                price_id: subscription.plan_id, // Add price_id field
+                current_period_start: new Date(subscription.current_start * 1000),
+                current_period_end: new Date(subscription.current_end * 1000),
+              });
+
+              // Create payment record
+              await storage.createPaymentHistory({
+                user_id: userId,
+                razorpay_payment_id: paymentEntity.id,
+                amount: paymentEntity.amount,
+                currency: paymentEntity.currency,
+                status: 'succeeded',
+                description: `Subscription payment for ${planName}`,
+              });
+
+              console.log('Subscription and payment records created');
+            }
+          } catch (error) {
+            console.error('Error saving subscription charge data:', error);
+          }
+          break;
+
+        case 'subscription.cancelled':
+          const cancelledSub = event.payload.subscription.entity;
+          console.log('Subscription cancelled:', cancelledSub);
+
+          try {
+            // Update subscription status
+            await storage.updateSubscription(cancelledSub.id, {
+              status: 'cancelled',
+              cancel_at_period_end: false,
             });
-            
-            console.log('Payment record created for cancellation:', paymentRecord);
-          } else {
-            console.warn('No user ID found in subscription metadata for cancellation tracking');
+
+            console.log('Subscription cancelled in database:', cancelledSub.id);
+          } catch (error) {
+            console.error('Error updating cancelled subscription:', error);
           }
-        } catch (error) {
-          console.error('Error updating cancelled subscription:', error);
-          console.error('Error details:', error.message);
-        }
-        break;
+          break;
 
-      default:
-        console.log(`Unhandled event type ${event.type}`);
+        default:
+          console.log(`Unhandled Razorpay event type: ${event.event}`);
+      }
+
+      // Save webhook event to prevent duplicate processing
+      try {
+        await storage.createWebhookEvent({
+          razorpay_event_id: event.payload.payment?.entity?.id || event.payload.subscription?.entity?.id || 'unknown',
+          event_type: event.event,
+          processed: true,
+        });
+      } catch (error) {
+        console.error('Error saving webhook event:', error);
+      }
+
+      res.json({ status: 'ok' });
+    } catch (error: any) {
+      console.error('Razorpay webhook error:', error);
+      res.status(400).json({ message: 'Webhook processing failed' });
     }
-
-    // Save webhook event to prevent duplicate processing
-    try {
-      await storage.createWebhookEvent({
-        stripe_event_id: event.id,
-        event_type: event.type,
-        processed: true,
-      });
-    } catch (error) {
-      console.error('Error saving webhook event:', error);
-    }
-
-    res.json({ received: true });
   });
 
   // Auth routes
@@ -719,151 +613,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe payment routes
+  // Razorpay payment routes
   app.post("/api/create-checkout-session", async (req: Request, res: Response) => {
     try {
-      const { priceId, userId, email } = req.body;
+      const { planId, userId, email } = req.body;
 
-      if (!priceId || !userId || !email) {
-        return res.status(400).json({ message: "Price ID, user ID, and email are required" });
+      if (!planId || !userId || !email) {
+        return res.status(400).json({ message: "Plan ID, user ID, and email are required" });
       }
 
-      // Validate price ID
-      const validPriceIds = Object.values(PRICE_IDS).filter(Boolean);
-      if (!validPriceIds.includes(priceId)) {
-        return res.status(400).json({ message: "Invalid price ID" });
+      // Validate plan ID - accept actual Razorpay plan IDs and mapped formats
+      const validPlanIds = [
+        ...Object.values(PLAN_IDS).filter(Boolean),
+        'plan_pro_monthly',
+        'plan_pro_yearly', 
+        'plan_enterprise_monthly',
+        'plan_enterprise_yearly',
+        'plan_QhReRFpIgKH7uT', // Actual pro monthly plan ID
+        'pro-monthly',
+        'pro-yearly',
+        'enterprise-monthly', 
+        'enterprise-yearly'
+      ];
+
+      if (!validPlanIds.includes(planId)) {
+        console.log('Invalid plan ID received:', planId);
+        console.log('Valid plan IDs:', validPlanIds);
+        return res.status(400).json({ message: "Invalid plan ID" });
       }
 
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        mode: 'subscription',
-        success_url: `${req.get('origin')}/billing?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.get('origin')}/pricing`,
-        customer_email: email,
-        metadata: {
+      // Get plan pricing - handle both original and mapped plan IDs
+      let amount = 0;
+      if (planId === PLAN_IDS.PRO_MONTHLY || planId === 'plan_pro_monthly' || planId === 'plan_QhReRFpIgKH7uT' || planId === 'pro-monthly') {
+        amount = PLAN_PRICING.PRO_MONTHLY;
+      } else if (planId === PLAN_IDS.PRO_YEARLY || planId === 'plan_pro_yearly' || planId === 'pro-yearly') {
+        amount = PLAN_PRICING.PRO_YEARLY;
+      } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY || planId === 'plan_enterprise_monthly' || planId === 'enterprise-monthly') {
+        amount = PLAN_PRICING.ENTERPRISE_MONTHLY;
+      } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY || planId === 'plan_enterprise_yearly' || planId === 'enterprise-yearly') {
+        amount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      }
+
+      // Create Razorpay order
+      const order = await razorpay.orders.create({
+        amount: amount, // Amount in paise
+        currency: 'INR',
+        receipt: `order_${userId}_${Date.now()}`,
+        notes: {
           userId: userId.toString(),
+          planId: planId,
+          email: email,
         },
       });
 
-      res.json({ sessionId: session.id });
+      res.json({ 
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+      });
     } catch (error) {
       console.error('Error creating checkout session:', error);
       res.status(500).json({ message: 'Failed to create checkout session' });
     }
   });
 
-  app.post("/api/create-portal-session", async (req: Request, res: Response) => {
+  // Verify payment
+  app.post("/api/verify-payment", async (req: Request, res: Response) => {
     try {
-      const { customerId } = req.body;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
 
-      if (!customerId) {
-        return res.status(400).json({ message: "Customer ID is required" });
+      // Verify signature
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+        .update(body.toString())
+        .digest("hex");
+
+      if (expectedSignature !== razorpay_signature) {
+        return res.status(400).json({ message: "Invalid payment signature" });
       }
 
-      // Check if customer exists first
-      const customer = await stripe.customers.retrieve(customerId);
-      if (!customer || customer.deleted) {
-        return res.status(404).json({ message: "Customer not found" });
-      }
+      // Get payment details
+      const payment = await razorpay.payments.fetch(razorpay_payment_id);
+      const order = await razorpay.orders.fetch(razorpay_order_id);
 
-      const portalSession = await stripe.billingPortal.sessions.create({
-        customer: customerId,
-        return_url: `${req.get('origin')}/billing`,
-        configuration: undefined, // Use default configuration
-      });
-
-      res.json({ url: portalSession.url });
-    } catch (error: any) {
-      console.error('Error creating portal session:', error);
-      
-      // Check if it's a configuration error
-      if (error.message && error.message.includes('configuration')) {
-        return res.status(400).json({ 
-          message: 'Customer portal is not configured. Please configure your Stripe Customer Portal in the dashboard.',
-          configurationRequired: true
-        });
-      }
-      
-      res.status(500).json({ message: 'Failed to create portal session' });
-    }
-  });
-
-  // Update customer
-  app.put("/api/customer/:customerId", async (req: Request, res: Response) => {
-    try {
-      const { customerId } = req.params;
-      const { invoice_settings } = req.body;
-
-      const customer = await stripe.customers.update(customerId, {
-        invoice_settings: invoice_settings || {}
-      });
-
-      res.json({ customer });
-    } catch (error) {
-      console.error('Error updating customer:', error);
-      res.status(500).json({ message: 'Failed to update customer' });
-    }
-  });
-
-  // Update subscription
-  app.put("/api/subscription/:subscriptionId", async (req: Request, res: Response) => {
-    try {
-      const { subscriptionId } = req.params;
-      const { items, discounts, off_session, payment_behavior, proration_behavior, userId } = req.body;
-
-      // Get current subscription before update
-      const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-      const currentPlanName = currentSubscription.items.data[0].price.nickname || 'Current Plan';
-
-      const subscription = await stripe.subscriptions.update(subscriptionId, {
-        items,
-        discounts: discounts || [],
-        off_session: off_session || false,
-        payment_behavior: payment_behavior || 'error_if_incomplete',
-        proration_behavior: proration_behavior || 'none'
-      });
-
-      // Create payment record for plan change
-      if (userId && items && items.length > 0) {
-        const newPriceId = items[0].price;
-        const newPrice = await stripe.prices.retrieve(newPriceId);
-        const newPlanName = newPrice.nickname || 'New Plan';
-        
-        // Calculate proration amount if applicable
-        let prorationAmount = 0;
-        if (proration_behavior === 'create_prorations') {
-          // This would be calculated based on the difference in plan pricing
-          // For now, we'll use 0 and let Stripe handle the actual billing
-          prorationAmount = 0;
+      if (payment.status === 'captured') {
+        // Map plan ID to plan name
+        let planName = 'Unknown Plan';
+        const planId = order.notes.planId;
+        if (planId === PLAN_IDS.PRO_MONTHLY) {
+          planName = 'Pro Monthly';
+        } else if (planId === PLAN_IDS.PRO_YEARLY) {
+          planName = 'Pro Yearly';
+        } else if (planId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+          planName = 'Enterprise Monthly';
+        } else if (planId === PLAN_IDS.ENTERPRISE_YEARLY) {
+          planName = 'Enterprise Yearly';
         }
 
+        // Calculate subscription period
+        const now = new Date();
+        const periodEnd = new Date(now);
+        if (planId?.includes('yearly')) {
+          periodEnd.setFullYear(now.getFullYear() + 1);
+        } else {
+          periodEnd.setMonth(now.getMonth() + 1);
+        }
+
+        // Save subscription to database
+        await storage.createSubscription({
+          user_id: parseInt(userId),
+          razorpay_subscription_id: payment.id, // Use payment ID as subscription ID for now
+          razorpay_customer_id: payment.customer_id || 'unknown',
+          status: 'active',
+          plan_name: planName,
+          plan_id: planId,
+          price_id: planId, // Add price_id field (same as plan_id for Razorpay)
+          current_period_start: now,
+          current_period_end: periodEnd,
+        });
+
+        // Save payment history
         await storage.createPaymentHistory({
           user_id: parseInt(userId),
-          stripe_payment_intent_id: `plan_change_${subscriptionId}_${Date.now()}`,
-          amount: prorationAmount,
-          currency: subscription.currency || 'usd',
+          razorpay_payment_id: payment.id,
+          amount: payment.amount,
+          currency: payment.currency,
           status: 'succeeded',
-          description: `Plan changed from ${currentPlanName} to ${newPlanName}`,
+          description: `Subscription payment for ${planName}`,
         });
-      }
 
-      res.json({ subscription });
+        res.json({ success: true, message: 'Payment verified successfully' });
+      } else {
+        res.status(400).json({ message: 'Payment not captured' });
+      }
     } catch (error) {
-      console.error('Error updating subscription:', error);
-      res.status(500).json({ message: 'Failed to update subscription' });
+      console.error('Error verifying payment:', error);
+      res.status(500).json({ message: 'Failed to verify payment' });
     }
   });
 
+  // Get current USD to INR exchange rate
+  app.get('/api/exchange-rate', async (req: Request, res: Response) => {
+    try {
+      const livePricing = await getPlanPricing();
+      // Calculate the current rate from live pricing
+      const currentRate = livePricing.PRO_MONTHLY / (29 * 100); // Reverse calculate from pro monthly
 
+      res.json({
+        rate: currentRate,
+        timestamp: Date.now(),
+        message: 'Current USD to INR exchange rate'
+      });
+    } catch (error) {
+      console.error('Error fetching exchange rate:', error);
+      res.status(500).json({ error: 'Failed to fetch exchange rate' });
+    }
+  });
 
-  // Get user subscription
-  app.get("/api/subscription/user/:userId", async (req: Request, res: Response) => {
+  // Get subscription by user ID
+  app.get('/api/subscription/user/:userId', async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
 
@@ -956,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get new price details
       const newPrice = await stripe.prices.retrieve(newPriceId);
-      
+
       // Map price ID to proper plan name
       let newPlanName = 'New Plan';
       if (newPriceId === PRICE_IDS.PRO_MONTHLY) {
@@ -1010,6 +919,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upgrade subscription
+  app.post('/api/subscription/:id/upgrade', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPlanId, userId } = req.body;
+
+      if (!newPlanId || !userId) {
+        return res.status(400).json({ error: 'New plan ID and user ID are required' });
+      }
+
+      console.log('Upgrade request received:', { subscriptionId: id, newPlanId, userId });
+
+      // Get current subscription details
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
+      }
+
+      // Map plan ID to plan name and pricing
+      let newPlanName = 'Unknown Plan';
+      let newAmount = 0;
+
+      if (newPlanId === PLAN_IDS.PRO_MONTHLY || newPlanId === 'pro-monthly') {
+        newPlanName = 'Pro Monthly';
+        newAmount = PLAN_PRICING.PRO_MONTHLY;
+      } else if (newPlanId === PLAN_IDS.PRO_YEARLY || newPlanId === 'pro-yearly') {
+        newPlanName = 'Pro Yearly';
+        newAmount = PLAN_PRICING.PRO_YEARLY;
+      } else if (newPlanId === PLAN_IDS.ENTERPRISE_MONTHLY || newPlanId === 'enterprise-monthly') {
+        newPlanName = 'Enterprise Monthly';
+        newAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
+      } else if (newPlanId === PLAN_IDS.ENTERPRISE_YEARLY || newPlanId === 'enterprise-yearly') {
+        newPlanName = 'Enterprise Yearly';
+        newAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      }
+
+      // Calculate prorated amount
+      const currentPeriodStart = new Date(subscription.current_period_start);
+      const currentPeriodEnd = new Date(subscription.current_period_end);
+      const now = new Date();
+
+      // Calculate remaining days in current period
+      const totalDays = Math.ceil((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
+      const remainingDays = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Calculate current plan daily rate
+      let currentAmount = 0;
+      const currentPlanId = subscription.plan_id;
+      if (currentPlanId === PLAN_IDS.PRO_MONTHLY) {
+        currentAmount = PLAN_PRICING.PRO_MONTHLY;
+      } else if (currentPlanId === PLAN_IDS.PRO_YEARLY) {
+        currentAmount = PLAN_PRICING.PRO_YEARLY;
+      } else if (currentPlanId === PLAN_IDS.ENTERPRISE_MONTHLY) {
+        currentAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
+      } else if (currentPlanId === PLAN_IDS.ENTERPRISE_YEARLY) {
+        currentAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
+      }
+
+      const currentDailyRate = currentAmount / totalDays;
+      const newDailyRate = newAmount / totalDays; // Assuming same period type
+
+      // Calculate prorated upgrade cost
+      const unusedCredit = Math.round(currentDailyRate * remainingDays);
+      const upgradeCharge = Math.round(newDailyRate * remainingDays);
+      const proratedAmount = upgradeCharge - unusedCredit;
+
+      // Update subscription in database immediately for instant access
+      const updatedSubscription = await storage.updateSubscription(subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id, {
+        status: 'active',
+        plan_name: newPlanName,
+        plan_id: newPlanId,
+        price_id: newPlanId,
+        // Keep the same period dates for prorated upgrade
+        current_period_start: subscription.current_period_start,
+        current_period_end: subscription.current_period_end,
+      });
+
+      // Create payment record for the upgrade
+      if (proratedAmount > 0) {
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          razorpay_payment_id: `upgrade_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
+          amount: proratedAmount,
+          currency: 'inr',
+          status: 'succeeded',
+          description: `Subscription upgraded from ${subscription.plan_name} to ${newPlanName} (prorated)`,
+        });
+      } else {
+        // If downgrade, record as credit
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          razorpay_payment_id: `upgrade_credit_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
+          amount: Math.abs(proratedAmount),
+          currency: 'inr',
+          status: 'succeeded',
+          description: `Credit applied for upgrade from ${subscription.plan_name} to ${newPlanName}`,
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        subscription: updatedSubscription,
+        prorationDetails: {
+          currentPlan: subscription.plan_name,
+          newPlan: newPlanName,
+          remainingDays,
+          unusedCredit: unusedCredit / 100, // Convert to rupees
+          upgradeCharge: upgradeCharge / 100,
+          netAmount: proratedAmount / 100,
+        },
+        message: `Successfully upgraded from ${subscription.plan_name} to ${newPlanName}. You now have immediate access to ${newPlanName} features!` 
+      });
+    } catch (error) {
+      console.error('Error upgrading subscription:', error);
+      res.status(500).json({ error: 'Failed to upgrade subscription' });
+    }
+  });
+
   // Cancel subscription (downgrade to free)
   app.post('/api/subscription/:id/cancel', async (req: Request, res: Response) => {
     try {
@@ -1018,61 +1046,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Cancellation request received:', { subscriptionId: id, userId });
 
-      // Get current subscription details before canceling
-      const currentSubscription = await stripe.subscriptions.retrieve(id);
-      console.log('Current subscription before cancellation:', {
-        id: currentSubscription.id,
-        status: currentSubscription.status,
-        cancelAtPeriodEnd: currentSubscription.cancel_at_period_end
-      });
-      
-      // Cancel the subscription at the end of the billing period
-      const subscription = await stripe.subscriptions.update(id, {
+      // First get the subscription details to find the correct ID
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
+      }
+
+      // Use the actual subscription ID from the database
+      const subscriptionIdToUpdate = subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id;
+
+      console.log('Using subscription ID for update:', subscriptionIdToUpdate);
+
+      // Update the subscription status in database
+      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
+        status: 'active', // Keep active until period ends
         cancel_at_period_end: true,
-        metadata: {
-          ...currentSubscription.metadata,
-          userId: userId?.toString() || currentSubscription.metadata?.userId,
-          cancellation_requested: new Date().toISOString()
-        }
       });
 
-      console.log('Stripe subscription updated:', {
-        id: subscription.id,
-        status: subscription.status,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end
-      });
-
-      // Update the subscription status in your database
-      const dbUpdate = await storage.updateSubscription(id, {
-        status: subscription.status, // Keep current status, will be 'active' until period ends
-        cancel_at_period_end: true,
-        current_period_end: new Date(subscription.current_period_end * 1000),
-      });
-      
       console.log('Database update result:', dbUpdate);
 
       // Create a payment record for the cancellation
       if (userId) {
-        const planName = currentSubscription.items.data[0].price.nickname || 'Unknown Plan';
-        
+        // Convert current_period_end to Date if it's a string
+        let periodEndDate = subscription.current_period_end;
+        if (typeof periodEndDate === 'string') {
+          periodEndDate = new Date(periodEndDate);
+        }
+
+        const formattedEndDate = periodEndDate instanceof Date && !isNaN(periodEndDate.getTime()) 
+          ? periodEndDate.toLocaleDateString() 
+          : 'end of billing period';
+
         await storage.createPaymentHistory({
           user_id: parseInt(userId),
-          stripe_payment_intent_id: `cancel_scheduled_${id}_${Date.now()}`,
+          razorpay_payment_id: `cancel_scheduled_${subscriptionIdToUpdate}_${Date.now()}`,
           amount: 0, // Cancellation doesn't involve a charge
-          currency: 'usd',
+          currency: 'inr',
           status: 'pending_cancellation',
-          description: `Subscription cancellation scheduled: ${planName} - Access continues until ${new Date(currentSubscription.current_period_end * 1000).toLocaleDateString()}`,
+          description: `Subscription cancellation scheduled: ${subscription.plan_name} - Access continues until ${formattedEndDate}`,
         });
       }
 
       res.json({ 
         success: true, 
-        subscription,
+        subscription: dbUpdate,
         message: 'Subscription cancelled successfully. Access will continue until the end of the billing period.' 
       });
     } catch (error) {
       console.error('Error cancelling subscription:', error);
       res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+  });
+
+  // Create subscription
+  app.post('/api/subscription/create', async (req: Request, res: Response) => {
+    const { userId, planId, customerEmail, customerName } = req.body;
+
+    try {
+      // Get live pricing based on plan
+      const livePricing = await getPlanPricing();
+      let amount: number;
+      let planName: string;
+      let interval: string;
+
+      switch (planId) {
+        case 'pro-monthly':
+          amount = livePricing.PRO_MONTHLY;
+          planName = 'Pro Monthly';
+          interval = 'monthly';
+          break;
+        case 'pro-yearly':
+          amount = livePricing.PRO_YEARLY;
+          planName = 'Pro Yearly';
+          interval = 'yearly';
+          break;
+        case 'enterprise-monthly':
+          amount = livePricing.ENTERPRISE_MONTHLY;
+          planName = 'Enterprise Monthly';
+          interval = 'monthly';
+          break;
+        case 'enterprise-yearly':
+          amount = livePricing.ENTERPRISE_YEARLY;
+          planName = 'Enterprise Yearly';
+          interval = 'yearly';
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid plan ID' });
+      }
+
+      // // Create a customer in Stripe
+      // const customer = await stripe.customers.create({
+      //   email: customerEmail,
+      //   name: customerName,
+      // });
+
+      // // Create a subscription in Stripe
+      // const subscription = await stripe.subscriptions.create({
+      //   customer: customer.id,
+      //   items: [{ plan: planId }],
+      //   payment_behavior: 'default_incomplete',
+      //   expand: ['latest_invoice.payment_intent'],
+      // });
+
+      // // Save the subscription to the database
+      // await storage.createSubscription({
+      //   user_id: userId,
+      //   stripe_subscription_id: subscription.id,
+      //   stripe_customer_id: customer.id,
+      //   status: subscription.status,
+      //   plan_name: planName,
+      //   price_id: planId,
+      //   current_period_start: new Date(subscription.current_period_start * 1000),
+      //   current_period_end: new Date(subscription.current_period_end * 1000),
+      // });
+
+      // res.json({
+      //   success: true,
+      //   subscriptionId: subscription.id,
+      //   clientSecret: (subscription.latest_invoice?.payment_intent as any)?.client_secret,
+      //   message: `Successfully subscribed to ${planName}!`
+      // });
+
+      res.status(500).json({ message: 'This route is not implemented yet. Use /api/create-checkout-session and /api/verify-payment instead.' });
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ error: 'Failed to create subscription' });
     }
   });
 

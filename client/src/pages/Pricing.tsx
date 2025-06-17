@@ -11,6 +11,43 @@ import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
 import Footer from '@/components/Footer';
 
+// Component to show current exchange rate
+function ExchangeRateInfo() {
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        const response = await fetch('/api/exchange-rate');
+        if (response.ok) {
+          const data = await response.json();
+          setExchangeRate(data.rate);
+        }
+      } catch (error) {
+        console.error('Failed to fetch exchange rate:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExchangeRate();
+  }, []);
+
+  return (
+    <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 text-center">
+      <p className="font-medium">
+        💰 Prices shown in USD. Indian customers will be charged equivalent amount in INR (₹) through Razorpay.
+        {!loading && exchangeRate && (
+          <span className="block text-sm mt-1">
+            Current rate: 1 USD = ₹{exchangeRate.toFixed(2)} (Live rate updated hourly)
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
 export default function Pricing() {
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -20,15 +57,15 @@ export default function Pricing() {
   const { createCheckoutSession, isLoading } = usePayment();
   const { user } = useAuth();
 
-  // Price IDs from your Stripe dashboard - use actual price IDs
+  // Plan IDs for Razorpay - use frontend format that gets mapped to actual Razorpay plan IDs
   const priceIds = {
     pro: {
-      monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp",
-      yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp",
+      monthly: "pro-monthly", // Maps to plan_QhReRFpIgKH7uT
+      yearly: "pro-yearly",   // Maps to plan_pro_yearly
     },
     enterprise: {
-      monthly: import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ",
-      yearly: import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG",
+      monthly: "enterprise-monthly", // Maps to plan_enterprise_monthly
+      yearly: "enterprise-yearly",   // Maps to plan_enterprise_yearly
     },
   };
 
@@ -43,13 +80,13 @@ export default function Pricing() {
     console.log('Billing interval:', billingInterval);
     console.log('Creating checkout session with price ID:', priceId);
     console.log('Available price IDs:', priceIds);
-    
-    if (!priceId || !priceId.startsWith('price_')) {
+
+    if (!priceId) {
       console.error('Invalid price ID:', priceId);
       console.error('Plan type:', planType, 'Billing interval:', billingInterval);
       return;
     }
-    
+
     try {
       await createCheckoutSession(priceId);
     } catch (error) {
@@ -63,7 +100,7 @@ export default function Pricing() {
     }
 
     try {
-      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
+      const response = await fetch(`/api/subscription/${userSubscription.razorpay_subscription_id || userSubscription.stripe_subscription_id}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +119,7 @@ export default function Pricing() {
         } else {
           setUserSubscription(null);
         }
-        
+
         // Show success message
         alert('Your subscription has been cancelled. You will continue to have access until the end of your billing period, then you will be moved to the Free plan.');
       } else {
@@ -102,7 +139,7 @@ export default function Pricing() {
     }
 
     try {
-      const response = await fetch(`/api/subscription/${userSubscription.stripe_subscription_id}/cancel`, {
+      const response = await fetch(`/api/subscription/${userSubscription.razorpay_subscription_id || userSubscription.stripe_subscription_id}/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +156,7 @@ export default function Pricing() {
           const subscription = await fetchResponse.json();
           setUserSubscription(subscription);
         }
-        
+
         // Show success message
         alert('Your subscription has been scheduled for cancellation. You will continue to have access to Enterprise features until the end of your billing period, then you can subscribe to Pro.');
       } else {
@@ -147,7 +184,7 @@ export default function Pricing() {
       try {
         const response = await fetch(`/api/subscription/user/${user.id}`);
         console.log('📡 Subscription API response status:', response.status);
-        
+
         if (response.ok) {
           const subscription = await response.json();
           console.log('✅ Subscription data received:', subscription);
@@ -177,40 +214,34 @@ export default function Pricing() {
 
     const planName = userSubscription.plan_name?.toLowerCase() || '';
     const priceId = userSubscription.price_id || '';
-    
+
     console.log('=== PLAN DETECTION DEBUG ===');
     console.log('Plan name:', planName);
     console.log('Price ID:', priceId);
     console.log('Status:', userSubscription.status);
     console.log('Full subscription:', userSubscription);
-    
-    // Check against actual price IDs from our pricing config
-    const proMonthlyPriceId = import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
-    const proYearlyPriceId = import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || "price_1RZIf4QTNPgFvxI8M9zhGGYp";
-    const enterpriseMonthlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || "price_1QYy4JQTNP6FvxI8OeztV7sJ";
-    const enterpriseYearlyPriceId = import.meta.env.VITE_STRIPE_ENTERPRISE_YEARLY_PRICE_ID || "price_1QYy4cQTNP6FvxI8i2p3w5rG";
-    
-    // Check by price ID first (most reliable)
-    if (priceId === proMonthlyPriceId) {
+
+    // Check by price ID first (most reliable) - now using Razorpay plan IDs
+    if (priceId === 'plan_QhReRFpIgKH7uT' || priceId === 'pro-monthly') {
       console.log('✅ Detected Pro Monthly by price ID');
       return 'pro-monthly';
     }
-    
-    if (priceId === proYearlyPriceId) {
+
+    if (priceId === 'plan_pro_yearly' || priceId === 'pro-yearly') {
       console.log('✅ Detected Pro Yearly by price ID');
       return 'pro-yearly';
     }
-    
-    if (priceId === enterpriseMonthlyPriceId) {
+
+    if (priceId === 'plan_enterprise_monthly' || priceId === 'enterprise-monthly') {
       console.log('✅ Detected Enterprise Monthly by price ID');
       return 'enterprise-monthly';
     }
-    
-    if (priceId === enterpriseYearlyPriceId) {
+
+    if (priceId === 'plan_enterprise_yearly' || priceId === 'enterprise-yearly') {
       console.log('✅ Detected Enterprise Yearly by price ID');
       return 'enterprise-yearly';
     }
-    
+
     // Fallback to plan name detection
     if (planName.includes('pro')) {
       if (planName.includes('monthly')) {
@@ -225,7 +256,7 @@ export default function Pricing() {
       console.log('✅ Detected Pro by plan name (using current billing interval)');
       return billingInterval === 'yearly' ? 'pro-yearly' : 'pro-monthly';
     }
-    
+
     if (planName.includes('enterprise')) {
       if (planName.includes('monthly')) {
         console.log('✅ Detected Enterprise Monthly by plan name');
@@ -291,7 +322,7 @@ export default function Pricing() {
       button: {
         text: (currentPlan === 'pro-monthly' && billingInterval === 'monthly') || 
               (currentPlan === 'pro-yearly' && billingInterval === 'yearly') ? "Current Plan" : 
-              (currentPlan.includes('enterprise')) ? "Cancel & Switch to Pro" :
+              (currentPlan.includes('enterprise')) ? "Downgrade to Pro" :
               (currentPlan.includes('pro') && billingInterval !== (currentPlan.includes('yearly') ? 'yearly' : 'monthly')) ? "Switch to " + (billingInterval === 'yearly' ? 'Yearly' : 'Monthly') :
               "Get Started",
         variant: "default" as const,
@@ -380,6 +411,8 @@ export default function Pricing() {
           <p className="font-medium">🧪 Test Mode Active - Use test card: 4242 4242 4242 4242</p>
         </div>
       )}
+            <ExchangeRateInfo />
+
       <div className="container max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>

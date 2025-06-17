@@ -329,17 +329,38 @@ export class SupabaseStorage implements IStorage {
     return data;
   }
 
-  async updateSubscription(stripeSubscriptionId: string, updates: any): Promise<any> {
+  async updateSubscription(subscriptionId: string, updates: any): Promise<any> {
     console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
-    console.log('Stripe Subscription ID:', stripeSubscriptionId);
+    console.log('Subscription ID:', subscriptionId);
     console.log('Updates to apply:', updates);
     
-    const { data, error } = await this.supabase
+    // Try to update by razorpay_subscription_id first, then by stripe_subscription_id
+    let data, error;
+    
+    // First try Razorpay subscription ID
+    const razorpayResult = await this.supabase
       .from('subscriptions')
       .update({ ...updates, updated_at: new Date() })
-      .eq('stripe_subscription_id', stripeSubscriptionId)
+      .eq('razorpay_subscription_id', subscriptionId)
       .select()
       .single();
+    
+    if (!razorpayResult.error && razorpayResult.data) {
+      console.log('Updated by razorpay_subscription_id:', razorpayResult.data);
+      console.log('=== END UPDATE DEBUG ===');
+      return razorpayResult.data;
+    }
+    
+    // If not found by Razorpay ID, try Stripe ID
+    const stripeResult = await this.supabase
+      .from('subscriptions')
+      .update({ ...updates, updated_at: new Date() })
+      .eq('stripe_subscription_id', subscriptionId)
+      .select()
+      .single();
+    
+    data = stripeResult.data;
+    error = stripeResult.error;
     
     if (error) {
       console.error('Supabase update error:', error);
