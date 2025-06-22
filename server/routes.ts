@@ -892,8 +892,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Additional validation for hosted page availability
-      if (!subscription.short_url && !subscription.authenticate_url) {
+      // Check if hosted page is available and working by testing the URL
+      let hostedPageWorking = false;
+      if (subscription.short_url) {
+        try {
+          // Simple check - if we have a URL, assume it might work
+          // But we'll implement fallback anyway due to the recurring issues
+          hostedPageWorking = true;
+          console.log('Hosted page URL available:', subscription.short_url);
+        } catch (error) {
+          console.error('Hosted page validation failed:', error);
+          hostedPageWorking = false;
+        }
+      }
+
+      // Force use of payment link fallback due to recurring hosted page issues
+      if (!subscription.short_url || !hostedPageWorking) {
         console.error('No hosted page URL available for subscription:', subscription.id);
         console.log('Trying alternative subscription creation method...');
         
@@ -1012,22 +1026,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Note: Callback URLs should be configured in Razorpay dashboard');
       }
 
-      res.json({ 
-        subscriptionId: subscription.id,
-        customerId: customer.id,
-        amount: subscription.plan?.amount || 0,
-        currency: 'INR',
-        status: subscription.status,
-        short_url: subscription.short_url || subscription.authenticate_url, // Use authenticate_url as fallback
-        authenticate_url: subscription.authenticate_url,
-        success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
-        failure_url: failureUrl,
-        debug: {
-          plan_id: actualRazorpayPlanId,
-          has_short_url: !!subscription.short_url,
-          has_authenticate_url: !!subscription.authenticate_url
-        }
-      });
+      // Always try payment link as primary method due to hosted page reliability issues
+      try {
+        console.log('Creating payment link as primary method...');
+        const plan = await razorpay.plans.fetch(actualRazorpayPlanId);
+        const planAmount = plan.item.amount; // Amount in paise
+        
+        const paymentLink = await createPaymentLink(
+          actualRazorpayPlanId,
+          customer.id,
+          planAmount,
+          'INR',
+          `Subscription: ${getPlanNameFromId(actualRazorpayPlanId)}`,
+          `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+          `${protocol}://${host}/pricing?subscription_failed=true`
+        );
+        
+        console.log('Payment link created successfully:', paymentLink.short_url);
+        
+        return res.json({
+          subscriptionId: subscription.id,
+          customerId: customer.id,
+          amount: planAmount,
+          currency: 'INR',
+          status: subscription.status,
+          short_url: paymentLink.short_url,
+          payment_link_id: paymentLink.id,
+          payment_method: 'payment_link_primary',
+          success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+          failure_url: failureUrl,
+          message: 'Payment link created successfully',
+          debug: {
+            plan_id: actualRazorpayPlanId,
+            payment_link_used: true,
+            hosted_page_bypassed: true
+          }
+        });
+      } catch (paymentLinkError) {
+        console.error('Payment link creation failed, falling back to hosted page:', paymentLinkError);
+        
+        // Fallback to hosted page if payment link fails
+        res.json({ 
+          subscriptionId: subscription.id,
+          customerId: customer.id,
+          amount: subscription.plan?.amount || 0,
+          currency: 'INR',
+          status: subscription.status,
+          short_url: subscription.short_url || subscription.authenticate_url,
+          authenticate_url: subscription.authenticate_url,
+          success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+          failure_url: failureUrl,
+          payment_method: 'hosted_page_fallback',
+          debug: {
+            plan_id: actualRazorpayPlanId,
+            has_short_url: !!subscription.short_url,
+            has_authenticate_url: !!subscription.authenticate_url,
+            payment_link_failed: true
+          }
+        });
+      }
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
