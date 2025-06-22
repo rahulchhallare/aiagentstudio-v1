@@ -1258,38 +1258,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Verify subscription payment (activated via webhook mainly, this is for direct verification)
-  // Manual subscription activation endpoint
+  // Manual subscription activation endpoint - place early to avoid conflicts
   app.post("/api/activate-subscription", async (req: Request, res: Response) => {
+    console.log('=== SUBSCRIPTION ACTIVATION DEBUG ===');
+    console.log('Request body:', req.body);
+    console.log('Content-Type:', req.headers['content-type']);
+    
     try {
       const { subscriptionId, userId } = req.body;
       
       if (!subscriptionId || !userId) {
+        console.log('Missing required fields:', { subscriptionId, userId });
         return res.status(400).json({ message: 'Missing subscription ID or user ID' });
       }
 
       // Get subscription details from Razorpay
       const subscription = await razorpay.subscriptions.fetch(subscriptionId);
-      console.log('Manual activation - Subscription status:', subscription.status);
+      console.log('Razorpay subscription details:', {
+        id: subscription.id,
+        status: subscription.status,
+        plan_id: subscription.plan_id,
+        customer_id: subscription.customer_id
+      });
       
       // Get plan name
       const planName = getPlanNameFromId(subscription.plan_id);
+      console.log('Plan name mapped:', planName);
       
       // Check if subscription already exists
       const existingSubscription = await storage.getSubscriptionByUserId(userId);
+      console.log('Existing subscription check:', existingSubscription ? 'Found' : 'Not found');
       
       if (existingSubscription) {
         // Update existing subscription
-        await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
+        console.log('Updating existing subscription...');
+        const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
           status: 'active',
           current_period_start: new Date(),
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
           updated_at: new Date()
         });
-        console.log('Updated existing subscription to active');
+        console.log('Subscription updated:', updatedSub);
       } else {
         // Create new subscription
-        await storage.createSubscription({
+        console.log('Creating new subscription...');
+        const newSubscription = {
           user_id: userId,
           razorpay_subscription_id: subscription.id,
           razorpay_customer_id: subscription.customer_id,
@@ -1299,18 +1312,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           price_id: subscription.plan_id,
           current_period_start: new Date(),
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        });
-        console.log('Created new active subscription');
+        };
+        console.log('New subscription data:', newSubscription);
+        
+        const createdSub = await storage.createSubscription(newSubscription);
+        console.log('Subscription created:', createdSub);
       }
+
+      // Verify subscription was created/updated
+      const verifySubscription = await storage.getSubscriptionByUserId(userId);
+      console.log('Verification check:', verifySubscription ? 'Success' : 'Failed');
+      console.log('=== END ACTIVATION DEBUG ===');
 
       res.json({ 
         success: true, 
         message: 'Subscription activated successfully',
-        subscription: { ...subscription, status: 'active' }
+        subscription: { ...subscription, status: 'active' },
+        verified: !!verifySubscription
       });
     } catch (error) {
       console.error('Manual subscription activation error:', error);
-      res.status(500).json({ message: 'Subscription activation failed' });
+      console.log('=== END ACTIVATION DEBUG (ERROR) ===');
+      res.status(500).json({ 
+        message: 'Subscription activation failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
