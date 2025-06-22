@@ -235,9 +235,11 @@ export default function Billing() {
   // Memoize formatted payment history
   const invoices = useMemo(() => {
     return paymentHistory.map((payment) => ({
-      id: payment.stripe_payment_intent_id || payment.id,
+      id: payment.razorpay_payment_id || payment.stripe_payment_intent_id || payment.id,
       date: new Date(payment.created_at).toLocaleDateString(),
-      amount: `$${(payment.amount / 100).toFixed(2)}`,
+      amount: payment.currency === 'INR' 
+        ? `₹${(payment.amount / 100).toFixed(2)}` 
+        : `$${(payment.amount / 100).toFixed(2)}`,
       status: payment.status === 'succeeded' ? 'Paid' : payment.status,
       plan: payment.description || 'Subscription Payment'
     }));

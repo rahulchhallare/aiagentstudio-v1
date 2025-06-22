@@ -1343,6 +1343,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const createdSub = await storage.createSubscription(newSubscription);
         console.log('Subscription created:', createdSub);
+        
+        // Create payment history record for manual activation
+        try {
+          const paymentRecord = await storage.createPaymentHistory({
+            user_id: userId,
+            razorpay_payment_id: `manual_${subscription.id}_${Date.now()}`, // Create unique payment ID
+            amount: 2900, // ₹29 in paisa (Indian currency subunit)
+            currency: 'INR',
+            status: 'succeeded',
+            description: `Manual activation: ${planName} subscription`,
+          });
+          console.log('Payment history created for manual activation:', paymentRecord);
+        } catch (error) {
+          console.error('Error creating payment history:', error);
+        }
       }
 
       // Verify subscription was created/updated
@@ -1470,6 +1485,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching subscription:', error);
       return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create payment history record manually (for testing/admin use)
+  app.post("/api/payment-history/create", async (req: Request, res: Response) => {
+    try {
+      const paymentData = req.body;
+      const payment = await storage.createPaymentHistory(paymentData);
+      return res.status(201).json(payment);
+    } catch (error) {
+      console.error('Error creating payment history:', error);
+      return res.status(500).json({ message: "Failed to create payment history" });
     }
   });
 
