@@ -388,8 +388,7 @@ export default function Billing() {
     }
   ];
 
-  // Format payment history for display
-  // Use useMemo to memoize the formatted payment history
+  // Memoize the formatted payment history to prevent unnecessary re-renders
   const invoices = useMemo(() => {
     return paymentHistory.map((payment) => ({
       id: payment.stripe_payment_intent_id || payment.id,
