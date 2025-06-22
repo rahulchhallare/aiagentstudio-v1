@@ -1803,10 +1803,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Update the subscription status in database
+      // Update the subscription status in database - immediate cancellation for downgrade to free
       const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
-        status: 'active', // Keep active until period ends
-        cancel_at_period_end: true,
+        status: 'cancelled',
+        cancel_at_period_end: false,
+        updated_at: new Date()
       });
 
       console.log('Database update result:', dbUpdate);

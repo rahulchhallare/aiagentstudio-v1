@@ -427,7 +427,9 @@ export default function Billing() {
                                 variant={plan.name === 'Free' ? 'outline' : 'default'}
                                 className="w-full"
                                 onClick={() => {
-                                  if (plan.planId) {
+                                  if (plan.name === 'Free') {
+                                    handleDowngradeToFree();
+                                  } else if (plan.planId) {
                                     upgradeSubscription(plan.planId);
                                   }
                                 }}
