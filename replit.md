@@ -27,6 +27,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Fixed webhook signature verification for payment processing
 - Fixed subscription activation after payment - now properly updates user's plan status
 - Manual subscription activation endpoint working as backup to webhook failures
+- Payment history now properly displays transaction records with correct currency formatting
+- Created manual payment history creation endpoint for administrative use
 
 ## User Preferences
 - Language: English
