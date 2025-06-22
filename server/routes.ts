@@ -202,6 +202,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } catch (error) {
             console.error('Error saving subscription charge data:', error);
+            // Don't throw error - webhook should still succeed
+          }
+          break;
 
   // Debug endpoint for subscription troubleshooting
   app.get('/api/debug/subscription/:subscriptionId', async (req: Request, res: Response) => {
@@ -1256,6 +1259,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Verify subscription payment (activated via webhook mainly, this is for direct verification)
+  // Manual subscription activation endpoint
+  app.post("/api/activate-subscription", async (req: Request, res: Response) => {
+    try {
+      const { subscriptionId, userId } = req.body;
+      
+      if (!subscriptionId || !userId) {
+        return res.status(400).json({ message: 'Missing subscription ID or user ID' });
+      }
+
+      // Get subscription details from Razorpay
+      const subscription = await razorpay.subscriptions.fetch(subscriptionId);
+      console.log('Manual activation - Subscription status:', subscription.status);
+      
+      // Get plan name
+      const planName = getPlanNameFromId(subscription.plan_id);
+      
+      // Check if subscription already exists
+      const existingSubscription = await storage.getSubscriptionByUserId(userId);
+      
+      if (existingSubscription) {
+        // Update existing subscription
+        await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
+          status: 'active',
+          current_period_start: new Date(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          updated_at: new Date()
+        });
+        console.log('Updated existing subscription to active');
+      } else {
+        // Create new subscription
+        await storage.createSubscription({
+          user_id: userId,
+          razorpay_subscription_id: subscription.id,
+          razorpay_customer_id: subscription.customer_id,
+          status: 'active',
+          plan_name: planName,
+          plan_id: subscription.plan_id,
+          price_id: subscription.plan_id,
+          current_period_start: new Date(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        });
+        console.log('Created new active subscription');
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Subscription activated successfully',
+        subscription: { ...subscription, status: 'active' }
+      });
+    } catch (error) {
+      console.error('Manual subscription activation error:', error);
+      res.status(500).json({ message: 'Subscription activation failed' });
+    }
+  });
+
   app.post("/api/verify-payment", async (req: Request, res: Response) => {
     try {
       const { razorpay_subscription_id, razorpay_payment_id, razorpay_signature, userId } = req.body;

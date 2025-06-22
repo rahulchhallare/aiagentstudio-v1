@@ -110,20 +110,40 @@ export default function Billing() {
           description: "Your subscription has been activated. Welcome to your new plan!",
         });
 
-        // Verify the subscription
-        fetch('/api/verify-payment', {
+        // Activate the subscription manually to ensure it's properly set up
+        fetch('/api/activate-subscription', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            razorpay_subscription_id: subscriptionId,
+            subscriptionId: subscriptionId,
             userId: user.id,
           }),
-        }).then(() => {
-          fetchBillingData();
+        }).then(response => {
+          if (response.ok) {
+            console.log('Subscription activated successfully');
+            fetchBillingData();
+          } else {
+            console.error('Failed to activate subscription');
+            // Fallback to verify-payment endpoint
+            return fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_subscription_id: subscriptionId,
+                userId: user.id,
+              }),
+            });
+          }
+        }).then(response => {
+          if (response && response.ok) {
+            fetchBillingData();
+          }
         }).catch(error => {
-          console.error('Error verifying subscription:', error);
+          console.error('Error activating subscription:', error);
         });
 
         // Clean up URL parameters
