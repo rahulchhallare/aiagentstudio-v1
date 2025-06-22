@@ -312,11 +312,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-            throw error; // Re-throw to ensure webhook fails and retries
-          }
-          break;
-
         case 'subscription.cancelled':
           const cancelledSub = event.payload.subscription.entity;
           console.log('Subscription cancelled:', cancelledSub);
@@ -1258,7 +1253,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manual subscription activation endpoint - place early to avoid conflicts
+  // Debug endpoint for subscription troubleshooting
+  app.get('/api/debug/subscription/:subscriptionId', async (req: Request, res: Response) => {
+    try {
+      const { subscriptionId } = req.params;
+      
+      const subscription = await razorpay.subscriptions.fetch(subscriptionId);
+      
+      res.json({
+        subscription: {
+          id: subscription.id,
+          status: subscription.status,
+          plan_id: subscription.plan_id,
+          customer_id: subscription.customer_id,
+          short_url: subscription.short_url,
+          authenticate_url: subscription.authenticate_url,
+          created_at: subscription.created_at,
+          current_start: subscription.current_start,
+          current_end: subscription.current_end,
+          notes: subscription.notes,
+        }
+      });
+    } catch (error: any) {
+      console.error('Error fetching subscription:', error);
+      res.status(400).json({ 
+        error: error.message,
+        code: error.error?.code,
+        description: error.error?.description
+      });
+    }
+  });
+
+  // Manual subscription activation endpoint
   app.post("/api/activate-subscription", async (req: Request, res: Response) => {
     console.log('=== SUBSCRIPTION ACTIVATION DEBUG ===');
     console.log('Request body:', req.body);
