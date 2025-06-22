@@ -1177,13 +1177,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating payment link for plan:', planId, 'mapped to:', actualRazorpayPlanId);
 
-      // Create payment link for new subscription
-      const paymentLink = await createPaymentLink(
-        actualRazorpayPlanId,
-        user.email,
-        user.username,
-        parseInt(userId)
-      );
+      // Get plan pricing - amounts are already in paise (smallest currency unit)
+      const livePricing = await getPlanPricing();
+      let amount: number;
+      let planName: string;
+
+      switch (planId) {
+        case 'pro-monthly':
+          amount = livePricing.PRO_MONTHLY;
+          planName = 'Pro Monthly';
+          break;
+        case 'pro-yearly':
+          amount = livePricing.PRO_YEARLY;
+          planName = 'Pro Yearly';
+          break;
+        case 'enterprise-monthly':
+          amount = livePricing.ENTERPRISE_MONTHLY;
+          planName = 'Enterprise Monthly';
+          break;
+        case 'enterprise-yearly':
+          amount = livePricing.ENTERPRISE_YEARLY;
+          planName = 'Enterprise Yearly';
+          break;
+        default:
+          amount = livePricing.PRO_MONTHLY;
+          planName = 'Pro Monthly';
+      }
+
+      console.log('Payment amount for', planName, ':', amount, 'paise');
+      console.log('Type of amount:', typeof amount);
+      console.log('Raw pricing object:', livePricing);
+
+      // Create Razorpay customer if doesn't exist
+      let customer;
+      try {
+        customer = await razorpay.customers.create({
+          name: user.username,
+          email: user.email,
+          contact: '+919000000000', // Default contact
+        });
+      } catch (error) {
+        console.error('Error creating customer:', error);
+        throw new Error('Failed to create customer');
+      }
+
+      // Ensure amount is a whole number (should already be in paise)
+      const amountInPaise = Math.round(Number(amount));
+      
+      console.log('Creating payment link with amount:', amountInPaise, 'paise');
+
+      // Create payment link
+      const paymentLink = await razorpay.paymentLink.create({
+        amount: amountInPaise,
+        currency: 'INR',
+        accept_partial: false,
+        description: `Subscription to ${planName}`,
+        customer: {
+          id: customer.id
+        },
+        notify: {
+          sms: false,
+          email: true
+        },
+        reminder_enable: true,
+        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true`,
+        callback_method: 'get'
+      });
 
       res.json({ 
         paymentLink: paymentLink.short_url || paymentLink.payment_page_url,
