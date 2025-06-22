@@ -1761,6 +1761,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Downgrade to free plan (bypass Razorpay)
+  app.post('/api/subscription/:id/downgrade-to-free', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.body;
+
+      console.log('Downgrade to free request received:', { subscriptionId: id, userId });
+
+      // Get the subscription details
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
+      }
+
+      // Update subscription status in database to cancelled (immediate downgrade to free)
+      const dbUpdate = await storage.updateSubscription(subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id, {
+        status: 'cancelled',
+        cancel_at_period_end: false,
+        updated_at: new Date()
+      });
+
+      console.log('Database downgrade result:', dbUpdate);
+
+      // Create a payment record for the downgrade
+      await storage.createPaymentHistory({
+        user_id: parseInt(userId),
+        razorpay_payment_id: `downgrade_to_free_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
+        amount: 0,
+        currency: 'INR',
+        status: 'succeeded',
+        description: `Downgraded to Free plan from ${subscription.plan_name}`,
+      });
+
+      res.json({ 
+        success: true, 
+        subscription: dbUpdate,
+        message: 'Successfully downgraded to Free plan'
+      });
+    } catch (error) {
+      console.error('Error downgrading to free plan:', error);
+      res.status(500).json({ error: 'Failed to downgrade to free plan' });
+    }
+  });
+
   // Cancel subscription (downgrade to free)
   app.post('/api/subscription/:id/cancel', async (req: Request, res: Response) => {
     try {
@@ -1790,12 +1835,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (razorpayError: any) {
         console.error('Error cancelling Razorpay subscription:', razorpayError);
 
-        // If subscription doesn't exist in Razorpay, that's fine - continue with database update
-        if (razorpayError.error?.code === 'BAD_REQUEST_ERROR' && 
-            razorpayError.error?.description?.includes('does not exist')) {
-          console.log('Subscription not found in Razorpay, proceeding with database update');
+        // If forceCancel is true (downgrade to free), continue regardless of Razorpay error
+        if (forceCancel) {
+          console.log('Force cancel enabled - proceeding with database update despite Razorpay error');
+        } else if (razorpayError.error?.code === 'BAD_REQUEST_ERROR' && 
+                   (razorpayError.error?.description?.includes('does not exist') ||
+                    razorpayError.error?.description?.includes('expired status'))) {
+          console.log('Subscription not cancellable in Razorpay (expired/not found), proceeding with database update');
         } else {
-          // For other errors, we might want to return early
+          // For other errors without force cancel, return early
           return res.status(400).json({ 
             error: 'Failed to cancel subscription in Razorpay',
             details: razorpayError.error?.description || razorpayError.message

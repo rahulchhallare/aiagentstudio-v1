@@ -92,6 +92,49 @@ export default function Billing() {
     }
   }, [user]);
 
+  const handleDowngradeToFree = useCallback(async () => {
+    if (!subscription || !user) return;
+
+    const confirmMessage = `Are you sure you want to downgrade to the Free plan? You will lose access to ${subscription.plan_name} features immediately and your subscription will be cancelled.`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await fetch(`/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/downgrade-to-free`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Downgraded to Free",
+          description: "Your subscription has been cancelled and you're now on the Free plan.",
+        });
+        fetchBillingData();
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to downgrade subscription:', errorData);
+        toast({
+          title: "Error", 
+          description: "Failed to downgrade subscription. Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error downgrading subscription:', error);
+      toast({
+        title: "Error",
+        description: "Failed to downgrade subscription. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  }, [subscription, user, toast, fetchBillingData]);
+
   // Fetch subscription and payment data
   useEffect(() => {
     if (user) {

@@ -29,6 +29,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Manual subscription activation endpoint working as backup to webhook failures
 - Payment history now properly displays transaction records with correct currency formatting
 - Created manual payment history creation endpoint for administrative use
+- Implemented downgrade to free plan functionality with dedicated endpoint
+- Downgrade bypasses Razorpay API issues and immediately cancels subscription in database
 
 ## User Preferences
 - Language: English
