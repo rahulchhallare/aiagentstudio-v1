@@ -1080,6 +1080,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual payment creation endpoint
+  app.post("/api/create-manual-payment", async (req: Request, res: Response) => {
+    try {
+      const { subscriptionId, planId, customerId, userId } = req.body;
+
+      if (!subscriptionId || !planId || !customerId || !userId) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: subscriptionId, planId, customerId, userId" 
+        });
+      }
+
+      const paymentData = await createManualSubscriptionPayment(
+        subscriptionId, 
+        planId, 
+        customerId, 
+        parseInt(userId)
+      );
+
+      res.json({
+        success: true,
+        order_id: paymentData.order.id,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        key: process.env.RAZORPAY_KEY_ID,
+        subscription_id: subscriptionId,
+        message: "Manual payment order created successfully"
+      });
+    } catch (error: any) {
+      console.error('Error creating manual payment:', error);
+      res.status(500).json({ 
+        message: 'Failed to create manual payment',
+        error: error.message 
+      });
+    }
+  });
+
+  // Verify manual payment endpoint
+  app.post("/api/verify-manual-payment", async (req: Request, res: Response) => {
+    try {
+      const { orderId, paymentId, signature, subscriptionId } = req.body;
+
+      if (!orderId || !paymentId || !signature || !subscriptionId) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: orderId, paymentId, signature, subscriptionId" 
+        });
+      }
+
+      const verificationResult = await verifyManualPayment(
+        orderId, 
+        paymentId, 
+        signature, 
+        subscriptionId
+      );
+
+      if (verificationResult.success) {
+        // Save or update subscription in database if needed
+        // This would be handled by webhook normally, but for manual payments we do it here
+        res.json({
+          success: true,
+          message: verificationResult.message,
+          payment_id: paymentId,
+          subscription_id: subscriptionId
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "Payment verification failed"
+        });
+      }
+    } catch (error: any) {
+      console.error('Error verifying manual payment:', error);
+      res.status(400).json({ 
+        success: false,
+        message: 'Payment verification failed',
+        error: error.message 
+      });
+    }
+  });
+
+  // Debug endpoint to check Razorpay account configuration
+  app.get("/api/debug/razorpay-config", async (req: Request, res: Response) => {
+    try {
+      // Check plans
+      const plans = await razorpay.plans.all({ count: 10 });
+      
+      // Check if hosted checkout is enabled (this might require specific API calls)
+      const accountInfo = {
+        plans_count: plans.count,
+        plans: plans.items.map(plan => ({
+          id: plan.id,
+          name: plan.item.name,
+          amount: plan.item.amount,
+          currency: plan.item.currency,
+          interval: plan.period,
+          status: plan.notes || 'active'
+        })),
+        configured_plan_ids: {
+          PRO_MONTHLY: PLAN_IDS.PRO_MONTHLY,
+          PRO_YEARLY: PLAN_IDS.PRO_YEARLY,
+          ENTERPRISE_MONTHLY: PLAN_IDS.ENTERPRISE_MONTHLY,
+          ENTERPRISE_YEARLY: PLAN_IDS.ENTERPRISE_YEARLY
+        }
+      };
+
+      res.json(accountInfo);
+    } catch (error: any) {
+      console.error('Error checking Razorpay config:', error);
+      res.status(500).json({ 
+        error: error.message,
+        code: error.error?.code,
+        description: error.error?.description
+      });
+    }
+  });
+
   // Verify subscription payment (activated via webhook mainly, this is for direct verification)
   app.post("/api/verify-payment", async (req: Request, res: Response) => {
     try {
