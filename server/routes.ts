@@ -1143,27 +1143,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { subscriptionId, planId, customerId, userId } = req.body;
 
-      if (!subscriptionId || !planId || !customerId || !userId) {
+      // Handle upgrade from Free plan - only need planId and userId
+      if (!userId || !planId) {
         return res.status(400).json({ 
-          message: "Missing required parameters: subscriptionId, planId, customerId, userId" 
+          message: "Missing required parameters: userId, planId" 
         });
       }
 
-      const paymentData = await createManualSubscriptionPayment(
-        subscriptionId, 
-        planId, 
-        customerId, 
+      // Get user details
+      const user = await storage.getUser(parseInt(userId));
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Map frontend plan ID to actual Razorpay plan ID
+      let actualRazorpayPlanId: string;
+      switch (planId) {
+        case 'pro-monthly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+          break;
+        case 'pro-yearly':
+          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+          break;
+        case 'enterprise-monthly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+          break;
+        case 'enterprise-yearly':
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      console.log('Creating payment link for plan:', planId, 'mapped to:', actualRazorpayPlanId);
+
+      // Create payment link for new subscription
+      const paymentLink = await createPaymentLink(
+        actualRazorpayPlanId,
+        user.email,
+        user.username,
         parseInt(userId)
       );
 
-      res.json({
-        success: true,
-        order_id: paymentData.order.id,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        key: process.env.RAZORPAY_KEY_ID,
-        subscription_id: subscriptionId,
-        message: "Manual payment order created successfully"
+      res.json({ 
+        paymentLink: paymentLink.short_url || paymentLink.payment_page_url,
+        message: "Payment link created successfully"
       });
     } catch (error: any) {
       console.error('Error creating manual payment:', error);
