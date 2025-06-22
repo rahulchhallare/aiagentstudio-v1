@@ -135,6 +135,78 @@ export default function Billing() {
     }
   }, [subscription, user, toast, fetchBillingData]);
 
+  const handleUpgradeOrSubscribe = useCallback(async (planId: string) => {
+    if (!user) return;
+
+    // If user is on Free plan (no active subscription), create new subscription via payment
+    if (!subscription || subscription.status !== 'active') {
+      // Create payment link for new subscription
+      try {
+        const response = await fetch('/api/create-manual-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            planId,
+            userId: user.id,
+          }),
+        });
+
+        if (response.ok) {
+          const { paymentLink } = await response.json();
+          window.open(paymentLink, '_blank');
+          toast({
+            title: "Redirecting to Payment",
+            description: "Complete your payment to activate your subscription.",
+          });
+        } else {
+          throw new Error('Failed to create payment link');
+        }
+      } catch (error) {
+        console.error('Error creating payment:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create payment. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // User has active subscription, upgrade it
+      try {
+        const response = await fetch(`/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            newPlanId: planId,
+            userId: user.id,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          toast({
+            title: "Upgrade Successful!",
+            description: result.message,
+          });
+          fetchBillingData();
+        } else {
+          const error = await response.text();
+          throw new Error(error);
+        }
+      } catch (error) {
+        console.error('Error upgrading subscription:', error);
+        toast({
+          title: "Upgrade Failed",
+          description: "Failed to upgrade subscription. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [user, subscription, toast, fetchBillingData]);
+
   // Fetch subscription and payment data
   useEffect(() => {
     if (user) {
@@ -473,7 +545,7 @@ export default function Billing() {
                                   if (plan.name === 'Free') {
                                     handleDowngradeToFree();
                                   } else if (plan.planId) {
-                                    upgradeSubscription(plan.planId);
+                                    handleUpgradeOrSubscribe(plan.planId);
                                   }
                                 }}
                                 disabled={paymentLoading}
