@@ -193,8 +193,8 @@ export default function Billing() {
 
   if (!user) return null;
 
-  // Determine current plan based on subscription
-  const getCurrentPlan = () => {
+  // Memoize current plan determination
+  const currentPlan = useMemo(() => {
     if (!subscription || subscription.status !== 'active') {
       return {
         name: 'Free',
@@ -326,11 +326,10 @@ export default function Billing() {
         'Community support'
       ]
     };
-  };
+  }, [subscription]);
 
-  const currentPlan = getCurrentPlan();
-
-  const plans = [
+  // Memoize plans array to prevent recreation on every render
+  const plans = useMemo(() => [
     {
       name: 'Free',
       price: '$0',
@@ -386,7 +385,7 @@ export default function Billing() {
                   (billingInterval === 'yearly' && currentPlan.interval === 'year'))),
       planId: billingInterval === 'monthly' ? 'enterprise-monthly' : 'enterprise-yearly'
     }
-  ];
+  ], [billingInterval, currentPlan]);
 
   // Memoize the formatted payment history to prevent unnecessary re-renders
   const invoices = useMemo(() => {

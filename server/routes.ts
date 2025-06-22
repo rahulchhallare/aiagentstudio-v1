@@ -95,9 +95,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Verify webhook signature
+      const bodyString = Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body);
       const expectedSignature = crypto
         .createHmac('sha256', webhookSecret)
-        .update(req.body)
+        .update(bodyString)
         .digest('hex');
 
       if (expectedSignature !== signature) {
