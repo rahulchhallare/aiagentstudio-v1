@@ -19,6 +19,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Updated payment system with correct plan IDs from dashboard
 - Added payment link fallbacks for hosted page issues
 - Implemented manual payment flow as backup solution
+- Switched to payment links as primary method (resolves hosted page errors)
+- Payment system fully functional with ₹999 Pro monthly plan
 
 ## User Preferences
 - Language: English

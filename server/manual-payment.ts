@@ -1,4 +1,6 @@
 import { razorpay, PLAN_IDS } from './razorpay';
+
+// Helper functions for manual payment processing when primary methods fail
 import { createPaymentOrder } from './payment-links';
 
 // Helper to get plan pricing from Razorpay

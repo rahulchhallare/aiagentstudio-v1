@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -389,7 +389,8 @@ export default function Billing() {
   ];
 
   // Format payment history for display
-  const formatPaymentHistory = () => {
+  // Use useMemo to memoize the formatted payment history
+  const invoices = useMemo(() => {
     return paymentHistory.map((payment) => ({
       id: payment.stripe_payment_intent_id || payment.id,
       date: new Date(payment.created_at).toLocaleDateString(),
@@ -397,9 +398,7 @@ export default function Billing() {
       status: payment.status === 'succeeded' ? 'Paid' : payment.status,
       plan: payment.description || 'Subscription Payment'
     }));
-  };
-
-  const invoices = formatPaymentHistory();
+  }, [paymentHistory]);
 
   useEffect(() => {
     if (user) {
