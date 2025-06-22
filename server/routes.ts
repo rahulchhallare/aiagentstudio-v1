@@ -1177,36 +1177,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating payment link for plan:', planId, 'mapped to:', actualRazorpayPlanId);
 
-      // Get plan pricing - amounts are already in paise (smallest currency unit)
-      const livePricing = await getPlanPricing();
+      // Use simplified fixed pricing in paise (₹999 = 99900 paise)
       let amount: number;
       let planName: string;
 
       switch (planId) {
         case 'pro-monthly':
-          amount = livePricing.PRO_MONTHLY;
+          amount = 99900; // ₹999
           planName = 'Pro Monthly';
           break;
         case 'pro-yearly':
-          amount = livePricing.PRO_YEARLY;
+          amount = 999900; // ₹9999
           planName = 'Pro Yearly';
           break;
         case 'enterprise-monthly':
-          amount = livePricing.ENTERPRISE_MONTHLY;
+          amount = 499900; // ₹4999
           planName = 'Enterprise Monthly';
           break;
         case 'enterprise-yearly':
-          amount = livePricing.ENTERPRISE_YEARLY;
+          amount = 4999900; // ₹49999
           planName = 'Enterprise Yearly';
           break;
         default:
-          amount = livePricing.PRO_MONTHLY;
+          amount = 99900; // ₹999
           planName = 'Pro Monthly';
       }
 
-      console.log('Payment amount for', planName, ':', amount, 'paise');
-      console.log('Type of amount:', typeof amount);
-      console.log('Raw pricing object:', livePricing);
+      console.log('Creating payment for', planName, 'with amount:', amount, 'paise (₹' + (amount/100) + ')');
 
       // Create Razorpay customer if doesn't exist
       let customer;
