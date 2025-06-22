@@ -28,6 +28,8 @@ function getPlanNameFromId(planId: string): string {
 
 
 import { razorpay, PLAN_IDS, PLAN_PRICING, getRazorpayPlanPricing } from './razorpay';
+import { createPaymentLink, createPaymentOrder } from './payment-links';
+import { createManualSubscriptionPayment, verifyManualPayment } from './manual-payment';
 import crypto from 'crypto';
 import axios from 'axios';
 
@@ -938,28 +940,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Alternative subscription creation also failed:', alternativeError);
         }
         
-        // Create a manual payment link as final fallback
-        const fallbackUrl = `${protocol}://${host}/billing?subscription_id=${subscription.id}&payment_required=true`;
-        console.log('Using fallback URL:', fallbackUrl);
-        
-        return res.json({
-          subscriptionId: subscription.id,
-          customerId: customer.id,
-          amount: subscription.plan?.amount || 0,
-          currency: 'INR',
-          status: subscription.status,
-          short_url: fallbackUrl,
-          fallback_payment: true,
-          success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
-          failure_url: failureUrl,
-          message: 'Subscription created. Please complete payment manually.',
-          debug: {
-            plan_id: actualRazorpayPlanId,
-            has_short_url: false,
-            has_authenticate_url: false,
-            fallback_used: true
-          }
-        });
+        // Create a payment link as final fallback
+        try {
+          console.log('Creating payment link fallback...');
+          const plan = await razorpay.plans.fetch(actualRazorpayPlanId);
+          const planAmount = plan.item.amount; // Amount in paise
+          
+          const paymentLink = await createPaymentLink(
+            actualRazorpayPlanId,
+            customer.id,
+            planAmount,
+            'INR',
+            `Subscription: ${getPlanNameFromId(actualRazorpayPlanId)}`,
+            `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+            `${protocol}://${host}/pricing?subscription_failed=true`
+          );
+          
+          console.log('Payment link created:', paymentLink.short_url);
+          
+          return res.json({
+            subscriptionId: subscription.id,
+            customerId: customer.id,
+            amount: planAmount,
+            currency: 'INR',
+            status: subscription.status,
+            short_url: paymentLink.short_url,
+            payment_link_id: paymentLink.id,
+            payment_method: 'payment_link_fallback',
+            success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+            failure_url: failureUrl,
+            message: 'Payment link created as fallback',
+            debug: {
+              plan_id: actualRazorpayPlanId,
+              payment_link_used: true,
+              fallback_used: true
+            }
+          });
+        } catch (paymentLinkError) {
+          console.error('Payment link creation failed:', paymentLinkError);
+          
+          // Final fallback - redirect to billing page with manual payment instructions
+          const manualUrl = `${protocol}://${host}/billing?subscription_id=${subscription.id}&manual_payment=true`;
+          
+          return res.json({
+            subscriptionId: subscription.id,
+            customerId: customer.id,
+            amount: subscription.plan?.amount || 0,
+            currency: 'INR',
+            status: subscription.status,
+            short_url: manualUrl,
+            payment_method: 'manual_instructions',
+            success_url: `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+            failure_url: failureUrl,
+            message: 'Please complete payment manually via billing page',
+            debug: {
+              plan_id: actualRazorpayPlanId,
+              manual_payment_required: true,
+              all_fallbacks_used: true
+            }
+          });
+        }
       }
 
       // For Razorpay hosted checkout, we need to configure the success and failure URLs

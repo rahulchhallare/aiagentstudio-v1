@@ -15,6 +15,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Fixed port configuration to use environment variable
 - Added proper error handling for port conflicts
 - Configured for 0.0.0.0 binding for Replit compatibility
+- Fixed Razorpay plan ID configuration issues
+- Updated payment system with correct plan IDs from dashboard
 
 ## User Preferences
 - Language: English

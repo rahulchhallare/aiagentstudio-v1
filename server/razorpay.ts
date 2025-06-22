@@ -24,6 +24,8 @@ if (missingPlanIds.length > 0) {
   console.warn('Missing Razorpay plan IDs:', missingPlanIds.map(([key]) => key));
 }
 
+
+
 // Cache for exchange rate (refreshed every hour)
 let cachedExchangeRate: { rate: number; timestamp: number } | null = null;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
