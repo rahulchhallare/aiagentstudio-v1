@@ -409,15 +409,41 @@ export default function Billing() {
 
   // Memoize formatted payment history
   const invoices = useMemo(() => {
-    return paymentHistory.map((payment) => ({
-      id: payment.razorpay_payment_id || payment.stripe_payment_intent_id || payment.id,
-      date: new Date(payment.created_at).toLocaleDateString(),
-      amount: payment.currency === 'INR' 
-        ? `₹${(payment.amount / 100).toFixed(2)}` 
-        : `$${(payment.amount / 100).toFixed(2)}`,
-      status: payment.status === 'succeeded' ? 'Paid' : payment.status,
-      plan: payment.description || 'Subscription Payment'
-    }));
+    return paymentHistory.map((payment) => {
+      let displayAmount: string;
+      
+      if (payment.currency === 'INR') {
+        // Convert INR to USD for display based on common plan pricing
+        const inrAmount = payment.amount / 100; // Convert from paise to rupees
+        let usdAmount: number;
+        
+        // Map common INR amounts to USD equivalents based on plan pricing
+        if (inrAmount >= 999 && inrAmount <= 1000) {
+          usdAmount = 29; // Pro Monthly
+        } else if (inrAmount >= 9999 && inrAmount <= 10000) {
+          usdAmount = 290; // Pro Yearly  
+        } else if (inrAmount >= 4999 && inrAmount <= 5000) {
+          usdAmount = 99; // Enterprise Monthly
+        } else if (inrAmount >= 49999 && inrAmount <= 50000) {
+          usdAmount = 990; // Enterprise Yearly
+        } else {
+          // Fallback: approximate conversion (₹83 ≈ $1)
+          usdAmount = Math.round(inrAmount / 83);
+        }
+        
+        displayAmount = `$${usdAmount.toFixed(2)}`;
+      } else {
+        displayAmount = `$${(payment.amount / 100).toFixed(2)}`;
+      }
+      
+      return {
+        id: payment.razorpay_payment_id || payment.stripe_payment_intent_id || payment.id,
+        date: new Date(payment.created_at).toLocaleDateString(),
+        amount: displayAmount,
+        status: payment.status === 'succeeded' ? 'Paid' : payment.status,
+        plan: payment.description || 'Subscription Payment'
+      };
+    });
   }, [paymentHistory]);
 
   // Memoize plans array

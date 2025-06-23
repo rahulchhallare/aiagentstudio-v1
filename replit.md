@@ -33,6 +33,7 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Downgrade bypasses Razorpay API issues and immediately cancels subscription in database
 - Fixed upgrade functionality for users on Free plan to create new payment links
 - Manual payment endpoint now handles both new subscriptions and upgrades properly
+- Fixed payment history display to show USD amounts instead of INR for better user experience
 
 ## User Preferences
 - Language: English
