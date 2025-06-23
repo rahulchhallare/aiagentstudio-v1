@@ -460,14 +460,19 @@ export default function Billing() {
         let usdAmount: number;
 
         // Map common INR amounts to USD equivalents based on plan pricing
-        if (inrAmount >= 999 && inrAmount <= 1000) {
-          usdAmount = 29; // Pro Monthly
+        if (inrAmount >= 28 && inrAmount <= 30) {
+          usdAmount = 29; // Pro Monthly (₹29 = $29)
+        } else if (inrAmount >= 999 && inrAmount <= 1000) {
+          usdAmount = 29; // Pro Monthly (₹999 = $29)
         } else if (inrAmount >= 9999 && inrAmount <= 10000) {
           usdAmount = 290; // Pro Yearly
         } else if (inrAmount >= 4999 && inrAmount <= 5000) {
           usdAmount = 99; // Enterprise Monthly
         } else if (inrAmount >= 49999 && inrAmount <= 50000) {
           usdAmount = 990; // Enterprise Yearly
+        } else if (inrAmount === 0) {
+          // For zero amounts (cancellations, etc.), keep as 0
+          usdAmount = 0;
         } else {
           // Fallback: approximate conversion (₹83 ≈ $1)
           usdAmount = Math.round(inrAmount / 83);
@@ -650,7 +655,11 @@ export default function Billing() {
                       <div className="flex items-center space-x-2">
                         <Label
                           htmlFor="billing-toggle"
-                          className={`text-sm ${billingInterval === "monthly" ? "font-medium" : ""}`}
+                          className={`text-sm transition-all duration-300 ${
+                            billingInterval === "monthly" 
+                              ? "font-medium text-blue-600 scale-105" 
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
                           Monthly
                         </Label>
@@ -660,13 +669,18 @@ export default function Billing() {
                           onCheckedChange={(checked) =>
                             setBillingInterval(checked ? "yearly" : "monthly")
                           }
+                          className="transition-all duration-300 hover:scale-105"
                         />
                         <Label
                           htmlFor="billing-toggle"
-                          className={`text-sm ${billingInterval === "yearly" ? "font-medium" : ""}`}
+                          className={`text-sm transition-all duration-300 ${
+                            billingInterval === "yearly" 
+                              ? "font-medium text-blue-600 scale-105" 
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
                           Yearly{" "}
-                          <span className="text-green-600 text-xs font-medium">
+                          <span className="text-green-600 text-xs font-medium animate-pulse">
                             Save 20%
                           </span>
                         </Label>
@@ -676,24 +690,32 @@ export default function Billing() {
                       {plans.map((plan, index) => (
                         <Card
                           key={index}
-                          className={
-                            plan.popular ? "border-primary-500 relative" : ""
-                          }
+                          className={`
+                            transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl cursor-pointer
+                            ${plan.popular ? 'border-primary-500 relative ring-2 ring-primary-200' : 'hover:border-primary-300'}
+                            ${plan.isCurrent ? 'bg-blue-50 border-blue-300 shadow-md' : ''}
+                          `}
                         >
                           {plan.popular && (
-                            <div className="absolute top-0 right-0 bg-primary-500 text-white px-3 py-1 text-xs font-medium rounded-bl-lg rounded-tr-lg">
+                            <div className="absolute top-0 right-0 bg-primary-500 text-white px-3 py-1 text-xs font-medium rounded-bl-lg rounded-tr-lg animate-bounce">
                               Most Popular
                             </div>
                           )}
                           <CardHeader>
-                            <CardTitle>{plan.name}</CardTitle>
+                            <CardTitle className="transition-colors duration-200 hover:text-primary-600">
+                              {plan.name}
+                            </CardTitle>
                             <CardDescription>
-                              <span className="text-3xl font-bold">
-                                {plan.price}
-                              </span>
-                              <span className="text-sm">/{plan.interval}</span>
+                              <div className="transition-all duration-500 ease-in-out">
+                                <span className="text-3xl font-bold transition-all duration-300 transform hover:scale-110 inline-block">
+                                  {plan.price}
+                                </span>
+                                <span className="text-sm opacity-70 transition-opacity duration-200 hover:opacity-100">
+                                  /{plan.interval}
+                                </span>
+                              </div>
                               {plan.savings && (
-                                <p className="text-green-600 font-medium text-sm mt-1">
+                                <p className="text-green-600 font-medium text-sm mt-1 transition-all duration-300 transform hover:scale-105 animate-pulse">
                                   {plan.savings}
                                 </p>
                               )}
