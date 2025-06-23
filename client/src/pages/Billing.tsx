@@ -72,18 +72,42 @@ export default function Billing() {
 
     setLoading(true);
     try {
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = Date.now();
+      
       // Fetch subscription data
-      const subResponse = await fetch(`/api/subscription/user/${user.id}`);
+      const subResponse = await fetch(`/api/subscription/user/${user.id}?t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (subResponse.ok) {
         const subData = await subResponse.json();
+        console.log('Fetched subscription data:', subData);
         setSubscription(subData);
+      } else if (subResponse.status === 404) {
+        // No subscription found - user is on free plan
+        console.log('No subscription found - user on free plan');
+        setSubscription(null);
+      } else {
+        console.error('Failed to fetch subscription:', subResponse.status);
       }
 
       // Fetch payment history
-      const paymentResponse = await fetch(`/api/payment-history/user/${user.id}`);
+      const paymentResponse = await fetch(`/api/payment-history/user/${user.id}?t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (paymentResponse.ok) {
         const paymentData = await paymentResponse.json();
         setPaymentHistory(paymentData);
+      } else {
+        console.error('Failed to fetch payment history:', paymentResponse.status);
       }
     } catch (error) {
       console.error('Error fetching billing data:', error);
@@ -214,6 +238,19 @@ export default function Billing() {
     }
   }, [user, fetchBillingData]);
 
+  // Auto-refresh subscription data every 30 seconds when page is visible
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchBillingData();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user, fetchBillingData]);
+
   // Handle payment success redirect
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -226,40 +263,63 @@ export default function Billing() {
         });
 
         // Activate the subscription manually to ensure it's properly set up
-        fetch('/api/activate-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subscriptionId: subscriptionId,
-            userId: user.id,
-          }),
-        }).then(response => {
-          if (response.ok) {
-            console.log('Subscription activated successfully');
-            fetchBillingData();
-          } else {
-            console.error('Failed to activate subscription');
-            // Fallback to verify-payment endpoint
-            return fetch('/api/verify-payment', {
+        const activateSubscription = async () => {
+          try {
+            let activated = false;
+            
+            // Try activation endpoint first
+            const activateResponse = await fetch('/api/activate-subscription', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                razorpay_subscription_id: subscriptionId,
+                subscriptionId: subscriptionId,
                 userId: user.id,
               }),
             });
+
+            if (activateResponse.ok) {
+              console.log('Subscription activated successfully');
+              activated = true;
+            } else {
+              console.log('Activation endpoint failed, trying verification...');
+              
+              // Fallback to verify-payment endpoint
+              const verifyResponse = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  razorpay_subscription_id: subscriptionId,
+                  userId: user.id,
+                }),
+              });
+
+              if (verifyResponse.ok) {
+                console.log('Subscription verified successfully');
+                activated = true;
+              }
+            }
+
+            // Force refresh billing data after activation/verification
+            if (activated) {
+              // Wait a moment for backend processing
+              setTimeout(() => {
+                fetchBillingData();
+              }, 1000);
+            }
+          } catch (error) {
+            console.error('Error activating subscription:', error);
+            // Still try to refresh the data
+            setTimeout(() => {
+              fetchBillingData();
+            }, 1000);
           }
-        }).then(response => {
-          if (response && response.ok) {
-            fetchBillingData();
-          }
-        }).catch(error => {
-          console.error('Error activating subscription:', error);
-        });
+        };
+
+        activateSubscription();
 
         // Clean up URL parameters
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -441,6 +501,13 @@ export default function Billing() {
                 <h1 className="text-3xl font-bold text-gray-900">Billing & Subscriptions</h1>
                 <p className="text-gray-600 mt-2">Manage your subscription and view payment history</p>
               </div>
+              <Button 
+                variant="outline" 
+                onClick={fetchBillingData}
+                disabled={loading}
+              >
+                {loading ? 'Refreshing...' : 'Refresh Data'}
+              </Button>
             </div>
 
             {loading ? (

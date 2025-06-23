@@ -1555,11 +1555,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Valid user ID is required" });
       }
 
+      // Set cache headers to ensure fresh data
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
       const subscription = await storage.getSubscriptionByUserId(userId);
 
       if (!subscription) {
         return res.status(404).json({ message: "No subscription found" });
       }
+
+      // Log for debugging
+      console.log(`Subscription data for user ${userId}:`, {
+        id: subscription.id,
+        status: subscription.status,
+        plan_name: subscription.plan_name,
+        updated_at: subscription.updated_at
+      });
 
       return res.status(200).json(subscription);
     } catch (error) {
