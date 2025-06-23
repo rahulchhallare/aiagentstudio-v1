@@ -34,6 +34,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Fixed upgrade functionality for users on Free plan to create new payment links
 - Manual payment endpoint now handles both new subscriptions and upgrades properly
 - Fixed payment history display to show USD amounts instead of INR for better user experience
+- Implemented micro-interactions for price display transitions with smooth animations
+- Added hover effects, scale transitions, and animated elements for better UX
 
 ## User Preferences
 - Language: English
