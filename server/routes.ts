@@ -823,12 +823,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Map plan ID to plan name
+      let planName: string;
+      switch (planId) {
+        case "pro-monthly":
+          planName = "Pro Monthly";
+          break;
+        case "pro-yearly":
+          planName = "Pro Yearly";
+          break;
+        case "enterprise-monthly":
+          planName = "Enterprise Monthly";
+          break;
+        case "enterprise-yearly":
+          planName = "Enterprise Yearly";
+          break;
+        default:
+          planName = `Plan ${planId}`;
+      }
+
       // Create payment link
       const paymentLink = await razorpay.paymentLink.create({
         amount: amount,
         currency: "INR",
         accept_partial: false,
-        description: `Manual Payment for ${planId}`,
+        description: `Manual Payment for ${planName}`,
         customer: {
           id: customer.id
         },
@@ -839,6 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         reminder_enable: true,
         notes: {
           planId: planId,
+          planName: planName,
           userId: userId.toString(),
           paymentType: "manual"
         }

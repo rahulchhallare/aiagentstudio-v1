@@ -354,6 +354,123 @@ export function usePayment() {
     }
   };
 
+  const createManualPayment = async (planId: string, amount: number) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to continue with payment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!planId || !amount) {
+      toast({
+        title: "Invalid parameters",
+        description: "Plan ID and amount are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('Creating manual payment for plan:', planId, 'amount:', amount);
+    setIsLoading(true);
+
+    try {
+      const requestBody = {
+        planId: mapPlanId(planId),
+        userId: user.id,
+        email: user.email,
+        amount: amount
+      };
+
+      console.log('Manual payment request body:', requestBody);
+
+      // Validate request body
+      if (!requestBody.planId || !requestBody.userId || !requestBody.email || !requestBody.amount) {
+        throw new Error(`Missing required fields: planId=${requestBody.planId}, userId=${requestBody.userId}, email=${requestBody.email}, amount=${requestBody.amount}`);
+      }
+
+      const response = await fetch('/api/create-manual-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('Manual payment response status:', response.status);
+
+      if (!response.ok) {
+        let errorData;
+        let responseText = '';
+        
+        try {
+          responseText = await response.text();
+          if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            errorData = JSON.parse(responseText);
+          } else {
+            console.error('Non-JSON response received:', responseText.substring(0, 200));
+            errorData = { 
+              message: response.status === 404 ? 'API endpoint not found' : 'Server returned an unexpected response'
+            };
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          console.error('Raw response text:', responseText.substring(0, 200));
+          errorData = { 
+            message: 'Server error - received invalid response format'
+          };
+        }
+        
+        console.error('Manual payment error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          responseText: responseText.substring(0, 200)
+        });
+        
+        let errorMessage = 'Failed to create manual payment';
+        
+        if (response.status === 400) {
+          errorMessage = errorData.message || 'Invalid request parameters.';
+        } else if (response.status === 500) {
+          errorMessage = errorData.message || 'Server error. Please try again.';
+        } else {
+          errorMessage = `Payment creation failed (${response.status}): ${errorData.message || 'Unknown error'}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const responseData = await response.json();
+      console.log('Manual payment response data:', responseData);
+
+      if (responseData.success && responseData.paymentLink) {
+        toast({
+          title: "Payment link created",
+          description: "Redirecting to payment page...",
+        });
+        
+        // Redirect to payment link
+        window.location.href = responseData.paymentLink;
+        return responseData;
+      } else {
+        throw new Error('Invalid response from payment service');
+      }
+
+    } catch (error: any) {
+      console.error('Error creating manual payment:', error);
+      toast({
+        title: "Payment failed",
+        description: error.message || "Failed to create payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const createPortalSession = async (customerId?: string) => {
     // For Razorpay, we don't have a direct equivalent to Stripe's customer portal
     // This function is kept for compatibility but subscription management is handled directly in the billing page
@@ -362,6 +479,7 @@ export function usePayment() {
 
   return {
     createCheckoutSession,
+    createManualPayment,
     cancelSubscription,
     updateSubscription,
     upgradeSubscription,
