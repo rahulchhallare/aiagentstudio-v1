@@ -2914,9 +2914,6 @@ accountInfo);
       }
     },
   );
-```text
-      },
-    },
   );
 
   // Create subscription
