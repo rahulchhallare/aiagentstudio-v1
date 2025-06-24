@@ -346,11 +346,24 @@ export default function Billing() {
 
             if (response.ok) {
               const result = await response.json();
-              toast({
-                title: "Upgrade Successful!",
-                description: result.message,
-              });
-              fetchBillingData();
+              
+              // Check if payment is required
+              if (result.paymentRequired && result.paymentLink) {
+                // Open payment link in new tab
+                window.open(result.paymentLink, '_blank');
+                
+                toast({
+                  title: "Payment Required",
+                  description: `To upgrade to ${result.upgradeDetails?.newPlan || planId.replace('-', ' ')}, please complete the payment in the new tab.`,
+                });
+              } else {
+                // Regular upgrade without payment (shouldn't happen for Pro to Enterprise)
+                toast({
+                  title: "Upgrade Successful!",
+                  description: result.message,
+                });
+                fetchBillingData();
+              }
             } else {
               const error = await response.text();
               throw new Error(error);
