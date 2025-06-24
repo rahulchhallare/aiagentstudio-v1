@@ -2912,6 +2912,8 @@ accountInfo);
         console.error("Error cancelling subscription:", error);
         res.status(500).json({ error: "Failed to cancel subscription" });
       }
+    },
+  );
 ```text
       },
     },
