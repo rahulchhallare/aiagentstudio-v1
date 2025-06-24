@@ -13,6 +13,10 @@ export async function createPaymentLink(
   cancelUrl: string
 ) {
   try {
+    // Extract the base URL and ensure proper redirect
+    const baseUrl = successUrl.split('?')[0].replace('/billing', '');
+    const finalSuccessUrl = `${baseUrl}/billing?subscription_success=true&auto_redirect=true`;
+    
     const paymentLink = await razorpay.paymentLink.create({
       amount: amount,
       currency: currency,
@@ -26,8 +30,17 @@ export async function createPaymentLink(
         email: true
       },
       reminder_enable: true,
-      callback_url: successUrl,
-      callback_method: 'get'
+      callback_url: finalSuccessUrl,
+      callback_method: 'get',
+      options: {
+        checkout: {
+          readonly: {
+            contact: false,
+            email: false,
+            name: false
+          }
+        }
+      }
     });
 
     return paymentLink;

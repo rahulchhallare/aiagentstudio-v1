@@ -233,14 +233,14 @@ export default function Billing() {
         // Determine if this is an upgrade or downgrade
         const currentPlanName = subscription.plan_name?.toLowerCase() || "";
         const targetPlanName = planId.toLowerCase();
-        
+
         // Check if this is actually a downgrade (Enterprise -> Pro)
         const isDowngrade = currentPlanName.includes("enterprise") && targetPlanName.includes("pro");
-        
+
         if (isDowngrade) {
           // Handle downgrade - just update subscription without payment
           const confirmMessage = `Are you sure you want to downgrade from ${subscription.plan_name} to ${planId.replace("-", " ")}? You will lose access to Enterprise features immediately.`;
-          
+
           if (!confirm(confirmMessage)) return;
 
           try {
@@ -346,12 +346,12 @@ export default function Billing() {
 
             if (response.ok) {
               const result = await response.json();
-              
+
               // Check if payment is required
               if (result.paymentRequired && result.paymentLink) {
                 // Open payment link in new tab
                 window.open(result.paymentLink, '_blank');
-                
+
                 toast({
                   title: "Payment Required",
                   description: `To upgrade to ${result.upgradeDetails?.newPlan || planId.replace('-', ' ')}, please complete the payment in the new tab.`,
@@ -408,7 +408,7 @@ export default function Billing() {
     if (urlParams.get("subscription_success") === "true") {
       const subscriptionId = urlParams.get("subscription_id");
       const paymentLinkId = urlParams.get("payment_link_id");
-      
+
       if ((subscriptionId || paymentLinkId) && user) {
         toast({
           title: "Payment Successful!",
@@ -425,23 +425,23 @@ export default function Billing() {
             // For payment link success, refresh data multiple times to ensure updates are captured
             if (paymentLinkId) {
               console.log('Payment link success - refreshing billing data for payment link:', paymentLinkId);
-              
+
               // Immediate refresh
               fetchBillingData();
-              
+
               // Additional refreshes to capture webhook updates
               setTimeout(() => {
                 fetchBillingData();
               }, 2000);
-              
+
               setTimeout(() => {
                 fetchBillingData();
               }, 5000);
-              
+
               setTimeout(() => {
                 fetchBillingData();
               }, 10000);
-              
+
               return;
             }
 
@@ -616,7 +616,7 @@ export default function Billing() {
         } else {
           // Check payment description to determine correct plan amount
           const description = payment.description?.toLowerCase() || '';
-          
+
           if (description.includes('enterprise monthly') || description.includes('enterprise')) {
             usdAmount = 99; // Enterprise Monthly
           } else if (description.includes('enterprise yearly')) {
@@ -678,7 +678,7 @@ export default function Billing() {
     if (plan.isCurrent) {
       return { text: "Current Plan", variant: "outline" as const, disabled: true };
     }
-    
+
     if (plan.name === "Free") {
       // Only show downgrade to free if user has an active paid subscription
       if (subscription && subscription.status === "active") {
@@ -691,27 +691,27 @@ export default function Billing() {
         return { text: "Current Plan", variant: "outline" as const, disabled: true };
       }
     }
-    
+
     // If no active subscription, all paid plans are upgrades
     if (!subscription || subscription.status !== "active") {
       return { text: "Get Started", variant: "default" as const, disabled: false };
     }
-    
+
     // Determine if this would be an upgrade or downgrade
     const currentPlanName = subscription.plan_name?.toLowerCase() || "";
     const isFromEnterprise = currentPlanName.includes("enterprise");
     const isFromPro = currentPlanName.includes("pro");
     const isPlanPro = plan.name === "Pro";
     const isPlanEnterprise = plan.name === "Enterprise";
-    
+
     if (isFromEnterprise && isPlanPro) {
       return { text: "Downgrade to Pro", variant: "outline" as const, disabled: false };
     }
-    
+
     if (isFromPro && isPlanEnterprise) {
       return { text: "Upgrade to Enterprise", variant: "default" as const, disabled: false };
     }
-    
+
     return { text: "Upgrade", variant: "default" as const, disabled: false };
   };
 

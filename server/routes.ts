@@ -1482,7 +1482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               planAmount,
               "INR",
               `Subscription: ${getPlanNameFromId(actualRazorpayPlanId)}`,
-              `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+              `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}&auto_redirect=true`,
               `${protocol}://${host}/pricing?subscription_failed=true`,
             );
 
@@ -1556,7 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             planAmount,
             "INR",
             `Subscription: ${getPlanNameFromId(actualRazorpayPlanId)}`,
-            `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
+            `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}&auto_redirect=true`,
             `${protocol}://${host}/pricing?subscription_failed=true`,
           );
 
@@ -1927,7 +1927,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       };
 
-      res.json(accountInfo);
+      res.json(```text
+accountInfo);
     } catch (error: any) {
       console.error("Error checking Razorpay config:", error);
       res.status(500).json({
@@ -2911,6 +2912,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error cancelling subscription:", error);
         res.status(500).json({ error: "Failed to cancel subscription" });
       }
+```text
+      },
     },
   );
 
