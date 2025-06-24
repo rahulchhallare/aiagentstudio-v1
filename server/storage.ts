@@ -333,6 +333,12 @@ export class SupabaseStorage implements IStorage {
     console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
     console.log('Subscription ID:', subscriptionId);
     console.log('Updates to apply:', updates);
+    
+    // Ensure we apply all update fields properly
+    const finalUpdates = { 
+      ...updates, 
+      updated_at: new Date()
+    };
 
     // Try to update by razorpay_subscription_id first, then by stripe_subscription_id
     let data, error;
@@ -340,7 +346,7 @@ export class SupabaseStorage implements IStorage {
     // First try Razorpay subscription ID
     const razorpayResult = await this.supabase
       .from('subscriptions')
-      .update({ ...updates, updated_at: new Date() })
+      .update(finalUpdates)
       .eq('razorpay_subscription_id', subscriptionId)
       .select()
       .single();
@@ -351,10 +357,10 @@ export class SupabaseStorage implements IStorage {
       return razorpayResult.data;
     }
 
-    // If not found by Razorpay ID, try Stripe ID
+    // If not found by Razorpay ID, try Stripe ID  
     const stripeResult = await this.supabase
       .from('subscriptions')
-      .update({ ...updates, updated_at: new Date() })
+      .update(finalUpdates)
       .eq('stripe_subscription_id', subscriptionId)
       .select()
       .single();
