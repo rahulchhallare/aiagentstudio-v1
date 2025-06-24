@@ -91,22 +91,40 @@ export function usePayment() {
 
       if (!response.ok) {
         let errorData;
+        let responseText = '';
+        
         try {
-          errorData = await response.json();
+          responseText = await response.text();
+          // Check if response is JSON
+          if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            errorData = JSON.parse(responseText);
+          } else {
+            // Response is HTML or plain text
+            console.error('Non-JSON response received:', responseText.substring(0, 200));
+            errorData = { 
+              message: response.status === 404 ? 'API endpoint not found' : 'Server returned an unexpected response'
+            };
+          }
         } catch (parseError) {
           console.error('Failed to parse error response:', parseError);
-          errorData = { message: 'Server error - unable to parse response' };
+          console.error('Raw response text:', responseText.substring(0, 200));
+          errorData = { 
+            message: 'Server error - received invalid response format'
+          };
         }
         
         console.error('Response error:', {
           status: response.status,
           statusText: response.statusText,
-          errorData
+          errorData,
+          responseText: responseText.substring(0, 200)
         });
         
         let errorMessage = 'Failed to create payment session';
         
-        if (response.status === 400) {
+        if (response.status === 404) {
+          errorMessage = 'Payment service not available. Please contact support.';
+        } else if (response.status === 400) {
           errorMessage = errorData.message || 'Invalid request parameters. Please check your plan selection.';
         } else if (response.status === 500) {
           errorMessage = errorData.message || 'Server error. Please try again or contact support.';

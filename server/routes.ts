@@ -789,6 +789,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(500).json({ message: "This route is not implemented" });
   });
 
+  // Create manual payment endpoint
+  app.post("/api/create-manual-payment", async (req: Request, res: Response) => {
+    try {
+      const { planId, userId, email, amount } = req.body;
+
+      if (!planId || !userId || !email || !amount) {
+        return res.status(400).json({ 
+          message: "Plan ID, user ID, email, and amount are required" 
+        });
+      }
+
+      // Get or create customer
+      let customer;
+      try {
+        const customers = await razorpay.customers.all({ email: email });
+        if (customers.items && customers.items.length > 0) {
+          customer = customers.items[0];
+        } else {
+          customer = await razorpay.customers.create({
+            name: email.split("@")[0],
+            email: email,
+            contact: "",
+            notes: {
+              userId: userId.toString(),
+            },
+          });
+        }
+      } catch (customerError) {
+        console.error("Failed to handle customer:", customerError);
+        return res.status(500).json({
+          message: "Failed to create or retrieve customer account",
+        });
+      }
+
+      // Create payment link
+      const paymentLink = await razorpay.paymentLink.create({
+        amount: amount,
+        currency: "INR",
+        accept_partial: false,
+        description: `Manual Payment for ${planId}`,
+        customer: {
+          id: customer.id
+        },
+        notify: {
+          sms: false,
+          email: true
+        },
+        reminder_enable: true,
+        notes: {
+          planId: planId,
+          userId: userId.toString(),
+          paymentType: "manual"
+        }
+      });
+
+      res.json({
+        success: true,
+        paymentLink: paymentLink.short_url,
+        paymentLinkId: paymentLink.id,
+        customerId: customer.id,
+        amount: amount,
+        currency: "INR"
+      });
+
+    } catch (error: any) {
+      console.error("Error creating manual payment:", error);
+      res.status(500).json({
+        message: "Failed to create manual payment",
+        error: error.message
+      });
+    }
+  });
+
   // Payment and subscription routes
   app.post(
     "/api/create-checkout-session",
