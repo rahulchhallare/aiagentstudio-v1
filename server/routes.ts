@@ -172,38 +172,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
 
               if (userId > 0) {
-                // Create payment history record for both authorized and captured payments
-                if (
-                  event.event === "payment.captured" ||
-                  event.event === "payment.authorized"
-                ) {
-                  try {
-                    await storage.createPaymentHistory({
-                      user_id: userId,
-                      razorpay_payment_id: payment.id,
-                      amount: payment.amount,
-                      currency: payment.currency,
-                      status: "succeeded", // Mark as succeeded for both captured and authorized payments
-                      description: `Payment for ${planName || payment.description || "subscription"}`,
-                    });
-
-                    console.log(
-                      "Payment history created for payment:",
-                      payment.id,
-                      "Event:",
-                      event.event,
-                      "Plan:",
-                      planName,
-                    );
-                  } catch (paymentHistoryError) {
-                    console.error(
-                      "Error creating payment history:",
-                      paymentHistoryError,
-                    );
-                    // Don't throw - continue with subscription processing
-                  }
-                }
-
                 // Handle subscription upgrade for both authorized and captured payments
                 const existingSubscription =
                   await storage.getSubscriptionByUserId(userId);
@@ -262,6 +230,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   } else if (description.toLowerCase().includes("pro yearly")) {
                     planName = "Pro Yearly";
                     planId = PLAN_IDS.PRO_YEARLY;
+                  }
+                }
+
+                // Create payment history record for both authorized and captured payments
+                if (
+                  event.event === "payment.captured" ||
+                  event.event === "payment.authorized"
+                ) {
+                  try {
+                    await storage.createPaymentHistory({
+                      user_id: userId,
+                      razorpay_payment_id: payment.id,
+                      amount: payment.amount,
+                      currency: payment.currency,
+                      status: "succeeded", // Mark as succeeded for both captured and authorized payments
+                      description: `Payment for ${planName || payment.description || "subscription"}`,
+                    });
+
+                    console.log(
+                      "Payment history created for payment:",
+                      payment.id,
+                      "Event:",
+                      event.event,
+                      "Plan:",
+                      planName,
+                    );
+                  } catch (paymentHistoryError) {
+                    console.error(
+                      "Error creating payment history:",
+                      paymentHistoryError,
+                    );
+                    // Don't throw - continue with subscription processing
                   }
                 }
 
