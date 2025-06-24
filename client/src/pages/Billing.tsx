@@ -275,13 +275,10 @@ export default function Billing() {
             });
           }
           return;
-            );
-
-            } else {
+        } else {
           // Regular upgrade
-          try {);
-
-              const response = await fetch(
+          try {
+            const response = await fetch(
               `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`,
               {
                 method: "POST",
@@ -296,7 +293,7 @@ export default function Billing() {
             );
 
             if (response.ok) {
-              const result = await response.json(););
+              const result = await response.json();
 
               // Check if payment is required
               if (result.paymentRequired && result.paymentLink) {
