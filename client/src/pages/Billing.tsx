@@ -230,40 +230,101 @@ export default function Billing() {
           });
         }
       } else {
-        // User has active subscription, upgrade it
-        try {
-          const response = await fetch(
-            `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                newPlanId: planId,
-                userId: user.id,
-              }),
-            },
-          );
+        // Determine if this is an upgrade or downgrade
+        const currentPlanName = subscription.plan_name?.toLowerCase() || "";
+        const isDowngrade = currentPlanName.includes("enterprise") && planId.includes("pro");
+        
+        if (isDowngrade) {
+          // Handle downgrade - cancel current subscription and create new one
+          const confirmMessage = `Are you sure you want to downgrade from ${subscription.plan_name} to ${planId.replace("-", " ")}? You will lose access to Enterprise features and your current subscription will be cancelled.`;
+          
+          if (!confirm(confirmMessage)) return;
 
-          if (response.ok) {
-            const result = await response.json();
+          try {
+            // Cancel current subscription
+            const cancelResponse = await fetch(
+              `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/downgrade-to-free`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  userId: user.id,
+                }),
+              },
+            );
+
+            if (cancelResponse.ok) {
+              // Create new subscription for the lower plan
+              const response = await fetch("/api/create-manual-payment", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  planId,
+                  userId: user.id,
+                }),
+              });
+
+              if (response.ok) {
+                const { paymentLink } = await response.json();
+                window.open(paymentLink, "_blank");
+                toast({
+                  title: "Downgrade Initiated",
+                  description: "Complete your payment to activate your new plan.",
+                });
+              } else {
+                throw new Error("Failed to create payment link for new plan");
+              }
+            } else {
+              throw new Error("Failed to cancel current subscription");
+            }
+          } catch (error) {
+            console.error("Error downgrading subscription:", error);
             toast({
-              title: "Upgrade Successful!",
-              description: result.message,
+              title: "Downgrade Failed",
+              description: "Failed to downgrade subscription. Please try again.",
+              variant: "destructive",
             });
-            fetchBillingData();
-          } else {
-            const error = await response.text();
-            throw new Error(error);
           }
-        } catch (error) {
-          console.error("Error upgrading subscription:", error);
-          toast({
-            title: "Upgrade Failed",
-            description: "Failed to upgrade subscription. Please try again.",
-            variant: "destructive",
-          });
+        } else {
+          // Regular upgrade
+          try {
+            const response = await fetch(
+              `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  newPlanId: planId,
+                  userId: user.id,
+                }),
+              },
+            );
+
+            if (response.ok) {
+              const result = await response.json();
+              toast({
+                title: "Upgrade Successful!",
+                description: result.message,
+              });
+              fetchBillingData();
+            } else {
+              const error = await response.text();
+              throw new Error(error);
+            }
+          } catch (error) {
+            console.error("Error upgrading subscription:", error);
+            toast({
+              title: "Upgrade Failed",
+              description: "Failed to upgrade subscription. Please try again.",
+              variant: "destructive",
+            });
+          }
         }
       }
     },
@@ -535,6 +596,42 @@ export default function Billing() {
     });
   }, [paymentHistory]);
 
+  // Helper function to determine button text and variant
+  const getPlanButtonConfig = (plan: any) => {
+    if (plan.isCurrent) {
+      return { text: "Current Plan", variant: "outline" as const, disabled: true };
+    }
+    
+    if (plan.name === "Free") {
+      return { 
+        text: "Downgrade to Free", 
+        variant: "outline" as const, 
+        disabled: false 
+      };
+    }
+    
+    // Determine if this would be an upgrade or downgrade
+    const currentPlanName = subscription?.plan_name?.toLowerCase() || "";
+    const isFromEnterprise = currentPlanName.includes("enterprise");
+    const isFromPro = currentPlanName.includes("pro");
+    const isPlanPro = plan.name === "Pro";
+    const isPlanEnterprise = plan.name === "Enterprise";
+    
+    if (isFromEnterprise && isPlanPro) {
+      return { text: "Downgrade to Pro", variant: "outline" as const, disabled: false };
+    }
+    
+    if (isFromPro && isPlanEnterprise) {
+      return { text: "Upgrade to Enterprise", variant: "default" as const, disabled: false };
+    }
+    
+    if (!subscription || subscription.status !== "active") {
+      return { text: "Get Started", variant: "default" as const, disabled: false };
+    }
+    
+    return { text: "Upgrade", variant: "default" as const, disabled: false };
+  };
+
   // Memoize plans array
   const plans = useMemo(
     () => [
@@ -601,7 +698,7 @@ export default function Billing() {
             : "enterprise-yearly",
       },
     ],
-    [billingInterval, currentPlan],
+    [billingInterval, currentPlan, subscription],
   );
 
   if (authLoading) {
@@ -771,32 +868,27 @@ export default function Billing() {
                             </ul>
                           </CardContent>
                           <CardFooter>
-                            {plan.isCurrent ? (
-                              <Button disabled className="w-full">
-                                Current Plan
-                              </Button>
-                            ) : (
-                              <Button
-                                variant={
-                                  plan.name === "Free" ? "outline" : "default"
-                                }
-                                className="w-full"
-                                onClick={() => {
-                                  if (plan.name === "Free") {
-                                    handleDowngradeToFree();
-                                  } else if (plan.planId) {
-                                    handleUpgradeOrSubscribe(plan.planId);
-                                  }
-                                }}
-                                disabled={paymentLoading}
-                              >
-                                {paymentLoading
-                                  ? "Loading..."
-                                  : plan.name === "Free"
-                                    ? "Downgrade to Free"
-                                    : "Upgrade"}
-                              </Button>
-                            )}
+                            {(() => {
+                              const buttonConfig = getPlanButtonConfig(plan);
+                              return (
+                                <Button
+                                  variant={buttonConfig.variant}
+                                  className="w-full"
+                                  onClick={() => {
+                                    if (plan.name === "Free") {
+                                      handleDowngradeToFree();
+                                    } else if (plan.planId) {
+                                      handleUpgradeOrSubscribe(plan.planId);
+                                    }
+                                  }}
+                                  disabled={paymentLoading || buttonConfig.disabled}
+                                >
+                                  {paymentLoading
+                                    ? "Loading..."
+                                    : buttonConfig.text}
+                                </Button>
+                              );
+                            })()}
                           </CardFooter>
                         </Card>
                       ))}
