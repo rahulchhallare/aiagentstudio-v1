@@ -120,6 +120,18 @@ export const USD_PRICES = {
 // Subscription management functions
 export async function createRazorpayCustomer(email: string, name: string, userId: number) {
   try {
+    // First check if customer already exists
+    const existingCustomers = await razorpay.customers.all({
+      email: email,
+      count: 1
+    });
+    
+    if (existingCustomers.items && existingCustomers.items.length > 0) {
+      console.log('Using existing Razorpay customer:', existingCustomers.items[0].id);
+      return existingCustomers.items[0];
+    }
+    
+    // Create new customer if none exists
     const customer = await razorpay.customers.create({
       name: name,
       email: email,
@@ -128,9 +140,29 @@ export async function createRazorpayCustomer(email: string, name: string, userId
         userId: userId.toString()
       }
     });
+    
+    console.log('Created new Razorpay customer:', customer.id);
     return customer;
   } catch (error) {
-    console.error('Error creating Razorpay customer:', error);
+    console.error('Error handling Razorpay customer:', error);
+    
+    // If error is about existing customer, try to fetch it
+    if (error.error && error.error.description && error.error.description.includes('already exists')) {
+      try {
+        const existingCustomers = await razorpay.customers.all({
+          email: email,
+          count: 1
+        });
+        
+        if (existingCustomers.items && existingCustomers.items.length > 0) {
+          console.log('Retrieved existing customer after error:', existingCustomers.items[0].id);
+          return existingCustomers.items[0];
+        }
+      } catch (fetchError) {
+        console.error('Error fetching existing customer:', fetchError);
+      }
+    }
+    
     throw error;
   }
 }

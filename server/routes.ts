@@ -1205,17 +1205,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating payment for', planName, 'with amount:', amount, 'paise (₹' + (amount/100) + ')');
 
-      // Create Razorpay customer if doesn't exist
+      // Create or get existing Razorpay customer
       let customer;
       try {
-        customer = await razorpay.customers.create({
-          name: user.username,
+        // First try to find existing customer by email
+        const existingCustomers = await razorpay.customers.all({
           email: user.email,
-          contact: '+919000000000', // Default contact
+          count: 1
         });
+        
+        if (existingCustomers.items && existingCustomers.items.length > 0) {
+          customer = existingCustomers.items[0];
+          console.log('Using existing customer:', customer.id);
+        } else {
+          // Create new customer if none exists
+          customer = await razorpay.customers.create({
+            name: user.username,
+            email: user.email,
+            contact: '+919000000000', // Default contact
+          });
+          console.log('Created new customer:', customer.id);
+        }
       } catch (error) {
-        console.error('Error creating customer:', error);
-        throw new Error('Failed to create customer');
+        console.error('Error handling customer:', error);
+        
+        // If customer creation fails due to existing customer, try to fetch by email
+        if (error.error && error.error.description && error.error.description.includes('already exists')) {
+          try {
+            const existingCustomers = await razorpay.customers.all({
+              email: user.email,
+              count: 1
+            });
+            
+            if (existingCustomers.items && existingCustomers.items.length > 0) {
+              customer = existingCustomers.items[0];
+              console.log('Found existing customer after error:', customer.id);
+            } else {
+              throw new Error('Customer exists but could not be retrieved');
+            }
+          } catch (fetchError) {
+            console.error('Error fetching existing customer:', fetchError);
+            throw new Error('Failed to handle existing customer');
+          }
+        } else {
+          throw new Error('Failed to create or retrieve customer');
+        }
       }
 
       // Ensure amount is a whole number (should already be in paise)
