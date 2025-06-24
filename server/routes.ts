@@ -1206,6 +1206,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/subscription/:id/downgrade-to-free", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!subscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      const subscriptionIdToUpdate =
+        subscription.razorpay_subscription_id ||
+        subscription.stripe_subscription_id ||
+        id;
+
+      // Cancel the Razorpay subscription if it exists
+      try {
+        if (subscription.razorpay_subscription_id) {
+          await razorpay.subscriptions.cancel(subscription.razorpay_subscription_id, {
+            cancel_at_cycle_end: 0, // Cancel immediately
+          });
+        }
+      } catch (razorpayError: any) {
+        console.error("Error cancelling Razorpay subscription:", razorpayError);
+        // Continue with local cancellation even if Razorpay fails
+      }
+
+      // Update subscription status to cancelled
+      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
+        status: "cancelled",
+        plan_name: "Free",
+        plan_id: "free",
+        price_id: "free",
+        cancel_at_period_end: false,
+        updated_at: new Date(),
+      });
+
+      // Create payment history record for the downgrade
+      await storage.createPaymentHistory({
+        user_id: parseInt(userId),
+        razorpay_payment_id: `downgrade_free_${subscriptionIdToUpdate}_${Date.now()}`,
+        amount: 0,
+        currency: "INR",
+        status: "succeeded",
+        description: `Plan downgraded from ${subscription.plan_name} to Free`,
+      });
+
+      res.json({
+        success: true,
+        subscription: dbUpdate,
+        message: "Successfully downgraded to Free plan. Your subscription has been cancelled.",
+      });
+    } catch (error) {
+      console.error("Error downgrading to free:", error);
+      res.status(500).json({ error: "Failed to downgrade to free plan" });
+    }
+  });
+
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
     try {

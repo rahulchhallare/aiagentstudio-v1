@@ -164,19 +164,18 @@ export default function Billing() {
       );
 
       if (response.ok) {
+        const result = await response.json();
         toast({
           title: "Downgraded to Free",
-          description:
-            "Your subscription has been cancelled and you're now on the Free plan.",
+          description: result.message || "Your subscription has been cancelled and you're now on the Free plan.",
         });
         fetchBillingData();
       } else {
-        const errorData = await response.text();
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
         console.error("Failed to downgrade subscription:", errorData);
         toast({
           title: "Error",
-          description:
-            "Failed to downgrade subscription. Please try again or contact support.",
+          description: errorData.error || "Failed to downgrade subscription. Please try again or contact support.",
           variant: "destructive",
         });
       }
@@ -184,8 +183,7 @@ export default function Billing() {
       console.error("Error downgrading subscription:", error);
       toast({
         title: "Error",
-        description:
-          "Failed to downgrade subscription. Please try again or contact support.",
+        description: "Failed to downgrade subscription. Please try again or contact support.",
         variant: "destructive",
       });
     }
@@ -277,60 +275,13 @@ export default function Billing() {
             });
           }
           return;
-
-          try {
-            // Cancel current subscription
-            const cancelResponse = await fetch(
-              `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/downgrade-to-free`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  userId: user.id,
-                }),
-              },
             );
 
-            if (cancelResponse.ok) {
-              // Create new subscription for the lower plan
-              const response = await fetch("/api/create-manual-payment", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  planId,
-                  userId: user.id,
-                }),
-              });
-
-              if (response.ok) {
-                const { paymentLink } = await response.json();
-                window.open(paymentLink, "_blank");
-                toast({
-                  title: "Downgrade Initiated",
-                  description: "Complete your payment to activate your new plan.",
-                });
-              } else {
-                throw new Error("Failed to create payment link for new plan");
-              }
             } else {
-              throw new Error("Failed to cancel current subscription");
-            }
-          } catch (error) {
-            console.error("Error downgrading subscription:", error);
-            toast({
-              title: "Downgrade Failed",
-              description: "Failed to downgrade subscription. Please try again.",
-              variant: "destructive",
-            });
-          }
-        } else {
           // Regular upgrade
-          try {
-            const response = await fetch(
+          try {);
+
+              const response = await fetch(
               `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`,
               {
                 method: "POST",
@@ -345,7 +296,7 @@ export default function Billing() {
             );
 
             if (response.ok) {
-              const result = await response.json();
+              const result = await response.json(););
 
               // Check if payment is required
               if (result.paymentRequired && result.paymentLink) {
