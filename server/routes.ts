@@ -1927,8 +1927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       };
 
-      res.json(```text
-accountInfo);
+      res.json(accountInfo);
     } catch (error: any) {
       console.error("Error checking Razorpay config:", error);
       res.status(500).json({
@@ -2916,7 +2915,7 @@ accountInfo);
   );
   );
 
-  // Create subscription
+  //  // Create subscription
   app.post("/api/subscription/create", async (req: Request, res: Response) => {
     const { userId, planId, customerEmail, customerName } = req.body;
 
