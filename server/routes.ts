@@ -251,6 +251,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           break;
 
+        case 'payment_link.paid':
+          const paidPayment = event.payload.payment_link.entity;
+          const paidPaymentEntity = event.payload.payment.entity;
+          console.log('Payment link paid:', paidPayment.id, 'Payment:', paidPaymentEntity.id);
+
+          try {
+            // Get userId from payment notes
+            let userId = parseInt(paidPaymentEntity.notes?.userId || '0');
+            
+            if (userId > 0) {
+              const planName = paidPaymentEntity.notes?.planName || 'Unknown Plan';
+              const planId = paidPaymentEntity.notes?.planId || '';
+              
+              console.log('Processing payment link payment:', paidPaymentEntity.id, 'for user:', userId, 'plan:', planName);
+              
+              // Create payment history record
+              await storage.createPaymentHistory({
+                user_id: userId,
+                razorpay_payment_id: paidPaymentEntity.id,
+                amount: paidPaymentEntity.amount,
+                currency: paidPaymentEntity.currency,
+                status: 'succeeded',
+                description: `Payment for ${planName}`,
+              });
+
+              console.log('Payment history created for payment link:', paidPaymentEntity.id);
+
+              // Handle subscription upgrade
+              const existingSubscription = await storage.getSubscriptionByUserId(userId);
+              
+              if (existingSubscription) {
+                // Update existing subscription
+                const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id || existingSubscription.stripe_subscription_id || `manual_${userId}`, {
+                  status: 'active',
+                  plan_name: planName,
+                  plan_id: planId,
+                  price_id: planId,
+                  current_period_start: new Date(),
+                  current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                  updated_at: new Date()
+                });
+                
+                console.log('Subscription updated to:', planName, 'for user:', userId);
+              } else {
+                // Create new subscription
+                const newSubscription = await storage.createSubscription({
+                  user_id: userId,
+                  razorpay_subscription_id: `manual_${paidPaymentEntity.id}`,
+                  razorpay_customer_id: paidPaymentEntity.customer_id || '',
+                  status: 'active',
+                  plan_name: planName,
+                  plan_id: planId,
+                  price_id: planId,
+                  current_period_start: new Date(),
+                  current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                });
+                
+                console.log('New subscription created:', planName, 'for user:', userId);
+              }
+            } else {
+              console.error('No valid userId found for payment link payment:', paidPaymentEntity.id);
+            }
+          } catch (error) {
+            console.error('Error processing payment link payment:', error);
+          }
+          break;
+
         case 'subscription.charged':
           const subscription = event.payload.subscription.entity;
           const paymentEntity = event.payload.payment.entity;
@@ -1385,7 +1452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           upgradeType: 'manual_payment',
           originalAmount: amountInPaise.toString()
         },
-        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true`,
+        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link_id=${paymentLink.id}`,
         callback_method: 'get'
       });
 

@@ -407,11 +407,14 @@ export default function Billing() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("subscription_success") === "true") {
       const subscriptionId = urlParams.get("subscription_id");
-      if (subscriptionId && user) {
+      const paymentLinkId = urlParams.get("payment_link_id");
+      
+      if ((subscriptionId || paymentLinkId) && user) {
         toast({
           title: "Payment Successful!",
-          description:
-            "Your subscription has been activated. Welcome to your new plan!",
+          description: paymentLinkId 
+            ? "Your payment has been processed. Your subscription will be activated shortly."
+            : "Your subscription has been activated. Welcome to your new plan!",
         });
 
         // Activate the subscription manually to ensure it's properly set up
@@ -419,7 +422,16 @@ export default function Billing() {
           try {
             let activated = false;
 
-            // Try activation endpoint first
+            // For payment link success, just refresh data since webhook should handle activation
+            if (paymentLinkId) {
+              console.log('Payment link success - refreshing billing data');
+              setTimeout(() => {
+                fetchBillingData();
+              }, 2000); // Wait 2 seconds for webhook processing
+              return;
+            }
+
+            // Try activation endpoint first for subscription-based payments
             const activateResponse = await fetch("/api/activate-subscription", {
               method: "POST",
               headers: {
