@@ -105,9 +105,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid webhook signature' });
       }
 
-      // Parse the webhook body - handle both Buffer and string
-      const bodyStr = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body;
-      const event = JSON.parse(bodyStr);
+      // Parse the webhook body - handle different body formats
+      let event;
+      if (Buffer.isBuffer(req.body)) {
+        event = JSON.parse(req.body.toString('utf8'));
+      } else if (typeof req.body === 'string') {
+        event = JSON.parse(req.body);
+      } else if (typeof req.body === 'object' && req.body !== null) {
+        event = req.body; // Already parsed object
+      } else {
+        throw new Error('Invalid webhook body format');
+      }
       console.log('Razorpay webhook received:', event.event, 'Event ID:', event.payload?.payment?.entity?.id || event.payload?.subscription?.entity?.id);
 
       // Check if this event was already processed

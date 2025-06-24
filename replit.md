@@ -38,6 +38,7 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Added hover effects, scale transitions, and animated elements for better UX
 - Fixed payment history amount calculation for subscription upgrades to show correct USD values
 - Fixed "Customer already exists" error for users re-upgrading after downgrade by implementing proper customer lookup
+- Fixed webhook processing error that was causing JSON parsing failures in Razorpay webhook handler
 
 ## User Preferences
 - Language: English
