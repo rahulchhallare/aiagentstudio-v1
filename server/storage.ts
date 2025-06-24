@@ -1,3 +1,4 @@
+
 import { users, agents, waitlist, type User, type InsertUser, type Agent, type InsertAgent, type Waitlist, type InsertWaitlist } from "@shared/schema";
 
 // Interface for storage operations
@@ -330,20 +331,12 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateSubscription(subscriptionId: string, updates: any): Promise<any> {
-    console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
-    console.log('Subscription ID:', subscriptionId);
-    console.log('Updates to apply:', updates);
-
-    // Ensure we apply all update fields properly
     const finalUpdates = { 
       ...updates, 
       updated_at: new Date()
     };
 
     // Try to update by razorpay_subscription_id first, then by stripe_subscription_id
-    let data, error;
-
-    // First try Razorpay subscription ID
     const razorpayResult = await this.supabase
       .from('subscriptions')
       .update(finalUpdates)
@@ -352,12 +345,9 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (!razorpayResult.error && razorpayResult.data) {
-      console.log('Updated by razorpay_subscription_id:', razorpayResult.data);
-      console.log('=== END UPDATE DEBUG ===');
       return razorpayResult.data;
     }
 
-    // If not found by Razorpay ID, try Stripe ID  
     const stripeResult = await this.supabase
       .from('subscriptions')
       .update(finalUpdates)
@@ -365,19 +355,11 @@ export class SupabaseStorage implements IStorage {
       .select()
       .single();
 
-    data = stripeResult.data;
-    error = stripeResult.error;
-
-    if (error) {
-      console.error('Supabase update error:', error);
-      console.error('Error details:', error.details);
-      console.error('Error hint:', error.hint);
-      throw new Error(error.message);
+    if (stripeResult.error) {
+      throw new Error(stripeResult.error.message);
     }
 
-    console.log('Supabase update successful:', data);
-    console.log('=== END UPDATE DEBUG ===');
-    return data;
+    return stripeResult.data;
   }
 
   async getSubscriptionByUserId(userId: number): Promise<any> {
@@ -416,6 +398,18 @@ export class SupabaseStorage implements IStorage {
     return data || [];
   }
 
+  async deletePaymentHistory(id: number): Promise<any> {
+    const { data, error } = await this.supabase
+        .from('payment_history')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) return null;
+    return data;
+  }
+
   // Webhook event methods
   async createWebhookEvent(event: any): Promise<any> {
     const { data, error } = await this.supabase
@@ -448,18 +442,6 @@ export class SupabaseStorage implements IStorage {
 
       if (error) return null;
       return data;
-  }
-
-  async deletePaymentHistory(id: number): Promise<any> {
-    const { data, error } = await this.supabase
-        .from('payment_history')
-        .delete()
-        .eq('id', id)
-        .select()
-        .single();
-
-    if (error) return null;
-    return data;
   }
 }
 
