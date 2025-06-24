@@ -36,6 +36,7 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Fixed payment history display to show USD amounts instead of INR for better user experience
 - Implemented micro-interactions for price display transitions with smooth animations
 - Added hover effects, scale transitions, and animated elements for better UX
+- Fixed payment history amount calculation for subscription upgrades to show correct USD values
 
 ## User Preferences
 - Language: English

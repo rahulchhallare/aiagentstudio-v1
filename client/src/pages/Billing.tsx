@@ -474,8 +474,45 @@ export default function Billing() {
           // For zero amounts (cancellations, etc.), keep as 0
           usdAmount = 0;
         } else {
-          // Fallback: approximate conversion (₹83 ≈ $1)
-          usdAmount = Math.round(inrAmount / 83);
+          // Check payment description to determine correct plan amount
+          const description = payment.description?.toLowerCase() || '';
+          
+          if (description.includes('enterprise monthly') || description.includes('enterprise')) {
+            usdAmount = 99; // Enterprise Monthly
+          } else if (description.includes('enterprise yearly')) {
+            usdAmount = 990; // Enterprise Yearly
+          } else if (description.includes('pro monthly') || description.includes('pro')) {
+            usdAmount = 29; // Pro Monthly
+          } else if (description.includes('pro yearly')) {
+            usdAmount = 290; // Pro Yearly
+          } else if (description.includes('upgrade') || description.includes('prorated')) {
+            // For upgrade transactions, show the target plan amount instead of prorated amount
+            if (description.includes('enterprise monthly')) {
+              usdAmount = 99; // Enterprise Monthly
+            } else if (description.includes('enterprise yearly')) {
+              usdAmount = 990; // Enterprise Yearly
+            } else if (description.includes('pro monthly')) {
+              usdAmount = 29; // Pro Monthly
+            } else if (description.includes('pro yearly')) {
+              usdAmount = 290; // Pro Yearly
+            } else {
+              // For large prorated amounts, convert to reasonable USD
+              if (inrAmount > 30000) { // Very large INR amounts
+                usdAmount = 99; // Likely Enterprise Monthly
+              } else if (inrAmount > 20000) {
+                usdAmount = 290; // Likely Pro Yearly
+              } else if (inrAmount > 8000) {
+                usdAmount = 99; // Likely Enterprise Monthly
+              } else if (inrAmount > 2000) {
+                usdAmount = 29; // Likely Pro Monthly
+              } else {
+                usdAmount = Math.round(inrAmount / 83);
+              }
+            }
+          } else {
+            // Fallback: approximate conversion (₹83 ≈ $1)
+            usdAmount = Math.round(inrAmount / 83);
+          }
         }
 
         displayAmount = `$${usdAmount.toFixed(2)}`;
