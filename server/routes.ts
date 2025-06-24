@@ -156,11 +156,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     razorpay_payment_id: payment.id,
                     amount: payment.amount,
                     currency: payment.currency,
-                    status: event.event === 'payment.captured' ? 'succeeded' : 'pending',
-                    description: `Payment for ${payment.description || planName || 'subscription'}`,
+                    status: 'succeeded', // Mark as succeeded for both captured and authorized payments
+                    description: `Payment for ${planName || payment.description || 'subscription'}`,
                   });
 
-                  console.log('Payment history created for payment:', payment.id, 'Event:', event.event);
+                  console.log('Payment history created for payment:', payment.id, 'Event:', event.event, 'Plan:', planName);
                 } catch (paymentHistoryError) {
                   console.error('Error creating payment history:', paymentHistoryError);
                   // Don't throw - continue with subscription processing
@@ -173,16 +173,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               let planId = '';
               
               // Determine plan based on payment amount with more flexible matching
-              if (payment.amount >= 490000 && payment.amount <= 510000) { // ₹4900-5100 = Enterprise Monthly
+              if (payment.amount >= 499000 && payment.amount <= 501000) { // ₹4990-5010 = Enterprise Monthly (₹4999)
                 planName = 'Enterprise Monthly';
                 planId = PLAN_IDS.ENTERPRISE_MONTHLY;
-              } else if (payment.amount >= 99000 && payment.amount <= 101000) { // ₹990-1010 = Pro Monthly
+              } else if (payment.amount >= 99000 && payment.amount <= 101000) { // ₹990-1010 = Pro Monthly (₹999)
                 planName = 'Pro Monthly';
                 planId = PLAN_IDS.PRO_MONTHLY;
-              } else if (payment.amount >= 990000 && payment.amount <= 1010000) { // ₹9900-10100 = Pro Yearly
+              } else if (payment.amount >= 999000 && payment.amount <= 1001000) { // ₹9990-10010 = Pro Yearly (₹9999)
                 planName = 'Pro Yearly';
                 planId = PLAN_IDS.PRO_YEARLY;
-              } else if (payment.amount >= 4990000 && payment.amount <= 5010000) { // ₹49900-50100 = Enterprise Yearly
+              } else if (payment.amount >= 4999000 && payment.amount <= 5001000) { // ₹49990-50010 = Enterprise Yearly (₹49999)
                 planName = 'Enterprise Yearly';
                 planId = PLAN_IDS.ENTERPRISE_YEARLY;
               } else {
@@ -1780,6 +1780,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fixing payment history:', error);
       return res.status(500).json({ message: "Failed to fix payment history" });
+    }
+  });
+
+  // Fix pending payment status
+  app.post("/api/payment-history/fix-pending", async (req: Request, res: Response) => {
+    try {
+      const { paymentId, userId } = req.body;
+
+      if (!paymentId || !userId) {
+        return res.status(400).json({ message: "Missing required fields: paymentId, userId" });
+      }
+
+      // Get the payment from Razorpay to verify its actual status
+      let payment;
+      try {
+        payment = await razorpay.payments.fetch(paymentId);
+      } catch (error) {
+        return res.status(404).json({ message: "Payment not found in Razorpay" });
+      }
+
+      // If payment is captured/authorized, update our database
+      if (payment.status === 'captured' || payment.status === 'authorized') {
+        // Get payment history entries for this user
+        const paymentHistory = await storage.getPaymentHistoryByUserId(parseInt(userId));
+        const pendingPayment = paymentHistory.find(p => p.razorpay_payment_id === paymentId);
+
+        if (pendingPayment) {
+          // Update the payment status in database
+          await storage.updatePaymentHistory(pendingPayment.id, {
+            status: 'succeeded',
+            description: pendingPayment.description + ' (status fixed)',
+            updated_at: new Date()
+          });
+
+          // Also ensure subscription is properly activated
+          const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+          if (subscription && subscription.status !== 'active') {
+            // Determine plan from payment amount
+            let planName = 'Enterprise Monthly';
+            let planId = PLAN_IDS.ENTERPRISE_MONTHLY;
+            
+            if (payment.amount >= 499000 && payment.amount <= 501000) {
+              planName = 'Enterprise Monthly';
+              planId = PLAN_IDS.ENTERPRISE_MONTHLY;
+            }
+
+            await storage.updateSubscription(subscription.razorpay_subscription_id || subscription.id, {
+              status: 'active',
+              plan_name: planName,
+              plan_id: planId,
+              updated_at: new Date()
+            });
+          }
+
+          return res.json({ 
+            message: "Payment status fixed successfully", 
+            payment: { id: paymentId, status: 'succeeded' }
+          });
+        } else {
+          return res.status(404).json({ message: "Payment not found in our records" });
+        }
+      } else {
+        return res.json({ 
+          message: "Payment is still pending in Razorpay", 
+          razorpay_status: payment.status 
+        });
+      }
+    } catch (error) {
+      console.error('Error fixing pending payment:', error);
+      return res.status(500).json({ message: "Failed to fix pending payment" });
     }
   });
 
