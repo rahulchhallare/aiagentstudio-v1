@@ -1385,7 +1385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           upgradeType: 'manual_payment',
           originalAmount: amountInPaise.toString()
         },
-        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link_id=${paymentLink.id}`,
+        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true`,
         callback_method: 'get'
       });
 
