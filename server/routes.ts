@@ -2913,9 +2913,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
-  );
 
-  //  // Create subscription
+  // Create subscription
   app.post("/api/subscription/create", async (req: Request, res: Response) => {
     const { userId, planId, customerEmail, customerName } = req.body;
 
