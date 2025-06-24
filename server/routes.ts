@@ -1820,82 +1820,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: 'Plan configuration error. Please contact support.' });
       }
 
-      // Calculate prorated amount
-      const currentPeriodStart = new Date(subscription.current_period_start);
-      const currentPeriodEnd = new Date(subscription.current_period_end);
-      const now = new Date();
+      // Instead of automatic prorated charge, create payment link for proper upgrade flow
+      try {
+        // Get the correct amount for the new plan (in paise)
+        let planAmount = 0;
+        switch (newPlanId) {
+          case 'pro-monthly':
+            planAmount = 99900; // ₹999 in paise
+            break;
+          case 'pro-yearly':
+            planAmount = 999900; // ₹9999 in paise  
+            break;
+          case 'enterprise-monthly':
+            planAmount = 499900; // ₹4999 in paise
+            break;
+          case 'enterprise-yearly':
+            planAmount = 4999900; // ₹49999 in paise
+            break;
+          default:
+            planAmount = 99900; // Default to Pro Monthly
+        }
 
-      // Calculate remaining days in current period
-      const totalDays = Math.ceil((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
-      const remainingDays = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        // Create or get existing Razorpay customer
+        const user = await storage.getUser(parseInt(userId));
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
 
-      // Calculate current plan daily rate
-      let currentAmount = 0;
-      const currentPlanId = subscription.plan_id;
-      if (currentPlanId === PLAN_IDS.PRO_MONTHLY) {
-        currentAmount = PLAN_PRICING.PRO_MONTHLY;
-      } else if (currentPlanId === PLAN_IDS.PRO_YEARLY) {
-        currentAmount = PLAN_PRICING.PRO_YEARLY;
-      } else if (currentPlanId === PLAN_IDS.ENTERPRISE_MONTHLY) {
-        currentAmount = PLAN_PRICING.ENTERPRISE_MONTHLY;
-      } else if (currentPlanId === PLAN_IDS.ENTERPRISE_YEARLY) {
-        currentAmount = PLAN_PRICING.ENTERPRISE_YEARLY;
-      }
+        // Find existing customer or create new one
+        let customer;
+        try {
+          const existingCustomers = await razorpay.customers.all({
+            email: user.email,
+            count: 1
+          });
+          
+          if (existingCustomers.items && existingCustomers.items.length > 0) {
+            customer = existingCustomers.items[0];
+          } else {
+            customer = await razorpay.customers.create({
+              name: user.username,
+              email: user.email,
+              contact: '+919000000000',
+            });
+          }
+        } catch (customerError) {
+          console.error('Error handling customer:', customerError);
+          return res.status(500).json({ error: 'Failed to handle customer' });
+        }
 
-      const currentDailyRate = currentAmount / totalDays;
-      const newDailyRate = newAmount / totalDays; // Assuming same period type
-
-      // Calculate prorated upgrade cost
-      const unusedCredit = Math.round(currentDailyRate * remainingDays);
-      const upgradeCharge = Math.round(newDailyRate * remainingDays);
-      const proratedAmount = upgradeCharge - unusedCredit;
-
-      // Update subscription in database immediately for instant access
-      const updatedSubscription = await storage.updateSubscription(subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id, {
-        status: 'active',
-        plan_name: newPlanName,
-        plan_id: actualRazorpayPlanId,
-        price_id: actualRazorpayPlanId,
-        // Keep the same period dates for prorated upgrade
-        current_period_start: subscription.current_period_start,
-        current_period_end: subscription.current_period_end,
-      });
-
-      // Create payment record for the upgrade
-      if (proratedAmount > 0) {
-        await storage.createPaymentHistory({
-          user_id: parseInt(userId),
-          razorpay_payment_id: `upgrade_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
-          amount: proratedAmount,
-          currency: 'inr',
-          status: 'succeeded',
-          description: `Subscription upgraded from ${subscription.plan_name} to ${newPlanName} (prorated)`,
+        // Create payment link for upgrade
+        const paymentLink = await razorpay.paymentLink.create({
+          amount: planAmount,
+          currency: 'INR',
+          accept_partial: false,
+          customer: {
+            id: customer.id
+          },
+          description: `Upgrade to ${newPlanName}`,
+          notes: {
+            userId: userId,
+            planId: actualRazorpayPlanId,
+            upgradeFrom: subscription.plan_name,
+            upgradeTo: newPlanName
+          }
         });
-      } else {
-        // If downgrade, record as credit
-        await storage.createPaymentHistory({
-          user_id: parseInt(userId),
-          razorpay_payment_id: `upgrade_credit_${subscription.razorpay_subscription_id || id}_${Date.now()}`,
-          amount: Math.abs(proratedAmount),
-          currency: 'inr',
-          status: 'succeeded',
-          description: `Credit applied for upgrade from ${subscription.plan_name} to ${newPlanName}`,
+
+        res.json({
+          success: true,
+          paymentRequired: true,
+          paymentLink: paymentLink.short_url,
+          message: `To upgrade to ${newPlanName}, please complete the payment`,
+          upgradeDetails: {
+            currentPlan: subscription.plan_name,
+            newPlan: newPlanName,
+            amount: planAmount / 100, // Show in rupees
+            currency: 'INR'
+          }
+        });
+
+      } catch (paymentError) {
+        console.error('Error creating upgrade payment:', paymentError);
+        res.status(500).json({ 
+          error: 'Failed to create upgrade payment',
+          message: 'Please try again or contact support'
         });
       }
-
-      res.json({ 
-        success: true, 
-        subscription: updatedSubscription,
-        prorationDetails: {
-          currentPlan: subscription.plan_name,
-          newPlan: newPlanName,
-          remainingDays,
-          unusedCredit: unusedCredit / 100, // Convert to rupees
-          upgradeCharge: upgradeCharge / 100,
-          netAmount: proratedAmount / 100,
-        },
-        message: `Successfully upgraded from ${subscription.plan_name} to ${newPlanName}. You now have immediate access to ${newPlanName} features!` 
-      });
     } catch (error) {
       console.error('Error upgrading subscription:', error);
       res.status(500).json({ error: 'Failed to upgrade subscription' });
