@@ -232,13 +232,51 @@ export default function Billing() {
       } else {
         // Determine if this is an upgrade or downgrade
         const currentPlanName = subscription.plan_name?.toLowerCase() || "";
-        const isDowngrade = currentPlanName.includes("enterprise") && planId.includes("pro");
+        const targetPlanName = planId.toLowerCase();
+        
+        // Check if this is actually a downgrade (Enterprise -> Pro)
+        const isDowngrade = currentPlanName.includes("enterprise") && targetPlanName.includes("pro");
         
         if (isDowngrade) {
-          // Handle downgrade - cancel current subscription and create new one
-          const confirmMessage = `Are you sure you want to downgrade from ${subscription.plan_name} to ${planId.replace("-", " ")}? You will lose access to Enterprise features and your current subscription will be cancelled.`;
+          // Handle downgrade - just update subscription without payment
+          const confirmMessage = `Are you sure you want to downgrade from ${subscription.plan_name} to ${planId.replace("-", " ")}? You will lose access to Enterprise features immediately.`;
           
           if (!confirm(confirmMessage)) return;
+
+          try {
+            // For downgrades, we directly update the subscription without payment
+            const response = await fetch(
+              `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/downgrade`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  newPlanId: planId,
+                  userId: user.id,
+                }),
+              },
+            );
+
+            if (response.ok) {
+              toast({
+                title: "Plan Downgraded",
+                description: `Successfully downgraded to ${planId.replace("-", " ")}`,
+              });
+              fetchBillingData();
+            } else {
+              throw new Error("Failed to downgrade subscription");
+            }
+          } catch (error) {
+            console.error("Error downgrading subscription:", error);
+            toast({
+              title: "Downgrade Failed",
+              description: "Failed to downgrade subscription. Please try again.",
+              variant: "destructive",
+            });
+          }
+          return;
 
           try {
             // Cancel current subscription

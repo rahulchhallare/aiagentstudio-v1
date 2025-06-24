@@ -1385,7 +1385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           upgradeType: 'manual_payment',
           originalAmount: amountInPaise.toString()
         },
-        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link=${paymentLink.id}`,
+        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link_id=${paymentLink.id}`,
         callback_method: 'get'
       });
 
@@ -1839,70 +1839,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Handle plan downgrades with payment tracking
+  // Handle plan downgrades without payment (e.g., Enterprise to Pro)
   app.post('/api/subscription/:id/downgrade', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { newPriceId, userId } = req.body;
+      const { newPlanId, userId } = req.body;
 
-      if (!newPriceId || !userId) {
-        return res.status(400).json({ error: 'New price ID and user ID are required' });
+      if (!newPlanId || !userId) {
+        return res.status(400).json({ error: 'New plan ID and user ID are required' });
       }
+
+      console.log('Downgrade request received:', { subscriptionId: id, newPlanId, userId });
 
       // Get current subscription details
-      const currentSubscription = await stripe.subscriptions.retrieve(id);
-      const currentPrice = currentSubscription.items.data[0].price;
-      const currentPlanName = currentPrice.nickname || 'Current Plan';
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
 
-      // Get new price details
-      const newPrice = await stripe.prices.retrieve(newPriceId);
-
-      // Map price ID to proper plan name
-      let newPlanName = 'New Plan';
-      if (newPriceId === PRICE_IDS.PRO_MONTHLY) {
-        newPlanName = 'Pro Monthly';
-      } else if (newPriceId === PRICE_IDS.PRO_YEARLY) {
-        newPlanName = 'Pro Yearly';
-      } else if (newPriceId === PRICE_IDS.ENTERPRISE_MONTHLY) {
-        newPlanName = 'Enterprise Monthly';
-      } else if (newPriceId === PRICE_IDS.ENTERPRISE_YEARLY) {
-        newPlanName = 'Enterprise Yearly';
-      } else if (newPrice.nickname) {
-        newPlanName = newPrice.nickname;
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
       }
 
-      // Update the subscription
-      const subscription = await stripe.subscriptions.update(id, {
-        items: [{
-          id: currentSubscription.items.data[0].id,
-          price: newPriceId,
-        }],
-        proration_behavior: 'create_prorations',
-      });
+      // Map frontend plan ID to plan name
+      let newPlanName: string;
+      let actualRazorpayPlanId: string;
 
-      // Update subscription in database
-      await storage.updateSubscription(id, {
-        status: subscription.status,
+      switch (newPlanId) {
+        case 'pro-monthly':
+          newPlanName = 'Pro Monthly';
+          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+          break;
+        case 'pro-yearly':
+          newPlanName = 'Pro Yearly';
+          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+          break;
+        case 'enterprise-monthly':
+          newPlanName = 'Enterprise Monthly';
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+          break;
+        case 'enterprise-yearly':
+          newPlanName = 'Enterprise Yearly';
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid plan ID for downgrade' });
+      }
+
+      // Use the actual subscription ID from the database
+      const subscriptionIdToUpdate = subscription.razorpay_subscription_id || subscription.stripe_subscription_id || id;
+
+      // Update subscription in database (immediate downgrade)
+      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
+        status: 'active',
         plan_name: newPlanName,
-        price_id: newPriceId,
-        current_period_start: new Date(subscription.current_period_start * 1000),
-        current_period_end: new Date(subscription.current_period_end * 1000),
+        plan_id: actualRazorpayPlanId,
+        price_id: actualRazorpayPlanId,
+        updated_at: new Date()
       });
 
-      // Create payment record for the downgrade
+      console.log('Database downgrade result:', dbUpdate);
+
+      // Create a payment record for the downgrade (no charge)
       await storage.createPaymentHistory({
         user_id: parseInt(userId),
-        stripe_payment_intent_id: `downgrade_${id}_${Date.now()}`,
-        amount: 0, // Proration will be handled in separate invoice
-        currency: subscription.currency || 'usd',
+        razorpay_payment_id: `downgrade_${subscriptionIdToUpdate}_${Date.now()}`,
+        amount: 0, // No charge for downgrades
+        currency: 'INR',
         status: 'succeeded',
-        description: `Plan downgraded from ${currentPlanName} to ${newPlanName}`,
+        description: `Plan downgraded from ${subscription.plan_name} to ${newPlanName}`,
       });
 
       res.json({
         success: true,
-        subscription,
-        message: `Successfully downgraded from ${currentPlanName} to ${newPlanName}`,
+        subscription: dbUpdate,
+        message: `Successfully downgraded from ${subscription.plan_name} to ${newPlanName}`,
       });
     } catch (error) {
       console.error('Error downgrading subscription:', error);
