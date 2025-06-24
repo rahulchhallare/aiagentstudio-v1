@@ -641,15 +641,25 @@ export default function Billing() {
     }
     
     if (plan.name === "Free") {
-      return { 
-        text: "Downgrade to Free", 
-        variant: "outline" as const, 
-        disabled: false 
-      };
+      // Only show downgrade to free if user has an active paid subscription
+      if (subscription && subscription.status === "active") {
+        return { 
+          text: "Downgrade to Free", 
+          variant: "outline" as const, 
+          disabled: false 
+        };
+      } else {
+        return { text: "Current Plan", variant: "outline" as const, disabled: true };
+      }
+    }
+    
+    // If no active subscription, all paid plans are upgrades
+    if (!subscription || subscription.status !== "active") {
+      return { text: "Get Started", variant: "default" as const, disabled: false };
     }
     
     // Determine if this would be an upgrade or downgrade
-    const currentPlanName = subscription?.plan_name?.toLowerCase() || "";
+    const currentPlanName = subscription.plan_name?.toLowerCase() || "";
     const isFromEnterprise = currentPlanName.includes("enterprise");
     const isFromPro = currentPlanName.includes("pro");
     const isPlanPro = plan.name === "Pro";
@@ -661,10 +671,6 @@ export default function Billing() {
     
     if (isFromPro && isPlanEnterprise) {
       return { text: "Upgrade to Enterprise", variant: "default" as const, disabled: false };
-    }
-    
-    if (!subscription || subscription.status !== "active") {
-      return { text: "Get Started", variant: "default" as const, disabled: false };
     }
     
     return { text: "Upgrade", variant: "default" as const, disabled: false };
@@ -704,8 +710,7 @@ export default function Billing() {
         popular: true,
         isCurrent:
           currentPlan.name === "Pro" &&
-          ((billingInterval === "monthly" &&
-            currentPlan.interval === "month") ||
+          ((billingInterval === "monthly" && currentPlan.interval === "month") ||
             (billingInterval === "yearly" && currentPlan.interval === "year")),
         planId: billingInterval === "monthly" ? "pro-monthly" : "pro-yearly",
       },
@@ -727,8 +732,7 @@ export default function Billing() {
         ],
         isCurrent:
           currentPlan.name === "Enterprise" &&
-          ((billingInterval === "monthly" &&
-            currentPlan.interval === "month") ||
+          ((billingInterval === "monthly" && currentPlan.interval === "month") ||
             (billingInterval === "yearly" && currentPlan.interval === "year")),
         planId:
           billingInterval === "monthly"
