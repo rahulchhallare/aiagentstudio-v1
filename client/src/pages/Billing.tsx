@@ -126,11 +126,13 @@ export default function Billing() {
 
       if (paymentResponse.ok) {
         const paymentData = await paymentResponse.json();
+        console.log('Payment history fetched:', paymentData);
         setPaymentHistory(paymentData);
       } else {
         console.error(
           "Failed to fetch payment history:",
           paymentResponse.status,
+          await paymentResponse.text()
         );
       }
     } catch (error) {

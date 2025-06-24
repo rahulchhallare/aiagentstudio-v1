@@ -148,18 +148,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             if (userId > 0) {
-              // Create payment history record only for captured payments
-              if (event.event === 'payment.captured') {
-                await storage.createPaymentHistory({
-                  user_id: userId,
-                  razorpay_payment_id: payment.id,
-                  amount: payment.amount,
-                  currency: payment.currency,
-                  status: 'succeeded',
-                  description: `Payment for ${payment.description || 'subscription'}`,
-                });
+              // Create payment history record for both authorized and captured payments
+              if (event.event === 'payment.captured' || event.event === 'payment.authorized') {
+                try {
+                  await storage.createPaymentHistory({
+                    user_id: userId,
+                    razorpay_payment_id: payment.id,
+                    amount: payment.amount,
+                    currency: payment.currency,
+                    status: event.event === 'payment.captured' ? 'succeeded' : 'pending',
+                    description: `Payment for ${payment.description || planName || 'subscription'}`,
+                  });
 
-                console.log('Payment history created for payment:', payment.id);
+                  console.log('Payment history created for payment:', payment.id, 'Event:', event.event);
+                } catch (paymentHistoryError) {
+                  console.error('Error creating payment history:', paymentHistoryError);
+                  // Don't throw - continue with subscription processing
+                }
               }
 
               // Handle subscription upgrade for both authorized and captured payments
@@ -167,23 +172,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
               let planName = '';
               let planId = '';
               
-              // Determine plan based on payment amount
-              if (payment.amount === 99900) { // ₹999 = Pro Monthly
-                planName = 'Pro Monthly';
-                planId = PLAN_IDS.PRO_MONTHLY;
-              } else if (payment.amount === 999900) { // ₹9999 = Pro Yearly
-                planName = 'Pro Yearly';
-                planId = PLAN_IDS.PRO_YEARLY;
-              } else if (payment.amount === 499900) { // ₹4999 = Enterprise Monthly
+              // Determine plan based on payment amount with more flexible matching
+              if (payment.amount >= 490000 && payment.amount <= 510000) { // ₹4900-5100 = Enterprise Monthly
                 planName = 'Enterprise Monthly';
                 planId = PLAN_IDS.ENTERPRISE_MONTHLY;
-              } else if (payment.amount === 4999900) { // ₹49999 = Enterprise Yearly
+              } else if (payment.amount >= 99000 && payment.amount <= 101000) { // ₹990-1010 = Pro Monthly
+                planName = 'Pro Monthly';
+                planId = PLAN_IDS.PRO_MONTHLY;
+              } else if (payment.amount >= 990000 && payment.amount <= 1010000) { // ₹9900-10100 = Pro Yearly
+                planName = 'Pro Yearly';
+                planId = PLAN_IDS.PRO_YEARLY;
+              } else if (payment.amount >= 4990000 && payment.amount <= 5010000) { // ₹49900-50100 = Enterprise Yearly
                 planName = 'Enterprise Yearly';
                 planId = PLAN_IDS.ENTERPRISE_YEARLY;
+              } else {
+                // Fallback: check payment notes or description for plan details
+                const notes = payment.notes || {};
+                const description = payment.description || '';
+                
+                if (notes.planName) {
+                  planName = notes.planName;
+                  planId = notes.planId || '';
+                } else if (description.toLowerCase().includes('enterprise monthly')) {
+                  planName = 'Enterprise Monthly';
+                  planId = PLAN_IDS.ENTERPRISE_MONTHLY;
+                } else if (description.toLowerCase().includes('enterprise yearly')) {
+                  planName = 'Enterprise Yearly';
+                  planId = PLAN_IDS.ENTERPRISE_YEARLY;
+                } else if (description.toLowerCase().includes('pro monthly')) {
+                  planName = 'Pro Monthly';
+                  planId = PLAN_IDS.PRO_MONTHLY;
+                } else if (description.toLowerCase().includes('pro yearly')) {
+                  planName = 'Pro Yearly';
+                  planId = PLAN_IDS.PRO_YEARLY;
+                }
               }
               
               if (planName && planId) {
-                console.log('Processing payment for plan:', planName, 'Amount:', payment.amount, 'Event:', event.event);
+                console.log('Processing payment for plan:', planName, 'Amount:', payment.amount, 'Event:', event.event, 'User ID:', userId);
                 
                 if (existingSubscription) {
                   // Update existing subscription
@@ -1355,9 +1381,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: {
           userId: userId.toString(),
           planId: actualRazorpayPlanId,
-          planName: planName
+          planName: planName,
+          upgradeType: 'manual_payment',
+          originalAmount: amountInPaise.toString()
         },
-        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true`,
+        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link=${paymentLink.id}`,
         callback_method: 'get'
       });
 
@@ -1717,6 +1745,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating payment history:', error);
       return res.status(500).json({ message: "Failed to create payment history" });
+    }
+  });
+
+  // Fix missing payment history for a user (debug endpoint)
+  app.post("/api/payment-history/fix/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { paymentId, amount, planName } = req.body;
+
+      if (!paymentId || !amount || !planName) {
+        return res.status(400).json({ message: "Missing required fields: paymentId, amount, planName" });
+      }
+
+      // Check if payment history already exists
+      const existingHistory = await storage.getPaymentHistoryByUserId(userId);
+      const exists = existingHistory.some(p => p.razorpay_payment_id === paymentId);
+
+      if (exists) {
+        return res.json({ message: "Payment history already exists", exists: true });
+      }
+
+      // Create the missing payment history
+      const paymentHistory = await storage.createPaymentHistory({
+        user_id: userId,
+        razorpay_payment_id: paymentId,
+        amount: amount,
+        currency: 'INR',
+        status: 'succeeded',
+        description: `Subscription payment for ${planName} (manually added)`,
+      });
+
+      return res.status(201).json({ message: "Payment history created successfully", payment: paymentHistory });
+    } catch (error) {
+      console.error('Error fixing payment history:', error);
+      return res.status(500).json({ message: "Failed to fix payment history" });
     }
   });
 
