@@ -1453,9 +1453,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customer_id: subscription.customer_id
       });
       
-      // Get plan name
-      const planName = getPlanNameFromId(subscription.plan_id);
-      console.log('Plan name mapped:', planName);
+      // Get plan name from the provided planId parameter (for manual activation)
+      const requestedPlanId = req.body.planId;
+      const planName = requestedPlanId ? getPlanNameFromId(requestedPlanId) : getPlanNameFromId(subscription.plan_id);
+      console.log('Plan name mapped:', planName, 'from planId:', requestedPlanId || subscription.plan_id);
+      console.log('Using requested plan ID:', requestedPlanId, 'vs subscription plan ID:', subscription.plan_id);
       
       // Check if subscription already exists
       const existingSubscription = await storage.getSubscriptionByUserId(userId);
@@ -1467,8 +1469,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
           status: 'active',
           plan_name: planName,
-          plan_id: subscription.plan_id,
-          price_id: subscription.plan_id,
+          plan_id: requestedPlanId || subscription.plan_id,
+          price_id: requestedPlanId || subscription.plan_id,
           current_period_start: new Date(),
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
           updated_at: new Date()

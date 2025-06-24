@@ -340,7 +340,7 @@ export class SupabaseStorage implements IStorage {
     // First try Razorpay subscription ID
     const razorpayResult = await this.supabase
       .from('subscriptions')
-      .update(updates)
+      .update({ ...updates, updated_at: new Date() })
       .eq('razorpay_subscription_id', subscriptionId)
       .select()
       .single();
@@ -354,7 +354,7 @@ export class SupabaseStorage implements IStorage {
     // If not found by Razorpay ID, try Stripe ID
     const stripeResult = await this.supabase
       .from('subscriptions')
-      .update(updates)
+      .update({ ...updates, updated_at: new Date() })
       .eq('stripe_subscription_id', subscriptionId)
       .select()
       .single();
