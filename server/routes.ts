@@ -127,45 +127,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle the event
       switch (event.event) {
+        case 'payment.authorized':
         case 'payment.captured':
           const payment = event.payload.payment.entity;
-          console.log('Payment captured:', payment);
+          console.log('Payment processed:', event.event, payment.id);
 
           try {
-            const userId = parseInt(payment.notes?.userId || '0');
+            // Try to get userId from payment notes first, then from order if available
+            let userId = parseInt(payment.notes?.userId || '0');
+            
+            // If no userId in payment notes, try to get from order
+            if (userId === 0 && payment.order_id) {
+              try {
+                const order = await razorpay.orders.fetch(payment.order_id);
+                userId = parseInt(order.notes?.userId || '0');
+                console.log('Retrieved userId from order:', userId);
+              } catch (orderError) {
+                console.error('Error fetching order for userId:', orderError);
+              }
+            }
 
             if (userId > 0) {
-              // Create payment history record
-              await storage.createPaymentHistory({
-                user_id: userId,
-                razorpay_payment_id: payment.id,
-                amount: payment.amount,
-                currency: payment.currency,
-                status: 'succeeded',
-                description: `Payment for ${payment.description || 'subscription'}`,
-              });
+              // Create payment history record only for captured payments
+              if (event.event === 'payment.captured') {
+                await storage.createPaymentHistory({
+                  user_id: userId,
+                  razorpay_payment_id: payment.id,
+                  amount: payment.amount,
+                  currency: payment.currency,
+                  status: 'succeeded',
+                  description: `Payment for ${payment.description || 'subscription'}`,
+                });
 
-              console.log('Payment history created for payment:', payment.id);
+                console.log('Payment history created for payment:', payment.id);
+              }
 
-              // Check if this is an upgrade payment - look for plan info in payment description or amount
+              // Handle subscription upgrade for both authorized and captured payments
               const existingSubscription = await storage.getSubscriptionByUserId(userId);
-              if (existingSubscription) {
-                let planName = '';
-                let planId = '';
+              let planName = '';
+              let planId = '';
+              
+              // Determine plan based on payment amount
+              if (payment.amount === 99900) { // ₹999 = Pro Monthly
+                planName = 'Pro Monthly';
+                planId = PLAN_IDS.PRO_MONTHLY;
+              } else if (payment.amount === 999900) { // ₹9999 = Pro Yearly
+                planName = 'Pro Yearly';
+                planId = PLAN_IDS.PRO_YEARLY;
+              } else if (payment.amount === 499900) { // ₹4999 = Enterprise Monthly
+                planName = 'Enterprise Monthly';
+                planId = PLAN_IDS.ENTERPRISE_MONTHLY;
+              } else if (payment.amount === 4999900) { // ₹49999 = Enterprise Yearly
+                planName = 'Enterprise Yearly';
+                planId = PLAN_IDS.ENTERPRISE_YEARLY;
+              }
+              
+              if (planName && planId) {
+                console.log('Processing payment for plan:', planName, 'Amount:', payment.amount, 'Event:', event.event);
                 
-                // Determine plan based on payment amount
-                if (payment.amount === 99900) { // ₹999 = Pro Monthly
-                  planName = 'Pro Monthly';
-                  planId = 'plan_QkD66jfK28P0qc';
-                } else if (payment.amount === 499900) { // ₹4999 = Enterprise Monthly
-                  planName = 'Enterprise Monthly';
-                  planId = 'plan_QiFxtRD0uU3ag3';
-                }
-                
-                if (planName && planId) {
-                  console.log('Processing upgrade payment for plan:', planName, 'Amount:', payment.amount);
-                  
-                  await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
+                if (existingSubscription) {
+                  // Update existing subscription
+                  const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id || existingSubscription.stripe_subscription_id || `manual_${userId}`, {
                     status: 'active',
                     plan_name: planName,
                     plan_id: planId,
@@ -175,12 +197,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     updated_at: new Date()
                   });
                   
-                  console.log('Subscription upgraded to:', planName);
+                  console.log('Subscription updated to:', planName, 'for user:', userId);
+                } else {
+                  // Create new subscription
+                  const newSubscription = await storage.createSubscription({
+                    user_id: userId,
+                    razorpay_subscription_id: `manual_${payment.id}`,
+                    razorpay_customer_id: payment.customer_id || '',
+                    status: 'active',
+                    plan_name: planName,
+                    plan_id: planId,
+                    price_id: planId,
+                    current_period_start: new Date(),
+                    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                  });
+                  
+                  console.log('New subscription created:', planName, 'for user:', userId);
                 }
+              } else {
+                console.log('Could not determine plan for payment amount:', payment.amount);
               }
+            } else {
+              console.error('No valid userId found for payment:', payment.id);
             }
           } catch (error) {
-            console.error('Error saving payment data:', error);
+            console.error('Error processing payment:', error);
           }
           break;
 
@@ -1311,6 +1352,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: true
         },
         reminder_enable: true,
+        notes: {
+          userId: userId.toString(),
+          planId: actualRazorpayPlanId,
+          planName: planName
+        },
         callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true`,
         callback_method: 'get'
       });
