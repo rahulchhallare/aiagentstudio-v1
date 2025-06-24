@@ -146,6 +146,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
 
               console.log('Payment history created for payment:', payment.id);
+
+              // Check if this is an upgrade payment by looking at notes
+              if (payment.notes?.planId && payment.notes?.upgradeTo) {
+                const planId = payment.notes.planId;
+                const planName = payment.notes.upgradeTo;
+                
+                console.log('Processing upgrade payment for plan:', planName);
+                
+                // Get existing subscription and update it
+                const existingSubscription = await storage.getSubscriptionByUserId(userId);
+                if (existingSubscription) {
+                  await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
+                    status: 'active',
+                    plan_name: planName,
+                    plan_id: planId,
+                    price_id: planId,
+                    current_period_start: new Date(),
+                    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                    updated_at: new Date()
+                  });
+                  
+                  console.log('Subscription upgraded to:', planName);
+                }
+              }
             }
           } catch (error) {
             console.error('Error saving payment data:', error);
