@@ -1438,10 +1438,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Existing subscription check:', existingSubscription ? 'Found' : 'Not found');
       
       if (existingSubscription) {
-        // Update existing subscription
+        // Update existing subscription with new plan details
         console.log('Updating existing subscription...');
         const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
           status: 'active',
+          plan_name: planName,
+          plan_id: subscription.plan_id,
+          price_id: subscription.plan_id,
           current_period_start: new Date(),
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
           updated_at: new Date()
@@ -1683,7 +1686,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updateData = req.body;
 
-      const subscription = await stripe.subscriptions.update(id, updateData);
+      // Update subscription in our database (not Stripe)
+      const subscription = await storage.updateSubscription(id, updateData);
 
       res.json({ subscription });
     } catch (error) {
