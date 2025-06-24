@@ -139,10 +139,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Handle the event
         switch (event.event) {
-          case "payment.authorized":
           case "payment.captured":
             const payment = event.payload.payment.entity;
-            console.log("Payment processed:", event.event, payment.id);
+            console.log("Payment captured:", payment.id);
 
             try {
               let userId = parseInt(payment.notes?.userId || "0");
@@ -157,55 +156,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
 
               if (userId > 0) {
+                // Check if payment history already exists to prevent duplicates
+                const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
+                const paymentExists = existingPaymentHistory.some(
+                  (p) => p.razorpay_payment_id === payment.id
+                );
+
+                if (paymentExists) {
+                  console.log("Payment history already exists for payment:", payment.id);
+                  break;
+                }
+
                 const existingSubscription = await storage.getSubscriptionByUserId(userId);
                 let planName = "";
                 let planId = "";
 
-                // Determine plan based on payment amount
-                if (payment.amount >= 499000 && payment.amount <= 501000) {
-                  planName = "Enterprise Monthly";
-                  planId = PLAN_IDS.ENTERPRISE_MONTHLY;
-                } else if (payment.amount >= 99000 && payment.amount <= 101000) {
-                  planName = "Pro Monthly";
-                  planId = PLAN_IDS.PRO_MONTHLY;
-                } else if (payment.amount >= 999000 && payment.amount <= 1001000) {
-                  planName = "Pro Yearly";
-                  planId = PLAN_IDS.PRO_YEARLY;
-                } else if (payment.amount >= 4999000 && payment.amount <= 5001000) {
-                  planName = "Enterprise Yearly";
-                  planId = PLAN_IDS.ENTERPRISE_YEARLY;
+                // Determine plan based on payment amount or notes
+                if (payment.notes?.planName && payment.notes?.planId) {
+                  planName = payment.notes.planName;
+                  planId = payment.notes.planId;
                 } else {
-                  const notes = payment.notes || {};
-                  if (notes.planName) {
-                    planName = notes.planName;
-                    planId = notes.planId || "";
+                  // Fallback to amount-based detection
+                  if (payment.amount >= 499000 && payment.amount <= 501000) {
+                    planName = "Enterprise Monthly";
+                    planId = PLAN_IDS.ENTERPRISE_MONTHLY;
+                  } else if (payment.amount >= 99000 && payment.amount <= 101000) {
+                    planName = "Pro Monthly";
+                    planId = PLAN_IDS.PRO_MONTHLY;
+                  } else if (payment.amount >= 999000 && payment.amount <= 1001000) {
+                    planName = "Pro Yearly";
+                    planId = PLAN_IDS.PRO_YEARLY;
+                  } else if (payment.amount >= 4999000 && payment.amount <= 5001000) {
+                    planName = "Enterprise Yearly";
+                    planId = PLAN_IDS.ENTERPRISE_YEARLY;
                   }
                 }
 
-                // Create payment history record
-                if (event.event === "payment.captured" || event.event === "payment.authorized") {
-                  try {
-                    const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
-                    const paymentExists = existingPaymentHistory.some(
-                      (p) => p.razorpay_payment_id === payment.id
-                    );
+                // Create payment history record only once
+                if (planName) {
+                  await storage.createPaymentHistory({
+                    user_id: userId,
+                    razorpay_payment_id: payment.id,
+                    amount: payment.amount,
+                    currency: payment.currency,
+                    status: "succeeded",
+                    description: `Payment for ${planName}`,
+                  });
 
-                    if (!paymentExists) {
-                      await storage.createPaymentHistory({
-                        user_id: userId,
-                        razorpay_payment_id: payment.id,
-                        amount: payment.amount,
-                        currency: payment.currency,
-                        status: "succeeded",
-                        description: `Payment for ${planName || payment.description || "subscription"}`,
-                      });
-                    }
-                  } catch (paymentHistoryError) {
-                    console.error("Error creating payment history:", paymentHistoryError);
-                  }
-                }
-
-                if (planName && planId) {
+                  // Update or create subscription
                   if (existingSubscription) {
                     await storage.updateSubscription(
                       existingSubscription.razorpay_subscription_id ||
@@ -242,31 +240,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
 
           case "payment_link.paid":
-            const paidPayment = event.payload.payment_link.entity;
             const paidPaymentEntity = event.payload.payment.entity;
 
             try {
               let userId = parseInt(paidPaymentEntity.notes?.userId || "0");
 
               if (userId > 0) {
-                const planName = paidPaymentEntity.notes?.planName || "Unknown Plan";
-                const planId = paidPaymentEntity.notes?.planId || "";
-
+                // Check if payment history already exists
                 const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
                 const paymentExists = existingPaymentHistory.some(
                   (p) => p.razorpay_payment_id === paidPaymentEntity.id
                 );
 
-                if (!paymentExists) {
-                  await storage.createPaymentHistory({
-                    user_id: userId,
-                    razorpay_payment_id: paidPaymentEntity.id,
-                    amount: paidPaymentEntity.amount,
-                    currency: paidPaymentEntity.currency,
-                    status: "succeeded",
-                    description: `Payment for ${planName}`,
-                  });
+                if (paymentExists) {
+                  console.log("Payment history already exists for payment link payment:", paidPaymentEntity.id);
+                  break;
                 }
+
+                const planName = paidPaymentEntity.notes?.planName || "Unknown Plan";
+                const planId = paidPaymentEntity.notes?.planId || "";
+
+                await storage.createPaymentHistory({
+                  user_id: userId,
+                  razorpay_payment_id: paidPaymentEntity.id,
+                  amount: paidPaymentEntity.amount,
+                  currency: paidPaymentEntity.currency,
+                  status: "succeeded",
+                  description: `Payment for ${planName}`,
+                });
 
                 const existingSubscription = await storage.getSubscriptionByUserId(userId);
 
@@ -312,6 +313,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const userId = parseInt(subscription.notes?.userId || "0");
 
               if (userId > 0) {
+                // Check if payment history already exists to prevent duplicates
+                const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
+                const paymentExists = existingPaymentHistory.some(
+                  (p) => p.razorpay_payment_id === paymentEntity.id
+                );
+
+                if (paymentExists) {
+                  console.log("Payment history already exists for subscription charge:", paymentEntity.id);
+                  break;
+                }
+
                 const planName = getPlanNameFromId(subscription.plan_id);
                 const existingSubscription = await storage.getSubscriptionByUserId(userId);
 
