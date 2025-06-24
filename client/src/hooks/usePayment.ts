@@ -73,6 +73,12 @@ export function usePayment() {
         throw new Error(`Missing required fields: planId=${requestBody.planId}, userId=${requestBody.userId}, email=${requestBody.email}`);
       }
 
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(requestBody.email)) {
+        throw new Error('Invalid email format');
+      }
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -84,14 +90,31 @@ export function usePayment() {
       console.log('Response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        console.error('Response error:', errorData);
-        
-        if (response.status === 400) {
-          throw new Error(errorData.message || 'Invalid request parameters');
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorData = { message: 'Server error - unable to parse response' };
         }
         
-        throw new Error(`Failed to create checkout session: ${response.status} ${errorData.message || 'Unknown error'}`);
+        console.error('Response error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        
+        let errorMessage = 'Failed to create payment session';
+        
+        if (response.status === 400) {
+          errorMessage = errorData.message || 'Invalid request parameters. Please check your plan selection.';
+        } else if (response.status === 500) {
+          errorMessage = errorData.message || 'Server error. Please try again or contact support.';
+        } else {
+          errorMessage = `Payment creation failed (${response.status}): ${errorData.message || 'Unknown error'}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const responseData = await response.json();

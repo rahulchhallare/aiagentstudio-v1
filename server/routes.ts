@@ -772,6 +772,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Exchange rate endpoint
+  app.get("/api/exchange-rate", async (req: Request, res: Response) => {
+    try {
+      const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+      const rate = response.data.rates.INR;
+      res.json({ rate: rate || 83 });
+    } catch (error) {
+      console.error("Failed to fetch exchange rate:", error);
+      res.json({ rate: 83 }); // Fallback rate
+    }
+  });
+
+  // Create subscription
+  app.post("/api/subscription/create", async (req: Request, res: Response) => {
+    res.status(500).json({ message: "This route is not implemented" });
+  });
+
   // Payment and subscription routes
   app.post(
     "/api/create-checkout-session",
