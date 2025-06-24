@@ -793,75 +793,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/create-checkout-session",
     async (req: Request, res: Response) => {
+      console.log("Create checkout session request received:", { body: req.body });
+      
       try {
         const { planId, userId, email } = req.body;
 
+        console.log("Processing checkout session for:", { planId, userId, email });
+
         if (!planId || !userId || !email) {
+          console.log("Missing required fields");
           return res
             .status(400)
             .json({ message: "Plan ID, user ID, and email are required" });
         }
 
-        let actualRazorpayPlanId: string;
+        // Get plan pricing directly without relying on Razorpay plan fetch
+        let planAmount: number;
+        let planName: string;
+        
         switch (planId) {
           case "pro-monthly":
-            actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+            planAmount = 2900; // ₹29
+            planName = "Pro Monthly";
             break;
           case "pro-yearly":
-            actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+            planAmount = 29000; // ₹290
+            planName = "Pro Yearly";
             break;
           case "enterprise-monthly":
-            actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+            planAmount = 9900; // ₹99
+            planName = "Enterprise Monthly";
             break;
           case "enterprise-yearly":
-            actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+            planAmount = 99000; // ₹990
+            planName = "Enterprise Yearly";
             break;
           default:
+            console.log("Invalid plan ID:", planId);
             return res.status(400).json({ message: "Invalid plan ID" });
         }
 
-        if (!actualRazorpayPlanId) {
-          return res
-            .status(500)
-            .json({ message: "Plan configuration error. Please contact support." });
-        }
+        console.log("Plan details:", { planAmount, planName });
 
         let customer;
         try {
+          console.log("Looking for existing customer with email:", email);
           const customers = await razorpay.customers.all({ email: email });
           if (customers.items && customers.items.length > 0) {
             customer = customers.items[0];
+            console.log("Found existing customer:", customer.id);
           } else {
             throw new Error("No existing customer found");
           }
-        } catch (error) {
-          customer = await razorpay.customers.create({
-            name: email.split("@")[0],
-            email: email,
-            contact: "",
-            notes: {
-              userId: userId.toString(),
-            },
-          });
+        } catch (customerError) {
+          console.log("Creating new customer for email:", email);
+          try {
+            customer = await razorpay.customers.create({
+              name: email.split("@")[0],
+              email: email,
+              contact: "",
+              notes: {
+                userId: userId.toString(),
+              },
+            });
+            console.log("Created new customer:", customer.id);
+          } catch (createError) {
+            console.error("Failed to create customer:", createError);
+            return res.status(500).json({
+              message: "Failed to create customer account",
+              error: createError.message,
+            });
+          }
         }
 
         const host = req.get("host") || "localhost:5000";
         const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
 
+        console.log("Creating payment link with:", {
+          planAmount,
+          customerId: customer.id,
+          planName,
+          host,
+          protocol
+        });
+
         // Create payment link directly as primary method
         try {
-          const plan = await razorpay.plans.fetch(actualRazorpayPlanId);
-          const planAmount = plan.item.amount;
+          const paymentLink = await razorpay.paymentLink.create({
+            amount: planAmount,
+            currency: "INR",
+            accept_partial: false,
+            description: `Subscription: ${planName}`,
+            customer: {
+              id: customer.id
+            },
+            notify: {
+              sms: false,
+              email: true
+            },
+            reminder_enable: true,
+            callback_url: `${protocol}://${host}/billing?subscription_success=true&auto_redirect=true`,
+            callback_method: 'get',
+            notes: {
+              planId: planId,
+              planName: planName,
+              userId: userId.toString()
+            },
+            options: {
+              checkout: {
+                readonly: {
+                  contact: false,
+                  email: false,
+                  name: false
+                }
+              }
+            }
+          });
 
-          const paymentLink = await createPaymentLink(
-            actualRazorpayPlanId,
-            customer.id,
-            planAmount,
-            "INR",
-            `Subscription: ${getPlanNameFromId(actualRazorpayPlanId)}`,
-            `${protocol}://${host}/billing?subscription_success=true&auto_redirect=true`,
-            `${protocol}://${host}/pricing?subscription_failed=true`,
-          );
+          console.log("Payment link created successfully:", paymentLink.short_url);
 
           return res.json({
             subscriptionId: `payment_link_${paymentLink.id}`,
@@ -879,13 +928,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({
             message: "Failed to create payment link",
             error: paymentLinkError.message,
+            details: "Unable to generate payment URL. Please try again.",
           });
         }
       } catch (error: any) {
         console.error("Error creating checkout session:", error);
-        res.status(500).json({
+        return res.status(500).json({
           message: "Failed to create checkout session",
           error: error.message || "Unknown error",
+          details: "Server error occurred while processing payment request",
         });
       }
     },

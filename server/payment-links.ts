@@ -32,6 +32,11 @@ export async function createPaymentLink(
       reminder_enable: true,
       callback_url: finalSuccessUrl,
       callback_method: 'get',
+      notes: {
+        planId: planId,
+        planName: description.replace('Subscription: ', ''),
+        userId: customerId // This will be overridden with actual userId in routes.ts
+      },
       options: {
         checkout: {
           readonly: {
