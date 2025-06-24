@@ -43,6 +43,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Fixed subscription plan discrepancy by properly updating database records and creating missing payment history
 - Fixed upgrade flow to use proper Razorpay payment links instead of automatic prorated charges that showed incorrect amounts
 - Fixed subscription activation to properly map plan IDs and activate correct plans after payment completion
+- Fixed upgrade flow after downgrades - payments now automatically activate correct subscription plans via webhook
+- Enhanced webhook handler to detect plan type by payment amount and auto-activate subscriptions
 
 ## User Preferences
 - Language: English

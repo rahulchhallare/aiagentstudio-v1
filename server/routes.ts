@@ -147,16 +147,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               console.log('Payment history created for payment:', payment.id);
 
-              // Check if this is an upgrade payment by looking at notes
-              if (payment.notes?.planId && payment.notes?.upgradeTo) {
-                const planId = payment.notes.planId;
-                const planName = payment.notes.upgradeTo;
+              // Check if this is an upgrade payment - look for plan info in payment description or amount
+              const existingSubscription = await storage.getSubscriptionByUserId(userId);
+              if (existingSubscription) {
+                let planName = '';
+                let planId = '';
                 
-                console.log('Processing upgrade payment for plan:', planName);
+                // Determine plan based on payment amount
+                if (payment.amount === 99900) { // ₹999 = Pro Monthly
+                  planName = 'Pro Monthly';
+                  planId = 'plan_QkD66jfK28P0qc';
+                } else if (payment.amount === 499900) { // ₹4999 = Enterprise Monthly
+                  planName = 'Enterprise Monthly';
+                  planId = 'plan_QiFxtRD0uU3ag3';
+                }
                 
-                // Get existing subscription and update it
-                const existingSubscription = await storage.getSubscriptionByUserId(userId);
-                if (existingSubscription) {
+                if (planName && planId) {
+                  console.log('Processing upgrade payment for plan:', planName, 'Amount:', payment.amount);
+                  
                   await storage.updateSubscription(existingSubscription.razorpay_subscription_id, {
                     status: 'active',
                     plan_name: planName,
