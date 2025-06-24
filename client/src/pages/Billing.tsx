@@ -422,12 +422,26 @@ export default function Billing() {
           try {
             let activated = false;
 
-            // For payment link success, just refresh data since webhook should handle activation
+            // For payment link success, refresh data multiple times to ensure updates are captured
             if (paymentLinkId) {
-              console.log('Payment link success - refreshing billing data');
+              console.log('Payment link success - refreshing billing data for payment link:', paymentLinkId);
+              
+              // Immediate refresh
+              fetchBillingData();
+              
+              // Additional refreshes to capture webhook updates
               setTimeout(() => {
                 fetchBillingData();
-              }, 2000); // Wait 2 seconds for webhook processing
+              }, 2000);
+              
+              setTimeout(() => {
+                fetchBillingData();
+              }, 5000);
+              
+              setTimeout(() => {
+                fetchBillingData();
+              }, 10000);
+              
               return;
             }
 

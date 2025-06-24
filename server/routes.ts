@@ -135,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             // Try to get userId from payment notes first, then from order if available
             let userId = parseInt(payment.notes?.userId || '0');
-            
+
             // If no userId in payment notes, try to get from order
             if (userId === 0 && payment.order_id) {
               try {
@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const existingSubscription = await storage.getSubscriptionByUserId(userId);
               let planName = '';
               let planId = '';
-              
+
               // Determine plan based on payment amount with more flexible matching
               if (payment.amount >= 499000 && payment.amount <= 501000) { // ₹4990-5010 = Enterprise Monthly (₹4999)
                 planName = 'Enterprise Monthly';
@@ -189,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Fallback: check payment notes or description for plan details
                 const notes = payment.notes || {};
                 const description = payment.description || '';
-                
+
                 if (notes.planName) {
                   planName = notes.planName;
                   planId = notes.planId || '';
@@ -207,10 +207,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   planId = PLAN_IDS.PRO_YEARLY;
                 }
               }
-              
+
               if (planName && planId) {
                 console.log('Processing payment for plan:', planName, 'Amount:', payment.amount, 'Event:', event.event, 'User ID:', userId);
-                
+
                 if (existingSubscription) {
                   // Update existing subscription
                   const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id || existingSubscription.stripe_subscription_id || `manual_${userId}`, {
@@ -222,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
                     updated_at: new Date()
                   });
-                  
+
                   console.log('Subscription updated to:', planName, 'for user:', userId);
                 } else {
                   // Create new subscription
@@ -237,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     current_period_start: new Date(),
                     current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
                   });
-                  
+
                   console.log('New subscription created:', planName, 'for user:', userId);
                 }
               } else {
@@ -259,13 +259,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             // Get userId from payment notes
             let userId = parseInt(paidPaymentEntity.notes?.userId || '0');
-            
+
             if (userId > 0) {
               const planName = paidPaymentEntity.notes?.planName || 'Unknown Plan';
               const planId = paidPaymentEntity.notes?.planId || '';
-              
+
               console.log('Processing payment link payment:', paidPaymentEntity.id, 'for user:', userId, 'plan:', planName);
-              
+
               // Create payment history record
               await storage.createPaymentHistory({
                 user_id: userId,
@@ -280,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               // Handle subscription upgrade
               const existingSubscription = await storage.getSubscriptionByUserId(userId);
-              
+
               if (existingSubscription) {
                 // Update existing subscription
                 const updatedSub = await storage.updateSubscription(existingSubscription.razorpay_subscription_id || existingSubscription.stripe_subscription_id || `manual_${userId}`, {
@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
                   updated_at: new Date()
                 });
-                
+
                 console.log('Subscription updated to:', planName, 'for user:', userId);
               } else {
                 // Create new subscription
@@ -307,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   current_period_start: new Date(),
                   current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
                 });
-                
+
                 console.log('New subscription created:', planName, 'for user:', userId);
               }
             } else {
@@ -384,9 +384,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/debug/subscription/:subscriptionId', async (req: Request, res: Response) => {
     try {
       const { subscriptionId } = req.params;
-      
+
       const subscription = await razorpay.subscriptions.fetch(subscriptionId);
-      
+
       res.json({
         subscription: {
           id: subscription.id,
@@ -845,6 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const result = await executeFlow(flowData, input);
 
         console.log(`Agent execution completed:`, {
+```text
           success: !result.error,
           hasOutput: !!result.data,
           error: result.error
@@ -1021,7 +1022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create Razorpay subscription
       console.log('Creating subscription with plan ID:', actualRazorpayPlanId, 'for customer:', customer.id);
-      
+
       const subscription = await razorpay.subscriptions.create({
         plan_id: actualRazorpayPlanId,
         customer_id: customer.id,
@@ -1054,7 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const fetchedSub = await razorpay.subscriptions.fetch(subscription.id);
           console.log('Fetched subscription short_url:', fetchedSub.short_url);
           console.log('Fetched subscription authenticate_url:', fetchedSub.authenticate_url);
-          
+
           // If we got a URL from the refetch, use it
           if (fetchedSub.short_url) {
             subscription.short_url = fetchedSub.short_url;
@@ -1085,11 +1086,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!subscription.short_url || !hostedPageWorking) {
         console.error('No hosted page URL available for subscription:', subscription.id);
         console.log('Trying alternative subscription creation method...');
-        
+
         try {
           // Cancel the problematic subscription
           await razorpay.subscriptions.cancel(subscription.id);
-          
+
           // Create a new subscription with minimal parameters (like manual creation)
           const simpleSubscription = await razorpay.subscriptions.create({
             plan_id: actualRazorpayPlanId,
@@ -1100,10 +1101,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: email,
             }
           });
-          
+
           console.log('Alternative subscription created:', simpleSubscription.id);
           console.log('Alternative subscription short_url:', simpleSubscription.short_url);
-          
+
           if (simpleSubscription.short_url || simpleSubscription.authenticate_url) {
             // Use the alternative subscription
             return res.json({ 
@@ -1128,13 +1129,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (alternativeError) {
           console.error('Alternative subscription creation also failed:', alternativeError);
         }
-        
+
         // Create a payment link as final fallback
         try {
           console.log('Creating payment link fallback...');
           const plan = await razorpay.plans.fetch(actualRazorpayPlanId);
           const planAmount = plan.item.amount; // Amount in paise
-          
+
           const paymentLink = await createPaymentLink(
             actualRazorpayPlanId,
             customer.id,
@@ -1144,9 +1145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
             `${protocol}://${host}/pricing?subscription_failed=true`
           );
-          
+
           console.log('Payment link created:', paymentLink.short_url);
-          
+
           return res.json({
             subscriptionId: subscription.id,
             customerId: customer.id,
@@ -1167,10 +1168,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         } catch (paymentLinkError) {
           console.error('Payment link creation failed:', paymentLinkError);
-          
+
           // Final fallback - redirect to billing page with manual payment instructions
           const manualUrl = `${protocol}://${host}/billing?subscription_id=${subscription.id}&manual_payment=true`;
-          
+
           return res.json({
             subscriptionId: subscription.id,
             customerId: customer.id,
@@ -1206,7 +1207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Creating payment link as primary method...');
         const plan = await razorpay.plans.fetch(actualRazorpayPlanId);
         const planAmount = plan.item.amount; // Amount in paise
-        
+
         const paymentLink = await createPaymentLink(
           actualRazorpayPlanId,
           customer.id,
@@ -1216,9 +1217,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `${protocol}://${host}/billing?subscription_success=true&subscription_id=${subscription.id}`,
           `${protocol}://${host}/pricing?subscription_failed=true`
         );
-        
+
         console.log('Payment link created successfully:', paymentLink.short_url);
-        
+
         return res.json({
           subscriptionId: subscription.id,
           customerId: customer.id,
@@ -1239,7 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (paymentLinkError) {
         console.error('Payment link creation failed, falling back to hosted page:', paymentLinkError);
-        
+
         // Fallback to hosted page if payment link fails
         res.json({ 
           subscriptionId: subscription.id,
@@ -1293,7 +1294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customerId: customer?.id,
           customerEmail: email
         });
-        
+
         return res.status(400).json({ 
           message: 'Subscription hosted page not available',
           error: 'The hosted payment page could not be generated. This might be due to plan configuration or customer verification requirements.',
@@ -1387,7 +1388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: user.email,
           count: 1
         });
-        
+
         if (existingCustomers.items && existingCustomers.items.length > 0) {
           customer = existingCustomers.items[0];
           console.log('Using existing customer:', customer.id);
@@ -1402,7 +1403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (error) {
         console.error('Error handling customer:', error);
-        
+
         // If customer creation fails due to existing customer, try to fetch by email
         if (error.error && error.error.description && error.error.description.includes('already exists')) {
           try {
@@ -1410,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: user.email,
               count: 1
             });
-            
+
             if (existingCustomers.items && existingCustomers.items.length > 0) {
               customer = existingCustomers.items[0];
               console.log('Found existing customer after error:', customer.id);
@@ -1428,33 +1429,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Ensure amount is a whole number (should already be in paise)
       const amountInPaise = Math.round(Number(amount));
-      
+
       console.log('Creating payment link with amount:', amountInPaise, 'paise');
 
       // Create payment link
       const paymentLink = await razorpay.paymentLink.create({
-        amount: amountInPaise,
-        currency: 'INR',
-        accept_partial: false,
-        description: `Subscription to ${planName}`,
-        customer: {
-          id: customer.id
-        },
-        notify: {
-          sms: false,
-          email: true
-        },
-        reminder_enable: true,
-        notes: {
-          userId: userId.toString(),
-          planId: actualRazorpayPlanId,
-          planName: planName,
-          upgradeType: 'manual_payment',
-          originalAmount: amountInPaise.toString()
-        },
-        callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link_id=${paymentLink.id}`,
-        callback_method: 'get'
-      });
+          amount: amountInPaise,
+          currency: 'INR',
+          accept_partial: false,
+          description: `Subscription to ${planName}`,
+          customer: {
+            id: customer.id
+          },
+          notify: {
+            sms: false,
+            email: true
+          },
+          reminder_enable: true,
+          notes: {
+            userId: userId.toString(),
+            planId: actualRazorpayPlanId,
+            planName: planName,
+            upgradeType: 'manual_payment',
+            originalAmount: amountInPaise.toString()
+          },
+          callback_url: `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link_id=PAYMENT_LINK_ID`,
+          callback_method: 'get'
+        });
+
+        // Update callback URL with actual payment link ID
+        const finalCallbackUrl = `${req.protocol}://${req.get('host')}/billing?subscription_success=true&payment_link_id=${paymentLink.id}`;
+        console.log('Payment link callback URL:', finalCallbackUrl);
 
       res.json({ 
         paymentLink: paymentLink.short_url || paymentLink.payment_page_url,
@@ -1517,7 +1522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Check plans
       const plans = await razorpay.plans.all({ count: 10 });
-      
+
       // Check if hosted checkout is enabled (this might require specific API calls)
       const accountInfo = {
         plans_count: plans.count,
@@ -1552,9 +1557,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/debug/subscription/:subscriptionId', async (req: Request, res: Response) => {
     try {
       const { subscriptionId } = req.params;
-      
+
       const subscription = await razorpay.subscriptions.fetch(subscriptionId);
-      
+
       res.json({
         subscription: {
           id: subscription.id,
@@ -1584,10 +1589,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('=== SUBSCRIPTION ACTIVATION DEBUG ===');
     console.log('Request body:', req.body);
     console.log('Content-Type:', req.headers['content-type']);
-    
+
     try {
       const { subscriptionId, userId } = req.body;
-      
+
       if (!subscriptionId || !userId) {
         console.log('Missing required fields:', { subscriptionId, userId });
         return res.status(400).json({ message: 'Missing subscription ID or user ID' });
@@ -1601,17 +1606,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         plan_id: subscription.plan_id,
         customer_id: subscription.customer_id
       });
-      
+
       // Get plan name from the provided planId parameter (for manual activation)
       const requestedPlanId = req.body.planId;
       const planName = requestedPlanId ? getPlanNameFromId(requestedPlanId) : getPlanNameFromId(subscription.plan_id);
       console.log('Plan name mapped:', planName, 'from planId:', requestedPlanId || subscription.plan_id);
       console.log('Using requested plan ID:', requestedPlanId, 'vs subscription plan ID:', subscription.plan_id);
-      
+
       // Check if subscription already exists
       const existingSubscription = await storage.getSubscriptionByUserId(userId);
       console.log('Existing subscription check:', existingSubscription ? 'Found' : 'Not found');
-      
+
       if (existingSubscription) {
         // Update existing subscription with new plan details
         console.log('Updating existing subscription...');
@@ -1640,10 +1645,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         };
         console.log('New subscription data:', newSubscription);
-        
+
         const createdSub = await storage.createSubscription(newSubscription);
         console.log('Subscription created:', createdSub);
-        
+
         // Create payment history record for manual activation
         try {
           const paymentRecord = await storage.createPaymentHistory({
@@ -1887,7 +1892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Determine plan from payment amount
             let planName = 'Enterprise Monthly';
             let planId = PLAN_IDS.ENTERPRISE_MONTHLY;
-            
+
             if (payment.amount >= 499000 && payment.amount <= 501000) {
               planName = 'Enterprise Monthly';
               planId = PLAN_IDS.ENTERPRISE_MONTHLY;
@@ -2142,7 +2147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: user.email,
             count: 1
           });
-          
+
           if (existingCustomers.items && existingCustomers.items.length > 0) {
             customer = existingCustomers.items[0];
           } else {
