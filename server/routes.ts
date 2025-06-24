@@ -138,14 +138,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             event.payload?.subscription?.entity?.id,
         );
 
-        // Check if this event was already processed
-        const existingEvent = await storage.getWebhookEventById(
-          event.payload?.payment?.entity?.id ||
-            event.payload?.subscription?.entity?.id ||
-            "unknown",
-        );
+        // Create a unique event identifier combining event type and entity ID
+        const eventId = event.payload?.payment?.entity?.id ||
+                       event.payload?.subscription?.entity?.id ||
+                       "unknown";
+        const uniqueEventKey = `${event.event}_${eventId}`;
+        
+        // Check if this specific event was already processed
+        const existingEvent = await storage.getWebhookEventById(uniqueEventKey);
         if (existingEvent) {
-          console.log("Event already processed, skipping:", event.event);
+          console.log("Event already processed, skipping:", event.event, "for entity:", eventId);
           return res.json({ status: "already_processed" });
         }
 
@@ -239,23 +241,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   event.event === "payment.authorized"
                 ) {
                   try {
-                    await storage.createPaymentHistory({
-                      user_id: userId,
-                      razorpay_payment_id: payment.id,
-                      amount: payment.amount,
-                      currency: payment.currency,
-                      status: "succeeded", // Mark as succeeded for both captured and authorized payments
-                      description: `Payment for ${planName || payment.description || "subscription"}`,
-                    });
-
-                    console.log(
-                      "Payment history created for payment:",
-                      payment.id,
-                      "Event:",
-                      event.event,
-                      "Plan:",
-                      planName,
+                    // Check if payment history already exists for this payment
+                    const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
+                    const paymentExists = existingPaymentHistory.some(
+                      (p) => p.razorpay_payment_id === payment.id
                     );
+
+                    if (!paymentExists) {
+                      await storage.createPaymentHistory({
+                        user_id: userId,
+                        razorpay_payment_id: payment.id,
+                        amount: payment.amount,
+                        currency: payment.currency,
+                        status: "succeeded", // Mark as succeeded for both captured and authorized payments
+                        description: `Payment for ${planName || payment.description || "subscription"}`,
+                      });
+
+                      console.log(
+                        "Payment history created for payment:",
+                        payment.id,
+                        "Event:",
+                        event.event,
+                        "Plan:",
+                        planName,
+                      );
+                    } else {
+                      console.log(
+                        "Payment history already exists for payment:",
+                        payment.id,
+                        "Skipping duplicate creation"
+                      );
+                    }
                   } catch (paymentHistoryError) {
                     console.error(
                       "Error creating payment history:",
@@ -367,20 +383,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   planName,
                 );
 
-                // Create payment history record
-                await storage.createPaymentHistory({
-                  user_id: userId,
-                  razorpay_payment_id: paidPaymentEntity.id,
-                  amount: paidPaymentEntity.amount,
-                  currency: paidPaymentEntity.currency,
-                  status: "succeeded",
-                  description: `Payment for ${planName}`,
-                });
-
-                console.log(
-                  "Payment history created for payment link:",
-                  paidPaymentEntity.id,
+                // Check if payment history already exists for this payment
+                const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
+                const paymentExists = existingPaymentHistory.some(
+                  (p) => p.razorpay_payment_id === paidPaymentEntity.id
                 );
+
+                if (!paymentExists) {
+                  // Create payment history record
+                  await storage.createPaymentHistory({
+                    user_id: userId,
+                    razorpay_payment_id: paidPaymentEntity.id,
+                    amount: paidPaymentEntity.amount,
+                    currency: paidPaymentEntity.currency,
+                    status: "succeeded",
+                    description: `Payment for ${planName}`,
+                  });
+
+                  console.log(
+                    "Payment history created for payment link:",
+                    paidPaymentEntity.id,
+                  );
+                } else {
+                  console.log(
+                    "Payment history already exists for payment link:",
+                    paidPaymentEntity.id,
+                    "Skipping duplicate creation"
+                  );
+                }
 
                 // Handle subscription upgrade
                 const existingSubscription =
@@ -679,10 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Save webhook event to prevent duplicate processing
         try {
           await storage.createWebhookEvent({
-            razorpay_event_id:
-              event.payload.payment?.entity?.id ||
-              event.payload.subscription?.entity?.id ||
-              "unknown",
+            razorpay_event_id: uniqueEventKey,
             event_type: event.event,
             processed: true,
           });
@@ -2324,6 +2351,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ message: "Failed to fix payment history" });
       }
     },
+  );
+
+  // Clean up duplicate payment history records
+  app.post(
+    "/api/payment-history/cleanup-duplicates/:userId",
+    async (req: Request, res: Response) => {
+      try {
+        const userId = parseInt(req.params.userId);
+
+        if (isNaN(userId)) {
+          return res.status(400).json({ message: "Valid user ID is required" });
+        }
+
+        // Get all payment history for the user
+        const paymentHistory = await storage.getPaymentHistoryByUserId(userId);
+
+        // Group by razorpay_payment_id to find duplicates
+        const groupedPayments = paymentHistory.reduce((acc, payment) => {
+          const key = payment.razorpay_payment_id;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(payment);
+          return acc;
+        }, {} as Record<string, any[]>);
+
+        // Find duplicates (groups with more than one entry)
+        const duplicates = Object.values(groupedPayments).filter(group => group.length > 1);
+        
+        if (duplicates.length === 0) {
+          return res.json({
+            message: "No duplicate payment records found",
+            duplicatesFound: 0
+          });
+        }
+
+        let removedCount = 0;
+        
+        // For each group of duplicates, keep the first one and remove the rest
+        for (const duplicateGroup of duplicates) {
+          // Sort by creation date to keep the oldest
+          duplicateGroup.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+          // Remove all but the first (oldest) record
+          for (let i = 1; i < duplicateGroup.length; i++) {
+            try {
+              await storage.deletePaymentHistory(duplicateGroup[i].id);
+              removedCount++;
+              console.log("Removed duplicate payment history:", duplicateGroup[i].id);
+            } catch (error) {
+              console.error("Error removing duplicate payment:", error);
+            }
+          }
+        }
+
+        return res.json({
+          message: "Duplicate payment records cleaned up successfully",
+          duplicatesFound: duplicates.length,
+          recordsRemoved: removedCount
+        });
+      } catch (error) {
+        console.error("Error cleaning up duplicate payments:", error);
+        return res.status(500).json({ message: "Failed to clean up duplicates" });
+      }
+    }
   );
 
   // Fix pending payment status

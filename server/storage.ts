@@ -333,7 +333,7 @@ export class SupabaseStorage implements IStorage {
     console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
     console.log('Subscription ID:', subscriptionId);
     console.log('Updates to apply:', updates);
-    
+
     // Ensure we apply all update fields properly
     const finalUpdates = { 
       ...updates, 
@@ -448,6 +448,18 @@ export class SupabaseStorage implements IStorage {
 
       if (error) return null;
       return data;
+  }
+
+  async deletePaymentHistory(id: number): Promise<any> {
+    const { data, error } = await this.supabase
+        .from('payment_history')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) return null;
+    return data;
   }
 }
 
