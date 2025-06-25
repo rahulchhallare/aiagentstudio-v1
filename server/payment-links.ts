@@ -15,7 +15,7 @@ export async function createPaymentLink(
   try {
     // Extract the base URL and ensure proper redirect
     const baseUrl = successUrl.split('?')[0].replace('/billing', '');
-    const finalSuccessUrl = `${baseUrl}/billing?payment_success=true&redirect=auto`;
+    const finalSuccessUrl = `${baseUrl}/billing?payment_success=true`;
     
     const paymentLink = await razorpay.paymentLink.create({
       amount: amount,

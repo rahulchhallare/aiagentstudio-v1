@@ -829,10 +829,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map plan ID to plan name and validate amount
       let planName: string;
       let expectedAmount: number;
-      
+
       try {
         expectedAmount = await getINRAmountByPlanId(planId);
-        
+
         switch (planId) {
           case "pro-monthly":
             planName = "Pro Monthly";
@@ -878,7 +878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: true
         },
         reminder_enable: true,
-        callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
+        callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}`,
         callback_method: 'get',
         notes: {
           planId: planId,
@@ -930,7 +930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         try {
           planAmount = await getINRAmountByPlanId(planId);
-          
+
           switch (planId) {
             case "pro-monthly":
               planName = "Pro Monthly";
@@ -1017,7 +1017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: true
             },
             reminder_enable: true,
-            callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
+            callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}`,
             callback_method: 'get',
             notes: {
               planId: planId,
@@ -1178,7 +1178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         planAmount = await getINRAmountByPlanId(newPlanId);
-        
+
         switch (newPlanId) {
           case "pro-monthly":
             actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;

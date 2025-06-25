@@ -329,13 +329,8 @@ export default function Billing() {
 
               // Check if payment is required
               if (result.paymentRequired && result.paymentLink) {
-                // Open payment link in new tab
-                window.open(result.paymentLink, '_blank');
-
-                toast({
-                  title: "Payment Required",
-                  description: `To upgrade to ${result.upgradeDetails?.newPlan || planId.replace('-', ' ')}, please complete the payment in the new tab.`,
-                });
+                // Redirect to payment link in same tab
+                window.location.href = result.paymentLink;
               } else {
                 // Regular upgrade without payment (shouldn't happen for Pro to Enterprise)
                 toast({
@@ -490,13 +485,12 @@ export default function Billing() {
         // If subscription_success is not true, check for other parameters that might indicate a completed payment
         const paymentSuccess = urlParams.get('payment_success');
         const planParam = urlParams.get('plan');
-        const redirectParam = urlParams.get('redirect');
 
-        if (paymentSuccess === 'true' && redirectParam === 'auto') {
+        if (paymentSuccess === 'true') {
           // Show success message
           toast({
             title: "Payment Successful!",
-            description: planParam ? `Your ${planParam} subscription has been activated.` : "Your subscription has been activated.",
+            description: planParam ? `Your ${planParam.replace('-', ' ')} subscription has been activated.` : "Your subscription has been activated.",
           });
 
           // Clean up URL parameters

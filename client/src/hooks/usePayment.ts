@@ -452,7 +452,7 @@ export function usePayment() {
           description: "Redirecting to payment page...",
         });
         
-        // Redirect to payment link
+        // Redirect to payment link in same tab
         window.location.href = responseData.paymentLink;
         return responseData;
       } else {
