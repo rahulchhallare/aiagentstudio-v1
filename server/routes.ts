@@ -63,7 +63,7 @@ async function sendContactFormNotifications(contactData: {
   }
 
   // Create nodemailer transporter
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     service: 'gmail', // or your preferred email service
     auth: {
       user: process.env.SMTP_USER, // Your email
