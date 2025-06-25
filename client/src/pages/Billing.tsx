@@ -380,6 +380,8 @@ export default function Billing() {
   // Handle payment success redirect
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    const isAutoRedirect = urlParams.get("redirect") === "auto";
+    
     if (urlParams.get("subscription_success") === "true") {
       const subscriptionId = urlParams.get("subscription_id");
       const paymentLinkId = urlParams.get("payment_link_id");
@@ -485,6 +487,7 @@ export default function Billing() {
         // If subscription_success is not true, check for other parameters that might indicate a completed payment
         const paymentSuccess = urlParams.get('payment_success');
         const planParam = urlParams.get('plan');
+        const isAutoRedirect = urlParams.get('redirect') === 'auto';
 
         if (paymentSuccess === 'true') {
           // Show success message
@@ -493,14 +496,25 @@ export default function Billing() {
             description: planParam ? `Your ${planParam.replace('-', ' ')} subscription has been activated.` : "Your subscription has been activated.",
           });
 
-          // Clean up URL parameters
+          // Clean up URL parameters immediately
           const newUrl = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, newUrl);
 
-          // Refresh subscription data after a short delay
-          setTimeout(() => {
+          // For auto redirects, immediately refresh data
+          if (isAutoRedirect) {
+            // Immediate refresh for auto redirects
             fetchBillingData();
-          }, 2000);
+            
+            // Additional refreshes to ensure webhook data is captured
+            setTimeout(() => fetchBillingData(), 1000);
+            setTimeout(() => fetchBillingData(), 3000);
+            setTimeout(() => fetchBillingData(), 5000);
+          } else {
+            // Regular refresh for non-auto redirects
+            setTimeout(() => {
+              fetchBillingData();
+            }, 2000);
+          }
       }
     }
   }, [user, toast, fetchBillingData]);

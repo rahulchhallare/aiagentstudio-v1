@@ -878,14 +878,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: true
         },
         reminder_enable: true,
-        callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}`,
+        callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
         callback_method: 'get',
         notes: {
           planId: planId,
           planName: planName,
           userId: userId.toString(),
           paymentType: "manual"
-        }
+        },
+        // Force automatic redirection
+        expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+        reference_id: `manual_${planId}_${userId}_${Date.now()}`
       });
 
       res.json({
@@ -1017,13 +1020,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: true
             },
             reminder_enable: true,
-            callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}`,
+            callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
             callback_method: 'get',
             notes: {
               planId: planId,
               planName: planName,
               userId: userId.toString()
-            }
+            },
+            // Force automatic redirection
+            expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+            reference_id: `checkout_${planId}_${userId}_${Date.now()}`
           });
 
           console.log("Payment link created successfully:", paymentLink.short_url);
@@ -1242,6 +1248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: customer.id,
           },
           description: `Upgrade to ${newPlanName}`,
+          callback_url: `${req.protocol}://${req.get('host')}/billing?payment_success=true&plan=${newPlanId}&redirect=auto`,
+          callback_method: 'get',
           notes: {
             userId: userId,
             planId: actualRazorpayPlanId,
@@ -1249,6 +1257,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             upgradeFrom: subscription.plan_name,
             upgradeTo: newPlanName,
           },
+          // Force automatic redirection
+          expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+          reference_id: `upgrade_${newPlanId}_${userId}_${Date.now()}`
         });
 
         res.json({

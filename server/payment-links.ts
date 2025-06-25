@@ -46,7 +46,13 @@ export async function createPaymentLink(
             name: false
           }
         }
-      }
+      },
+      // Force automatic redirection after payment
+      upi_link: false,
+      sms_notify: false,
+      email_notify: true,
+      expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+      reference_id: `${planId}_${Date.now()}`
     });
 
     return paymentLink;
