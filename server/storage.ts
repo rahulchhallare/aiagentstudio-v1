@@ -1,4 +1,3 @@
-
 import { users, agents, waitlist, type User, type InsertUser, type Agent, type InsertAgent, type Waitlist, type InsertWaitlist } from "@shared/schema";
 
 // Interface for storage operations
@@ -21,6 +20,16 @@ export interface IStorage {
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
+
+  // Contact Form
+  createContactSubmission(data: {
+    name: string;
+    email: string;
+    company?: string;
+    subject: string;
+    message: string;
+    inquiryType?: string;
+  }): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -151,6 +160,20 @@ export class MemStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
+  }
+
+  async createContactSubmission(data: {
+    name: string;
+    email: string;
+    company?: string;
+    subject: string;
+    message: string;
+    inquiryType?: string;
+  }) {
+    // This would require a contact_submissions table in your database
+    // For now, we'll just log it - you can implement the table later
+    console.log("Contact submission would be saved:", data);
+    return { id: Date.now(), ...data, created_at: new Date() };
   }
 }
 
@@ -442,6 +465,27 @@ export class SupabaseStorage implements IStorage {
 
       if (error) return null;
       return data;
+  }
+
+  async createContactSubmission(data: {
+    name: string;
+    email: string;
+    company?: string;
+    subject: string;
+    message: string;
+    inquiryType?: string;
+  }) {
+    const { data, error } = await this.supabase
+      .from('contact_submissions') // Replace with your actual table name
+      .insert(data)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase contact submission error:', error);
+      throw new Error(error.message);
+    }
+    return data;
   }
 }
 

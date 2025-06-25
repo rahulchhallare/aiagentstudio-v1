@@ -6,6 +6,7 @@ import {
   insertUserSchema,
   insertAgentSchema,
   insertWaitlistSchema,
+  insertContactSchema,
   flowDataSchema,
 } from "@shared/schema";
 import { executeFlow } from "./agent-execution";
@@ -1470,13 +1471,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contact form submission route
+  app.post("/api/contact", async (req: Request, res: Response) => {
+    try {
+      const contactData = validateBody(insertContactSchema, req.body);
+
+      // Save contact submission (currently just logs, but you can expand to database)
+      const submission = await storage.createContactSubmission(contactData);
+
+      console.log("Contact form submission received:", {
+        ...contactData,
+        timestamp: new Date().toISOString(),
+      });
+
+      // In a real application, you would:
+      // 1. Save the contact form data to your database (partially implemented)
+      // 2. Send an email notification to your team
+      // 3. Send a confirmation email to the user
+
+      return res.status(201).json({ 
+        message: "Contact form submitted successfully. We'll get back to you within 24 hours.",
+        success: true,
+        submissionId: submission.id
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error processing contact form:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Waitlist route
   app.post("/api/waitlist", async (req: Request, res: Response) => {
     try {
       const { email } = validateBody(insertWaitlistSchema, req.body);
 
       const entries = await storage.getWaitlistEntries();
-      const exists = entries.some((entry) => entry.email === email);
+      const exists = entries.some((entry) => entry.email === entry);
 
       if (exists) {
         return res.status(400).json({ message: "Email already registered" });
