@@ -475,7 +475,7 @@ export class SupabaseStorage implements IStorage {
     message: string;
     inquiryType?: string;
   }) {
-    const { data, error } = await this.supabase
+    const { data: result, error } = await this.supabase
       .from('contact_submissions') // Replace with your actual table name
       .insert(data)
       .select()
@@ -485,7 +485,7 @@ export class SupabaseStorage implements IStorage {
       console.error('Supabase contact submission error:', error);
       throw new Error(error.message);
     }
-    return data;
+    return result;
   }
 }
 
