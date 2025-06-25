@@ -888,7 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         // Force automatic redirection
         expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-        reference_id: `manual_${planId}_${userId}_${Date.now()}`
+        reference_id: `man_${userId}_${Date.now().toString().slice(-8)}`
       });
 
       res.json({
@@ -1029,7 +1029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             // Force automatic redirection
             expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-            reference_id: `checkout_${planId}_${userId}_${Date.now()}`
+            reference_id: `chk_${userId}_${Date.now().toString().slice(-8)}`
           });
 
           console.log("Payment link created successfully:", paymentLink.short_url);
@@ -1259,7 +1259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           // Force automatic redirection
           expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-          reference_id: `upgrade_${newPlanId}_${userId}_${Date.now()}`
+          reference_id: `upg_${userId}_${Date.now().toString().slice(-8)}`
         });
 
         res.json({

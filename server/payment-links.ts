@@ -52,7 +52,7 @@ export async function createPaymentLink(
       sms_notify: false,
       email_notify: true,
       expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-      reference_id: `${planId}_${Date.now()}`
+      reference_id: `pl_${Date.now().toString().slice(-10)}`
     });
 
     return paymentLink;
