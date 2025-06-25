@@ -57,6 +57,11 @@ async function sendContactFormNotifications(contactData: {
   message: string;
   inquiryType?: string;
 }) {
+  // Check if email credentials are available
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error("Email credentials not configured");
+  }
+
   // Create nodemailer transporter
   const transporter = nodemailer.createTransporter({
     service: 'gmail', // or your preferred email service
@@ -1564,26 +1569,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const contactData = validateBody(insertContactSchema, req.body);
 
-      // Save contact submission
-      const submission = await storage.createContactSubmission(contactData);
-
       console.log("Contact form submission received:", {
         ...contactData,
         timestamp: new Date().toISOString(),
       });
 
-      // Send email notifications
+      // Save contact submission
+      let submission;
       try {
-        await sendContactFormNotifications(contactData);
-      } catch (emailError) {
-        console.error("Error sending email notifications:", emailError);
-        // Don't fail the request if email fails
+        submission = await storage.createContactSubmission(contactData);
+        console.log("Contact submission saved successfully:", submission.id);
+      } catch (storageError) {
+        console.error("Error saving contact submission:", storageError);
+        return res.status(500).json({ 
+          message: "Failed to save contact submission. Please try again.",
+          error: "STORAGE_ERROR"
+        });
+      }
+
+      // Send email notifications (optional - don't fail if this fails)
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        try {
+          await sendContactFormNotifications(contactData);
+          console.log("Email notifications sent successfully");
+        } catch (emailError) {
+          console.error("Error sending email notifications:", emailError);
+          // Don't fail the request if email fails - just log it
+        }
+      } else {
+        console.log("Email credentials not configured - skipping email notifications");
       }
 
       return res.status(201).json({ 
         message: "Contact form submitted successfully. We'll get back to you within 24 hours.",
         success: true,
-        submissionId: submission.id
+        submissionId: submission?.id || "unknown"
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1593,7 +1613,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       console.error("Error processing contact form:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ 
+        message: "Internal server error. Please try again or contact support.",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
