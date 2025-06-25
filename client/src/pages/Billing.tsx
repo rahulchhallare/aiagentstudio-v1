@@ -601,7 +601,7 @@ export default function Billing() {
 
   // Memoize formatted payment history
   const invoices = useMemo(() => {
-    return paymentHistory.map((payment) => {
+    return paymentHistory.map((payment, index) => {
       let displayAmount: string;
 
       if (payment.currency === "INR") {
@@ -671,10 +671,7 @@ export default function Billing() {
       }
 
       return {
-        id:
-          payment.razorpay_payment_id ||
-          payment.stripe_payment_intent_id ||
-          payment.id,
+        id: `${payment.razorpay_payment_id || payment.stripe_payment_intent_id || payment.id}-${index}`,
         date: new Date(payment.created_at).toLocaleDateString(),
         amount: displayAmount,
         status: payment.status === "succeeded" ? "Paid" : payment.status,
