@@ -27,6 +27,7 @@ import {
 } from "./manual-payment";
 import crypto from "crypto";
 import axios from "axios";
+import nodemailer from "nodemailer";
 
 // Helper function to map Razorpay plan ID to plan name
 function getPlanNameFromId(planId: string): string {
@@ -45,6 +46,93 @@ function getPlanNameFromId(planId: string): string {
 // Helper to validate request body with Zod schema
 function validateBody<T>(schema: z.ZodType<T>, body: unknown): T {
   return schema.parse(body);
+}
+
+// Email notification function
+async function sendContactFormNotifications(contactData: {
+  name: string;
+  email: string;
+  company?: string;
+  subject: string;
+  message: string;
+  inquiryType?: string;
+}) {
+  // Create nodemailer transporter
+  const transporter = nodemailer.createTransporter({
+    service: 'gmail', // or your preferred email service
+    auth: {
+      user: process.env.SMTP_USER, // Your email
+      pass: process.env.SMTP_PASS, // Your app password
+    },
+  });
+
+  const timestamp = new Date().toLocaleString();
+
+  // Email to your team (notification)
+  const teamEmailOptions = {
+    from: process.env.SMTP_USER,
+    to: process.env.CONTACT_EMAIL || 'info@aiagentstudio.ai',
+    subject: `New Contact Form Submission: ${contactData.subject}`,
+    html: `
+      <h2>New Contact Form Submission</h2>
+      <p><strong>Submitted:</strong> ${timestamp}</p>
+      <p><strong>Name:</strong> ${contactData.name}</p>
+      <p><strong>Email:</strong> ${contactData.email}</p>
+      ${contactData.company ? `<p><strong>Company:</strong> ${contactData.company}</p>` : ''}
+      ${contactData.inquiryType ? `<p><strong>Inquiry Type:</strong> ${contactData.inquiryType}</p>` : ''}
+      <p><strong>Subject:</strong> ${contactData.subject}</p>
+      <p><strong>Message:</strong></p>
+      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
+        ${contactData.message.replace(/\n/g, '<br>')}
+      </div>
+      <hr>
+      <p><em>Reply to: ${contactData.email}</em></p>
+    `,
+  };
+
+  // Auto-reply email to the user
+  const userEmailOptions = {
+    from: process.env.SMTP_USER,
+    to: contactData.email,
+    subject: 'Thank you for contacting AIAgentStudio.AI',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Thank you for reaching out!</h2>
+        <p>Hi ${contactData.name},</p>
+        <p>We've received your message and will get back to you within 24 hours.</p>
+        
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #374151;">Your Message:</h3>
+          <p><strong>Subject:</strong> ${contactData.subject}</p>
+          <p><strong>Message:</strong></p>
+          <p style="background-color: white; padding: 15px; border-radius: 5px; border-left: 4px solid #2563eb;">
+            ${contactData.message.replace(/\n/g, '<br>')}
+          </p>
+        </div>
+
+        <p>In the meantime, feel free to:</p>
+        <ul>
+          <li>Explore our <a href="https://aiagentstudio.ai/documentation" style="color: #2563eb;">documentation</a></li>
+          <li>Check out our <a href="https://aiagentstudio.ai/templates" style="color: #2563eb;">AI agent templates</a></li>
+          <li>Join our community for updates and tips</li>
+        </ul>
+
+        <p>Best regards,<br>
+        The AIAgentStudio.AI Team</p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+        <p style="font-size: 12px; color: #6b7280;">
+          This is an automated response. Please do not reply to this email.
+        </p>
+      </div>
+    `,
+  };
+
+  // Send both emails
+  await Promise.all([
+    transporter.sendMail(teamEmailOptions),
+    transporter.sendMail(userEmailOptions),
+  ]);
 }
 
 // Function to fetch live plan pricing
@@ -1476,7 +1564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const contactData = validateBody(insertContactSchema, req.body);
 
-      // Save contact submission (currently just logs, but you can expand to database)
+      // Save contact submission
       const submission = await storage.createContactSubmission(contactData);
 
       console.log("Contact form submission received:", {
@@ -1484,10 +1572,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString(),
       });
 
-      // In a real application, you would:
-      // 1. Save the contact form data to your database (partially implemented)
-      // 2. Send an email notification to your team
-      // 3. Send a confirmation email to the user
+      // Send email notifications
+      try {
+        await sendContactFormNotifications(contactData);
+      } catch (emailError) {
+        console.error("Error sending email notifications:", emailError);
+        // Don't fail the request if email fails
+      }
 
       return res.status(201).json({ 
         message: "Contact form submitted successfully. We'll get back to you within 24 hours.",
