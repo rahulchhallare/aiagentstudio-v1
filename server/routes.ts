@@ -860,6 +860,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid plan ID" });
       }
 
+      // Get proper host and protocol for callback URL
+      const host = req.get("host") || "localhost:5000";
+      const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
+
       // Create payment link
       const paymentLink = await razorpay.paymentLink.create({
         amount: amount,
@@ -874,6 +878,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: true
         },
         reminder_enable: true,
+        callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
+        callback_method: 'get',
         notes: {
           planId: planId,
           planName: planName,
@@ -1011,21 +1017,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: true
             },
             reminder_enable: true,
-            callback_url: `${protocol}://${host}/billing?subscription_success=true&auto_redirect=true`,
+            callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
             callback_method: 'get',
             notes: {
               planId: planId,
               planName: planName,
               userId: userId.toString()
-            },
-            options: {
-              checkout: {
-                readonly: {
-                  contact: false,
-                  email: false,
-                  name: false
-                }
-              }
             }
           });
 

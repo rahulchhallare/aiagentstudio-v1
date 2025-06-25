@@ -15,7 +15,7 @@ export async function createPaymentLink(
   try {
     // Extract the base URL and ensure proper redirect
     const baseUrl = successUrl.split('?')[0].replace('/billing', '');
-    const finalSuccessUrl = `${baseUrl}/billing?subscription_success=true&auto_redirect=true`;
+    const finalSuccessUrl = `${baseUrl}/billing?payment_success=true&redirect=auto`;
     
     const paymentLink = await razorpay.paymentLink.create({
       amount: amount,
@@ -35,7 +35,8 @@ export async function createPaymentLink(
       notes: {
         planId: planId,
         planName: description.replace('Subscription: ', ''),
-        userId: customerId // This will be overridden with actual userId in routes.ts
+        userId: customerId, // This will be overridden with actual userId in routes.ts
+        paymentType: "subscription"
       },
       options: {
         checkout: {

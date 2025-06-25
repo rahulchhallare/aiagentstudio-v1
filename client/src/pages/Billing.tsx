@@ -200,12 +200,12 @@ export default function Billing() {
         try {
           // Get the amount from server pricing
           let amount: number;
-          
+
           // Fetch current pricing from server
           try {
             const pricingResponse = await fetch('/api/exchange-rate');
             const { rate } = await pricingResponse.json();
-            
+
             switch (planId) {
               case "pro-monthly":
                 amount = Math.round(19 * rate * 100); // $19 converted to paise
@@ -392,7 +392,7 @@ export default function Billing() {
       if ((subscriptionId || paymentLinkId) && user) {
         toast({
           title: "Payment Successful!",
-          description: paymentLinkId 
+          description: paymentLinkId
             ? "Your payment has been processed. Your subscription will be activated shortly."
             : "Your subscription has been activated. Welcome to your new plan!",
         });
@@ -485,6 +485,28 @@ export default function Billing() {
           document.title,
           window.location.pathname,
         );
+      }
+    } else {
+        // If subscription_success is not true, check for other parameters that might indicate a completed payment
+        const paymentSuccess = urlParams.get('payment_success');
+        const planParam = urlParams.get('plan');
+        const redirectParam = urlParams.get('redirect');
+
+        if (paymentSuccess === 'true' && redirectParam === 'auto') {
+          // Show success message
+          toast({
+            title: "Payment Successful!",
+            description: planParam ? `Your ${planParam} subscription has been activated.` : "Your subscription has been activated.",
+          });
+
+          // Clean up URL parameters
+          const newUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+
+          // Refresh subscription data after a short delay
+          setTimeout(() => {
+            fetchBillingData();
+          }, 2000);
       }
     }
   }, [user, toast, fetchBillingData]);
@@ -901,8 +923,7 @@ export default function Billing() {
                           <CardHeader>
                             <CardTitle className="transition-colors duration-200 hover:text-primary-600">
                               {plan.name}
-                            </CardTitle>
-                            <CardDescription>
+                            </CardTitle>The goal is to handle redirection issues after Razorpay payment by modifying the useEffect hook.                            <CardDescription>
                               <div className="transition-all duration-500 ease-in-out">
                                 <span className="text-3xl font-bold transition-all duration-300 transform hover:scale-110 inline-block">
                                   {plan.price}
