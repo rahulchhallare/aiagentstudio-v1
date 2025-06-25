@@ -69,6 +69,17 @@ export const webhook_events = pgTable("webhook_events", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+export const contact_submissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  company: text("company"),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  inquiry_type: text("inquiry_type"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

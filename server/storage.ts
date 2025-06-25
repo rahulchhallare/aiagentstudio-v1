@@ -475,9 +475,19 @@ export class SupabaseStorage implements IStorage {
     message: string;
     inquiryType?: string;
   }) {
+    // Map camelCase to snake_case for database
+    const dbData = {
+      name: data.name,
+      email: data.email,
+      company: data.company,
+      subject: data.subject,
+      message: data.message,
+      inquiry_type: data.inquiryType
+    };
+    
     const { data: result, error } = await this.supabase
-      .from('contact_submissions') // Replace with your actual table name
-      .insert(data)
+      .from('contact_submissions')
+      .insert(dbData)
       .select()
       .single();
 
