@@ -202,16 +202,16 @@ export default function Billing() {
           let amount: number;
           switch (planId) {
             case "pro-monthly":
-              amount = 2900; // ₹29
+              amount = 240700; // ₹2,407 (approx $29 USD)
               break;
             case "pro-yearly":
-              amount = 29000; // ₹290
+              amount = 2407000; // ₹24,070 (approx $290 USD)
               break;
             case "enterprise-monthly":
-              amount = 9900; // ₹99
+              amount = 821700; // ₹8,217 (approx $99 USD)
               break;
             case "enterprise-yearly":
-              amount = 99000; // ₹990
+              amount = 8217000; // ₹82,170 (approx $990 USD)
               break;
             default:
               throw new Error("Invalid plan ID");

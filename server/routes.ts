@@ -887,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/create-checkout-session",
     async (req: Request, res: Response) => {
       console.log("Create checkout session request received:", { body: req.body });
-      
+
       try {
         const { planId, userId, email } = req.body;
 
@@ -903,22 +903,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get plan pricing directly without relying on Razorpay plan fetch
         let planAmount: number;
         let planName: string;
-        
+
         switch (planId) {
           case "pro-monthly":
-            planAmount = 2900; // ₹29
+            planAmount = 240700; // ₹2,407 (approx $29 USD)
             planName = "Pro Monthly";
             break;
           case "pro-yearly":
-            planAmount = 29000; // ₹290
+            planAmount = 2407000; // ₹24,070 (approx $290 USD)
             planName = "Pro Yearly";
             break;
           case "enterprise-monthly":
-            planAmount = 9900; // ₹99
+            planAmount = 821700; // ₹8,217 (approx $99 USD)
             planName = "Enterprise Monthly";
             break;
           case "enterprise-yearly":
-            planAmount = 99000; // ₹990
+            planAmount = 8217000; // ₹82,170 (approx $990 USD)
             planName = "Enterprise Yearly";
             break;
           default:
@@ -926,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(400).json({ message: "Invalid plan ID" });
         }
 
-        console.log("Plan details:", { planAmount, planName });
+        console.log("Plan details:", { planAmount, planAmount, planName });
 
         let customer;
         try {
