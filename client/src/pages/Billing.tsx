@@ -65,6 +65,7 @@ export default function Billing() {
   const {
     cancelSubscription,
     upgradeSubscription,
+    createManualPayment,
     isLoading: paymentLoading,
   } = usePayment();
   const { toast } = useToast();
@@ -197,27 +198,32 @@ export default function Billing() {
       if (!subscription || subscription.status !== "active") {
         // Create payment link for new subscription
         try {
-          const response = await fetch("/api/create-manual-payment", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              planId,
-              userId: user.id,
-            }),
-          });
+          // Determine the amount based on plan ID
+          let amount: number;
+          switch (planId) {
+            case "pro-monthly":
+              amount = 2900; // ₹29
+              break;
+            case "pro-yearly":
+              amount = 29000; // ₹290
+              break;
+            case "enterprise-monthly":
+              amount = 9900; // ₹99
+              break;
+            case "enterprise-yearly":
+              amount = 99000; // ₹990
+              break;
+            default:
+              throw new Error("Invalid plan ID");
+          }
 
-          if (response.ok) {
-            const { paymentLink } = await response.json();
-            window.open(paymentLink, "_blank");
+          const result = await createManualPayment(planId, amount);
+          if (result) {
             toast({
               title: "Redirecting to Payment",
               description:
                 "Complete your payment to activate your subscription.",
             });
-          } else {
-            throw new Error("Failed to create payment link");
           }
         } catch (error) {
           console.error("Error creating payment:", error);
