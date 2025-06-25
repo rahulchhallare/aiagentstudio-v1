@@ -609,17 +609,15 @@ export default function Billing() {
         const inrAmount = payment.amount / 100; // Convert from paise to rupees
         let usdAmount: number;
 
-        // Map common INR amounts to USD equivalents based on plan pricing
-        if (inrAmount >= 28 && inrAmount <= 30) {
-          usdAmount = 29; // Pro Monthly (₹29 = $29)
-        } else if (inrAmount >= 999 && inrAmount <= 1000) {
-          usdAmount = 29; // Pro Monthly (₹999 = $29)
-        } else if (inrAmount >= 9999 && inrAmount <= 10000) {
-          usdAmount = 290; // Pro Yearly
-        } else if (inrAmount >= 4999 && inrAmount <= 5000) {
-          usdAmount = 99; // Enterprise Monthly
-        } else if (inrAmount >= 49999 && inrAmount <= 50000) {
-          usdAmount = 990; // Enterprise Yearly
+        // Map common INR amounts to USD equivalents based on current plan pricing
+        if (inrAmount >= 1500 && inrAmount <= 1600) {
+          usdAmount = 19; // Pro Monthly (current price)
+        } else if (inrAmount >= 15000 && inrAmount <= 15500) {
+          usdAmount = 183; // Pro Yearly (current price)
+        } else if (inrAmount >= 4000 && inrAmount <= 4300) {
+          usdAmount = 50; // Enterprise Monthly (current price)
+        } else if (inrAmount >= 39000 && inrAmount <= 40500) {
+          usdAmount = 480; // Enterprise Yearly (current price)
         } else if (inrAmount === 0) {
           // For zero amounts (cancellations, etc.), keep as 0
           usdAmount = 0;
@@ -628,33 +626,33 @@ export default function Billing() {
           const description = payment.description?.toLowerCase() || '';
 
           if (description.includes('enterprise monthly') || description.includes('enterprise')) {
-            usdAmount = 99; // Enterprise Monthly
+            usdAmount = 50; // Enterprise Monthly (current price)
           } else if (description.includes('enterprise yearly')) {
-            usdAmount = 990; // Enterprise Yearly
+            usdAmount = 480; // Enterprise Yearly (current price)
           } else if (description.includes('pro monthly') || description.includes('pro')) {
-            usdAmount = 29; // Pro Monthly
+            usdAmount = 19; // Pro Monthly (current price)
           } else if (description.includes('pro yearly')) {
-            usdAmount = 290; // Pro Yearly
+            usdAmount = 183; // Pro Yearly (current price)
           } else if (description.includes('upgrade') || description.includes('prorated')) {
             // For upgrade transactions, show the target plan amount instead of prorated amount
             if (description.includes('enterprise monthly')) {
-              usdAmount = 99; // Enterprise Monthly
+              usdAmount = 50; // Enterprise Monthly (current price)
             } else if (description.includes('enterprise yearly')) {
-              usdAmount = 990; // Enterprise Yearly
+              usdAmount = 480; // Enterprise Yearly (current price)
             } else if (description.includes('pro monthly')) {
-              usdAmount = 29; // Pro Monthly
+              usdAmount = 19; // Pro Monthly (current price)
             } else if (description.includes('pro yearly')) {
-              usdAmount = 290; // Pro Yearly
+              usdAmount = 183; // Pro Yearly (current price)
             } else {
-              // For large prorated amounts, convert to reasonable USD
-              if (inrAmount > 30000) { // Very large INR amounts
-                usdAmount = 99; // Likely Enterprise Monthly
-              } else if (inrAmount > 20000) {
-                usdAmount = 290; // Likely Pro Yearly
-              } else if (inrAmount > 8000) {
-                usdAmount = 99; // Likely Enterprise Monthly
-              } else if (inrAmount > 2000) {
-                usdAmount = 29; // Likely Pro Monthly
+              // For large prorated amounts, convert to reasonable USD based on current pricing
+              if (inrAmount > 35000) { // Very large INR amounts
+                usdAmount = 480; // Likely Enterprise Yearly
+              } else if (inrAmount > 10000) {
+                usdAmount = 183; // Likely Pro Yearly
+              } else if (inrAmount > 3000) {
+                usdAmount = 50; // Likely Enterprise Monthly
+              } else if (inrAmount > 1000) {
+                usdAmount = 19; // Likely Pro Monthly
               } else {
                 usdAmount = Math.round(inrAmount / 83);
               }
