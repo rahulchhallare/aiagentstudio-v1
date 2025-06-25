@@ -24,8 +24,6 @@ if (missingPlanIds.length > 0) {
   console.warn('Missing Razorpay plan IDs:', missingPlanIds.map(([key]) => key));
 }
 
-
-
 // Cache for exchange rate (refreshed every hour)
 let cachedExchangeRate: { rate: number; timestamp: number } | null = null;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -78,6 +76,34 @@ async function getUSDToINRRate(): Promise<number> {
   }
 }
 
+// Centralized pricing configuration
+export const USD_PRICES = {
+  PRO_MONTHLY: 19,
+  PRO_YEARLY: 183, // $19 * 12 * 0.8 (20% discount) = $182.4 rounded to $183
+  ENTERPRISE_MONTHLY: 50,
+  ENTERPRISE_YEARLY: 480, // $50 * 12 * 0.8 (20% discount) = $480
+};
+
+// Function to get plan pricing with live rates
+export async function getPlanPricing() {
+  const exchangeRate = await getUSDToINRRate();
+  
+  return {
+    PRO_MONTHLY: Math.round(USD_PRICES.PRO_MONTHLY * exchangeRate * 100), // Convert to paise
+    PRO_YEARLY: Math.round(USD_PRICES.PRO_YEARLY * exchangeRate * 100),
+    ENTERPRISE_MONTHLY: Math.round(USD_PRICES.ENTERPRISE_MONTHLY * exchangeRate * 100),
+    ENTERPRISE_YEARLY: Math.round(USD_PRICES.ENTERPRISE_YEARLY * exchangeRate * 100),
+  };
+}
+
+// Static pricing for immediate use (will be updated by live rates)
+export const PLAN_PRICING = {
+  PRO_MONTHLY: Math.round(USD_PRICES.PRO_MONTHLY * 83 * 100), // ₹1,577 (fallback)
+  PRO_YEARLY: Math.round(USD_PRICES.PRO_YEARLY * 83 * 100), // ₹15,189 (fallback)
+  ENTERPRISE_MONTHLY: Math.round(USD_PRICES.ENTERPRISE_MONTHLY * 83 * 100), // ₹4,150 (fallback)
+  ENTERPRISE_YEARLY: Math.round(USD_PRICES.ENTERPRISE_YEARLY * 83 * 100), // ₹39,840 (fallback)
+};
+
 // Function to fetch plan pricing directly from Razorpay
 export async function getRazorpayPlanPricing(planId: string): Promise<number> {
   try {
@@ -89,33 +115,39 @@ export async function getRazorpayPlanPricing(planId: string): Promise<number> {
   }
 }
 
-// Function to get plan pricing with live rates (fallback)
-export async function getPlanPricing() {
-  const exchangeRate = await getUSDToINRRate();
-  
-  return {
-    PRO_MONTHLY: Math.round(29 * exchangeRate * 100), // Convert to paise
-    PRO_YEARLY: Math.round(290 * exchangeRate * 100),
-    ENTERPRISE_MONTHLY: Math.round(99 * exchangeRate * 100),
-    ENTERPRISE_YEARLY: Math.round(990 * exchangeRate * 100),
-  };
+// Helper function to get USD price by plan ID
+export function getUSDPriceByPlanId(planId: string): number {
+  switch (planId) {
+    case 'pro-monthly':
+      return USD_PRICES.PRO_MONTHLY;
+    case 'pro-yearly':
+      return USD_PRICES.PRO_YEARLY;
+    case 'enterprise-monthly':
+      return USD_PRICES.ENTERPRISE_MONTHLY;
+    case 'enterprise-yearly':
+      return USD_PRICES.ENTERPRISE_YEARLY;
+    default:
+      return 0;
+  }
 }
 
-// Static pricing for immediate use (will be updated by live rates)
-export const PLAN_PRICING = {
-  PRO_MONTHLY: 240700, // Fallback values in paise
-  PRO_YEARLY: 2407000,
-  ENTERPRISE_MONTHLY: 821700,
-  ENTERPRISE_YEARLY: 8217000,
-};
-
-// USD prices for display on website
-export const USD_PRICES = {
-  PRO_MONTHLY: 29,
-  PRO_YEARLY: 290,
-  ENTERPRISE_MONTHLY: 99,
-  ENTERPRISE_YEARLY: 990,
-};
+// Helper function to get INR amount by plan ID
+export async function getINRAmountByPlanId(planId: string): Promise<number> {
+  const pricing = await getPlanPricing();
+  
+  switch (planId) {
+    case 'pro-monthly':
+      return pricing.PRO_MONTHLY;
+    case 'pro-yearly':
+      return pricing.PRO_YEARLY;
+    case 'enterprise-monthly':
+      return pricing.ENTERPRISE_MONTHLY;
+    case 'enterprise-yearly':
+      return pricing.ENTERPRISE_YEARLY;
+    default:
+      return 0;
+  }
+}
 
 // Subscription management functions
 export async function createRazorpayCustomer(email: string, name: string, userId: number) {

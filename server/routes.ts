@@ -15,6 +15,9 @@ import {
   razorpay,
   PLAN_IDS,
   PLAN_PRICING,
+  USD_PRICES,
+  getINRAmountByPlanId,
+  getUSDPriceByPlanId,
 } from "./razorpay";
 import { createPaymentLink } from "./payment-links";
 import {
@@ -823,23 +826,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Map plan ID to plan name
+      // Map plan ID to plan name and validate amount
       let planName: string;
-      switch (planId) {
-        case "pro-monthly":
-          planName = "Pro Monthly";
-          break;
-        case "pro-yearly":
-          planName = "Pro Yearly";
-          break;
-        case "enterprise-monthly":
-          planName = "Enterprise Monthly";
-          break;
-        case "enterprise-yearly":
-          planName = "Enterprise Yearly";
-          break;
-        default:
-          planName = `Plan ${planId}`;
+      let expectedAmount: number;
+      
+      try {
+        expectedAmount = await getINRAmountByPlanId(planId);
+        
+        switch (planId) {
+          case "pro-monthly":
+            planName = "Pro Monthly";
+            break;
+          case "pro-yearly":
+            planName = "Pro Yearly";
+            break;
+          case "enterprise-monthly":
+            planName = "Enterprise Monthly";
+            break;
+          case "enterprise-yearly":
+            planName = "Enterprise Yearly";
+            break;
+          default:
+            planName = `Plan ${planId}`;
+        }
+
+        // Validate the amount matches expected pricing (allow 5% variance for exchange rate fluctuations)
+        const variance = Math.abs(amount - expectedAmount) / expectedAmount;
+        if (variance > 0.05) {
+          console.warn(`Amount mismatch for ${planId}: expected ${expectedAmount}, got ${amount}`);
+        }
+      } catch (error) {
+        console.error("Error validating plan pricing:", error);
+        return res.status(400).json({ message: "Invalid plan ID" });
       }
 
       // Create payment link
@@ -900,30 +918,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: "Plan ID, user ID, and email are required" });
         }
 
-        // Get plan pricing directly without relying on Razorpay plan fetch
+        // Get plan pricing from centralized configuration
         let planAmount: number;
         let planName: string;
 
-        switch (planId) {
-          case "pro-monthly":
-            planAmount = 240700; // ₹2,407 (approx $29 USD)
-            planName = "Pro Monthly";
-            break;
-          case "pro-yearly":
-            planAmount = 2407000; // ₹24,070 (approx $290 USD)
-            planName = "Pro Yearly";
-            break;
-          case "enterprise-monthly":
-            planAmount = 821700; // ₹8,217 (approx $99 USD)
-            planName = "Enterprise Monthly";
-            break;
-          case "enterprise-yearly":
-            planAmount = 8217000; // ₹82,170 (approx $990 USD)
-            planName = "Enterprise Yearly";
-            break;
-          default:
-            console.log("Invalid plan ID:", planId);
+        try {
+          planAmount = await getINRAmountByPlanId(planId);
+          
+          switch (planId) {
+            case "pro-monthly":
+              planName = "Pro Monthly";
+              break;
+            case "pro-yearly":
+              planName = "Pro Yearly";
+              break;
+            case "enterprise-monthly":
+              planName = "Enterprise Monthly";
+              break;
+            case "enterprise-yearly":
+              planName = "Enterprise Yearly";
+              break;
+            default:
+              console.log("Invalid plan ID:", planId);
+              return res.status(400).json({ message: "Invalid plan ID" });
+          }
+
+          if (planAmount === 0) {
+            console.log("No pricing found for plan ID:", planId);
             return res.status(400).json({ message: "Invalid plan ID" });
+          }
+        } catch (error) {
+          console.error("Error getting plan pricing:", error);
+          return res.status(500).json({ message: "Failed to get plan pricing" });
         }
 
         console.log("Plan details:", { planAmount, planAmount, planName });
@@ -1153,29 +1179,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let newPlanName: string;
       let planAmount: number;
 
-      switch (newPlanId) {
-        case "pro-monthly":
-          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
-          newPlanName = "Pro Monthly";
-          planAmount = 99900;
-          break;
-        case "pro-yearly":
-          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
-          newPlanName = "Pro Yearly";
-          planAmount = 999900;
-          break;
-        case "enterprise-monthly":
-          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
-          newPlanName = "Enterprise Monthly";
-          planAmount = 499900;
-          break;
-        case "enterprise-yearly":
-          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
-          newPlanName = "Enterprise Yearly";
-          planAmount = 4999900;
-          break;
-        default:
-          return res.status(400).json({ error: "Invalid plan ID for upgrade" });
+      try {
+        planAmount = await getINRAmountByPlanId(newPlanId);
+        
+        switch (newPlanId) {
+          case "pro-monthly":
+            actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+            newPlanName = "Pro Monthly";
+            break;
+          case "pro-yearly":
+            actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+            newPlanName = "Pro Yearly";
+            break;
+          case "enterprise-monthly":
+            actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+            newPlanName = "Enterprise Monthly";
+            break;
+          case "enterprise-yearly":
+            actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+            newPlanName = "Enterprise Yearly";
+            break;
+          default:
+            return res.status(400).json({ error: "Invalid plan ID for upgrade" });
+        }
+
+        if (planAmount === 0) {
+          return res.status(400).json({ error: "Invalid plan pricing" });
+        }
+      } catch (error) {
+        console.error("Error getting upgrade pricing:", error);
+        return res.status(500).json({ error: "Failed to get plan pricing" });
       }
 
       const user = await storage.getUser(parseInt(userId));

@@ -418,7 +418,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
                   <div className="text-4xl font-bold text-gray-900 mb-6">
-                    $29
+                    $19
                     <span className="text-lg text-gray-500 font-normal">
                       /month
                     </span>
@@ -518,7 +518,7 @@ export default function LandingPage() {
                     Enterprise
                   </h3>
                   <div className="text-4xl font-bold text-gray-900 mb-6">
-                    $99
+                    $50
                     <span className="text-lg text-gray-500 font-normal">
                       /month
                     </span>

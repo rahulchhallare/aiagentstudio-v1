@@ -198,23 +198,49 @@ export default function Billing() {
       if (!subscription || subscription.status !== "active") {
         // Create payment link for new subscription
         try {
-          // Determine the amount based on plan ID
+          // Get the amount from server pricing
           let amount: number;
-          switch (planId) {
-            case "pro-monthly":
-              amount = 240700; // ₹2,407 (approx $29 USD)
-              break;
-            case "pro-yearly":
-              amount = 2407000; // ₹24,070 (approx $290 USD)
-              break;
-            case "enterprise-monthly":
-              amount = 821700; // ₹8,217 (approx $99 USD)
-              break;
-            case "enterprise-yearly":
-              amount = 8217000; // ₹82,170 (approx $990 USD)
-              break;
-            default:
-              throw new Error("Invalid plan ID");
+          
+          // Fetch current pricing from server
+          try {
+            const pricingResponse = await fetch('/api/exchange-rate');
+            const { rate } = await pricingResponse.json();
+            
+            switch (planId) {
+              case "pro-monthly":
+                amount = Math.round(19 * rate * 100); // $19 converted to paise
+                break;
+              case "pro-yearly":
+                amount = Math.round(183 * rate * 100); // $183 converted to paise
+                break;
+              case "enterprise-monthly":
+                amount = Math.round(50 * rate * 100); // $50 converted to paise
+                break;
+              case "enterprise-yearly":
+                amount = Math.round(480 * rate * 100); // $480 converted to paise
+                break;
+              default:
+                throw new Error("Invalid plan ID");
+            }
+          } catch (error) {
+            console.error("Error fetching pricing:", error);
+            // Fallback to hardcoded amounts with exchange rate of 83
+            switch (planId) {
+              case "pro-monthly":
+                amount = Math.round(19 * 83 * 100); // ₹1,577
+                break;
+              case "pro-yearly":
+                amount = Math.round(183 * 83 * 100); // ₹15,189
+                break;
+              case "enterprise-monthly":
+                amount = Math.round(50 * 83 * 100); // ₹4,150
+                break;
+              case "enterprise-yearly":
+                amount = Math.round(480 * 83 * 100); // ₹39,840
+                break;
+              default:
+                throw new Error("Invalid plan ID");
+            }
           }
 
           const result = await createManualPayment(planId, amount);
@@ -687,11 +713,11 @@ export default function Billing() {
       },
       {
         name: "Pro",
-        price: billingInterval === "monthly" ? "$29" : "$290",
+        price: billingInterval === "monthly" ? "$19" : "$183",
         interval: billingInterval === "monthly" ? "month" : "year",
-        yearlyPrice: "$290",
-        monthlyPrice: "$29",
-        savings: billingInterval === "yearly" ? "Save $58 per year" : "",
+        yearlyPrice: "$183",
+        monthlyPrice: "$19",
+        savings: billingInterval === "yearly" ? "Save $45 per year" : "",
         features: [
           "Up to 10 AI agents",
           "1,000 API requests per month",
@@ -709,11 +735,11 @@ export default function Billing() {
       },
       {
         name: "Enterprise",
-        price: billingInterval === "monthly" ? "$99" : "$990",
+        price: billingInterval === "monthly" ? "$50" : "$480",
         interval: billingInterval === "monthly" ? "month" : "year",
-        yearlyPrice: "$990",
-        monthlyPrice: "$99",
-        savings: billingInterval === "yearly" ? "Save $198 per year" : "",
+        yearlyPrice: "$480",
+        monthlyPrice: "$50",
+        savings: billingInterval === "yearly" ? "Save $120 per year" : "",
         features: [
           "Unlimited AI agents",
           "10,000 API requests per month",
