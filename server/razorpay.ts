@@ -217,6 +217,13 @@ export async function createRazorpaySubscription(planId: string, customerId: str
         planId: planId
       }
     });
+    
+    // Validate that the subscription has a proper payment URL
+    if (!subscription.short_url || subscription.short_url.includes('api.razorpay.com/v1/t/')) {
+      console.warn('Subscription created but has invalid payment URL:', subscription.short_url);
+      throw new Error('Subscription created but payment URL is not accessible');
+    }
+    
     return subscription;
   } catch (error) {
     console.error('Error creating Razorpay subscription:', error);

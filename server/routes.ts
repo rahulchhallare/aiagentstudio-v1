@@ -1202,6 +1202,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Subscription status:", subscription.status);
           console.log("Subscription short_url:", subscription.short_url);
 
+          // Check if subscription has a payment URL, if not create a payment link instead
+          if (!subscription.short_url || subscription.short_url.includes('api.razorpay.com/v1/t/')) {
+            console.log("Subscription created but no valid payment URL, falling back to payment link");
+            throw new Error("No valid payment URL for subscription");
+          }
+
           return res.json({
             subscriptionId: subscription.id,
             customerId: customer.id,
@@ -1240,7 +1246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               amount: planAmount,
               currency: "INR",
               accept_partial: false,
-              description: `Subscription: ${planName}`,
+              description: `Subscription Payment: ${planName}`,
               customer: {
                 id: customer.id
               },
@@ -1254,10 +1260,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               notes: {
                 planId: planId,
                 planName: planName,
-                userId: userId.toString()
+                userId: userId.toString(),
+                paymentType: "subscription_fallback",
+                originalSubscriptionId: subscription?.id || "none"
               },
               expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-              reference_id: `chk_${userId}_${Date.now().toString().slice(-8)}`
+              reference_id: `sub_${userId}_${Date.now().toString().slice(-8)}`
             });
 
             console.log("Payment link created successfully:", paymentLink.short_url);
