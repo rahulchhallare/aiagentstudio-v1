@@ -127,13 +127,13 @@ export default function Billing() {
 
       if (paymentResponse.ok) {
         const paymentData = await paymentResponse.json();
-        console.log('Payment history fetched:', paymentData);
+        console.log("Payment history fetched:", paymentData);
         setPaymentHistory(paymentData);
       } else {
         console.error(
           "Failed to fetch payment history:",
           paymentResponse.status,
-          await paymentResponse.text()
+          await paymentResponse.text(),
         );
       }
     } catch (error) {
@@ -168,15 +168,21 @@ export default function Billing() {
         const result = await response.json();
         toast({
           title: "Downgraded to Free",
-          description: result.message || "Your subscription has been cancelled and you're now on the Free plan.",
+          description:
+            result.message ||
+            "Your subscription has been cancelled and you're now on the Free plan.",
         });
         fetchBillingData();
       } else {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
         console.error("Failed to downgrade subscription:", errorData);
         toast({
           title: "Error",
-          description: errorData.error || "Failed to downgrade subscription. Please try again or contact support.",
+          description:
+            errorData.error ||
+            "Failed to downgrade subscription. Please try again or contact support.",
           variant: "destructive",
         });
       }
@@ -184,7 +190,8 @@ export default function Billing() {
       console.error("Error downgrading subscription:", error);
       toast({
         title: "Error",
-        description: "Failed to downgrade subscription. Please try again or contact support.",
+        description:
+          "Failed to downgrade subscription. Please try again or contact support.",
         variant: "destructive",
       });
     }
@@ -203,7 +210,7 @@ export default function Billing() {
 
           // Fetch current pricing from server
           try {
-            const pricingResponse = await fetch('/api/exchange-rate');
+            const pricingResponse = await fetch("/api/exchange-rate");
             const { rate } = await pricingResponse.json();
 
             switch (planId) {
@@ -265,7 +272,9 @@ export default function Billing() {
         const targetPlanName = planId.toLowerCase();
 
         // Check if this is actually a downgrade (Enterprise -> Pro)
-        const isDowngrade = currentPlanName.includes("enterprise") && targetPlanName.includes("pro");
+        const isDowngrade =
+          currentPlanName.includes("enterprise") &&
+          targetPlanName.includes("pro");
 
         if (isDowngrade) {
           // Handle downgrade - just update subscription without payment
@@ -302,7 +311,8 @@ export default function Billing() {
             console.error("Error downgrading subscription:", error);
             toast({
               title: "Downgrade Failed",
-              description: "Failed to downgrade subscription. Please try again.",
+              description:
+                "Failed to downgrade subscription. Please try again.",
               variant: "destructive",
             });
           }
@@ -381,7 +391,7 @@ export default function Billing() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const isAutoRedirect = urlParams.get("redirect") === "auto";
-    
+
     if (urlParams.get("subscription_success") === "true") {
       const subscriptionId = urlParams.get("subscription_id");
       const paymentLinkId = urlParams.get("payment_link_id");
@@ -401,7 +411,10 @@ export default function Billing() {
 
             // For payment link success, refresh data multiple times to ensure updates are captured
             if (paymentLinkId) {
-              console.log('Payment link success - refreshing billing data for payment link:', paymentLinkId);
+              console.log(
+                "Payment link success - refreshing billing data for payment link:",
+                paymentLinkId,
+              );
 
               // Immediate refresh
               fetchBillingData();
@@ -484,37 +497,39 @@ export default function Billing() {
         );
       }
     } else {
-        // If subscription_success is not true, check for other parameters that might indicate a completed payment
-        const paymentSuccess = urlParams.get('payment_success');
-        const planParam = urlParams.get('plan');
-        const isAutoRedirect = urlParams.get('redirect') === 'auto';
+      // If subscription_success is not true, check for other parameters that might indicate a completed payment
+      const paymentSuccess = urlParams.get("payment_success");
+      const planParam = urlParams.get("plan");
+      const isAutoRedirect = urlParams.get("redirect") === "auto";
 
-        if (paymentSuccess === 'true') {
-          // Show success message
-          toast({
-            title: "Payment Successful!",
-            description: planParam ? `Your ${planParam.replace('-', ' ')} subscription has been activated.` : "Your subscription has been activated.",
-          });
+      if (paymentSuccess === "true") {
+        // Show success message
+        toast({
+          title: "Payment Successful!",
+          description: planParam
+            ? `Your ${planParam.replace("-", " ")} subscription has been activated.`
+            : "Your subscription has been activated.",
+        });
 
-          // Clean up URL parameters immediately
-          const newUrl = window.location.origin + window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
+        // Clean up URL parameters immediately
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
 
-          // For auto redirects, immediately refresh data
-          if (isAutoRedirect) {
-            // Immediate refresh for auto redirects
+        // For auto redirects, immediately refresh data
+        if (isAutoRedirect) {
+          // Immediate refresh for auto redirects
+          fetchBillingData();
+
+          // Additional refreshes to ensure webhook data is captured
+          setTimeout(() => fetchBillingData(), 1000);
+          setTimeout(() => fetchBillingData(), 3000);
+          setTimeout(() => fetchBillingData(), 5000);
+        } else {
+          // Regular refresh for non-auto redirects
+          setTimeout(() => {
             fetchBillingData();
-            
-            // Additional refreshes to ensure webhook data is captured
-            setTimeout(() => fetchBillingData(), 1000);
-            setTimeout(() => fetchBillingData(), 3000);
-            setTimeout(() => fetchBillingData(), 5000);
-          } else {
-            // Regular refresh for non-auto redirects
-            setTimeout(() => {
-              fetchBillingData();
-            }, 2000);
-          }
+          }, 2000);
+        }
       }
     }
   }, [user, toast, fetchBillingData]);
@@ -623,29 +638,39 @@ export default function Billing() {
           usdAmount = 0;
         } else {
           // Check payment description to determine correct plan amount
-          const description = payment.description?.toLowerCase() || '';
+          const description = payment.description?.toLowerCase() || "";
 
-          if (description.includes('enterprise monthly') || description.includes('enterprise')) {
+          if (
+            description.includes("enterprise monthly") ||
+            description.includes("enterprise")
+          ) {
             usdAmount = 50; // Enterprise Monthly (current price)
-          } else if (description.includes('enterprise yearly')) {
+          } else if (description.includes("enterprise yearly")) {
             usdAmount = 480; // Enterprise Yearly (current price)
-          } else if (description.includes('pro monthly') || description.includes('pro')) {
+          } else if (
+            description.includes("pro monthly") ||
+            description.includes("pro")
+          ) {
             usdAmount = 19; // Pro Monthly (current price)
-          } else if (description.includes('pro yearly')) {
+          } else if (description.includes("pro yearly")) {
             usdAmount = 183; // Pro Yearly (current price)
-          } else if (description.includes('upgrade') || description.includes('prorated')) {
+          } else if (
+            description.includes("upgrade") ||
+            description.includes("prorated")
+          ) {
             // For upgrade transactions, show the target plan amount instead of prorated amount
-            if (description.includes('enterprise monthly')) {
+            if (description.includes("enterprise monthly")) {
               usdAmount = 50; // Enterprise Monthly (current price)
-            } else if (description.includes('enterprise yearly')) {
+            } else if (description.includes("enterprise yearly")) {
               usdAmount = 480; // Enterprise Yearly (current price)
-            } else if (description.includes('pro monthly')) {
+            } else if (description.includes("pro monthly")) {
               usdAmount = 19; // Pro Monthly (current price)
-            } else if (description.includes('pro yearly')) {
+            } else if (description.includes("pro yearly")) {
               usdAmount = 183; // Pro Yearly (current price)
             } else {
               // For large prorated amounts, convert to reasonable USD based on current pricing
-              if (inrAmount > 35000) { // Very large INR amounts
+              if (inrAmount > 35000) {
+                // Very large INR amounts
                 usdAmount = 480; // Likely Enterprise Yearly
               } else if (inrAmount > 10000) {
                 usdAmount = 183; // Likely Pro Yearly
@@ -692,25 +717,37 @@ export default function Billing() {
   // Helper function to determine button text and variant
   const getPlanButtonConfig = (plan: any) => {
     if (plan.isCurrent) {
-      return { text: "Current Plan", variant: "outline" as const, disabled: true };
+      return {
+        text: "Current Plan",
+        variant: "outline" as const,
+        disabled: true,
+      };
     }
 
     if (plan.name === "Free") {
       // Only show downgrade to free if user has an active paid subscription
       if (subscription && subscription.status === "active") {
-        return { 
-          text: "Downgrade to Free", 
-          variant: "outline" as const, 
-          disabled: false 
+        return {
+          text: "Downgrade to Free",
+          variant: "outline" as const,
+          disabled: false,
         };
       } else {
-        return { text: "Current Plan", variant: "outline" as const, disabled: true };
+        return {
+          text: "Current Plan",
+          variant: "outline" as const,
+          disabled: true,
+        };
       }
     }
 
     // If no active subscription, all paid plans are upgrades
     if (!subscription || subscription.status !== "active") {
-      return { text: "Get Started", variant: "default" as const, disabled: false };
+      return {
+        text: "Get Started",
+        variant: "default" as const,
+        disabled: false,
+      };
     }
 
     // Determine if this would be an upgrade or downgrade
@@ -721,11 +758,19 @@ export default function Billing() {
     const isPlanEnterprise = plan.name === "Enterprise";
 
     if (isFromEnterprise && isPlanPro) {
-      return { text: "Downgrade to Pro", variant: "outline" as const, disabled: false };
+      return {
+        text: "Downgrade to Pro",
+        variant: "outline" as const,
+        disabled: false,
+      };
     }
 
     if (isFromPro && isPlanEnterprise) {
-      return { text: "Upgrade to Enterprise", variant: "default" as const, disabled: false };
+      return {
+        text: "Upgrade to Enterprise",
+        variant: "default" as const,
+        disabled: false,
+      };
     }
 
     return { text: "Upgrade", variant: "default" as const, disabled: false };
@@ -765,7 +810,8 @@ export default function Billing() {
         popular: true,
         isCurrent:
           currentPlan.name === "Pro" &&
-          ((billingInterval === "monthly" && currentPlan.interval === "month") ||
+          ((billingInterval === "monthly" &&
+            currentPlan.interval === "month") ||
             (billingInterval === "yearly" && currentPlan.interval === "year")),
         planId: billingInterval === "monthly" ? "pro-monthly" : "pro-yearly",
       },
@@ -787,7 +833,8 @@ export default function Billing() {
         ],
         isCurrent:
           currentPlan.name === "Enterprise" &&
-          ((billingInterval === "monthly" && currentPlan.interval === "month") ||
+          ((billingInterval === "monthly" &&
+            currentPlan.interval === "month") ||
             (billingInterval === "yearly" && currentPlan.interval === "year")),
         planId:
           billingInterval === "monthly"
@@ -889,8 +936,8 @@ export default function Billing() {
                         <Label
                           htmlFor="billing-toggle"
                           className={`text-sm transition-all duration-300 ${
-                            billingInterval === "monthly" 
-                              ? "font-medium text-blue-600 scale-105" 
+                            billingInterval === "monthly"
+                              ? "font-medium text-blue-600 scale-105"
                               : "text-gray-600 hover:text-gray-900"
                           }`}
                         >
@@ -907,8 +954,8 @@ export default function Billing() {
                         <Label
                           htmlFor="billing-toggle"
                           className={`text-sm transition-all duration-300 ${
-                            billingInterval === "yearly" 
-                              ? "font-medium text-blue-600 scale-105" 
+                            billingInterval === "yearly"
+                              ? "font-medium text-blue-600 scale-105"
                               : "text-gray-600 hover:text-gray-900"
                           }`}
                         >
@@ -925,8 +972,8 @@ export default function Billing() {
                           key={index}
                           className={`
                             transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl cursor-pointer
-                            ${plan.popular ? 'border-primary-500 relative ring-2 ring-primary-200' : 'hover:border-primary-300'}
-                            ${plan.isCurrent ? 'bg-blue-50 border-blue-300 shadow-md' : ''}
+                            ${plan.popular ? "border-primary-500 relative ring-2 ring-primary-200" : "hover:border-primary-300"}
+                            ${plan.isCurrent ? "bg-blue-50 border-blue-300 shadow-md" : ""}
                           `}
                         >
                           {plan.popular && (
@@ -937,7 +984,8 @@ export default function Billing() {
                           <CardHeader>
                             <CardTitle className="transition-colors duration-200 hover:text-primary-600">
                               {plan.name}
-                            </CardTitle>The goal is to handle redirection issues after Razorpay payment by modifying the useEffect hook.                            <CardDescription>
+                            </CardTitle>
+                            <CardDescription>
                               <div className="transition-all duration-500 ease-in-out">
                                 <span className="text-3xl font-bold transition-all duration-300 transform hover:scale-110 inline-block">
                                   {plan.price}
@@ -977,7 +1025,9 @@ export default function Billing() {
                                       handleUpgradeOrSubscribe(plan.planId);
                                     }
                                   }}
-                                  disabled={paymentLoading || buttonConfig.disabled}
+                                  disabled={
+                                    paymentLoading || buttonConfig.disabled
+                                  }
                                 >
                                   {paymentLoading
                                     ? "Loading..."
