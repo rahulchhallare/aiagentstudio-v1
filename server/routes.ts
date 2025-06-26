@@ -264,7 +264,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   break;
                 }
 
-                const existingSubscription = await storage.getSubscriptionByUserId(userId);
                 let planName = "";
                 let planId = "";
 
@@ -289,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
 
-                // Create payment history record only once
+                // Create payment history record
                 if (planName) {
                   await storage.createPaymentHistory({
                     user_id: userId,
@@ -300,13 +299,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     description: `Payment for ${planName}`,
                   });
 
-                  // Update or create subscription
+                  // Try to find if this payment belongs to a subscription
+                  let subscriptionId = null;
+                  if (payment.subscription_id) {
+                    subscriptionId = payment.subscription_id;
+                  } else {
+                    // For payment links, we create a manual subscription
+                    subscriptionId = `manual_${payment.id}`;
+                  }
+
+                  const existingSubscription = await storage.getSubscriptionByUserId(userId);
+
                   if (existingSubscription) {
                     await storage.updateSubscription(
                       existingSubscription.razorpay_subscription_id ||
                         existingSubscription.stripe_subscription_id ||
                         `manual_${userId}`,
                       {
+                        razorpay_subscription_id: subscriptionId,
                         status: "active",
                         plan_name: planName,
                         plan_id: planId,
@@ -319,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   } else {
                     await storage.createSubscription({
                       user_id: userId,
-                      razorpay_subscription_id: `manual_${payment.id}`,
+                      razorpay_subscription_id: subscriptionId,
                       razorpay_customer_id: payment.customer_id || "",
                       status: "active",
                       plan_name: planName,
@@ -1110,53 +1120,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
           protocol
         });
 
-        // Create payment link directly as primary method
+        // Try to create a proper Razorpay subscription first
         try {
-          const paymentLink = await razorpay.paymentLink.create({
-            amount: planAmount,
-            currency: "INR",
-            accept_partial: false,
-            description: `Subscription: ${planName}`,
-            customer: {
-              id: customer.id
-            },
-            notify: {
-              sms: false,
-              email: true
-            },
-            reminder_enable: true,
-            callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
-            callback_method: 'get',
-            notes: {
-              planId: planId,
-              planName: planName,
-              userId: userId.toString()
-            },
-            // Force automatic redirection
-            expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-            reference_id: `chk_${userId}_${Date.now().toString().slice(-8)}`
-          });
+          let razorpayPlanId: string;
+          
+          switch (planId) {
+            case "pro-monthly":
+              razorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+              break;
+            case "pro-yearly":
+              razorpayPlanId = PLAN_IDS.PRO_YEARLY;
+              break;
+            case "enterprise-monthly":
+              razorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+              break;
+            case "enterprise-yearly":
+              razorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+              break;
+            default:
+              throw new Error("Invalid plan ID");
+          }
 
-          console.log("Payment link created successfully:", paymentLink.short_url);
+          if (razorpayPlanId) {
+            // Create actual Razorpay subscription
+            const subscription = await razorpay.subscriptions.create({
+              plan_id: razorpayPlanId,
+              customer_id: customer.id,
+              quantity: 1,
+              total_count: 120, // 10 years
+              notes: {
+                userId: userId.toString(),
+                planId: planId,
+                planName: planName
+              }
+            });
 
-          return res.json({
-            subscriptionId: `payment_link_${paymentLink.id}`,
-            customerId: customer.id,
-            amount: planAmount,
-            currency: "INR",
-            status: "created",
-            short_url: paymentLink.short_url,
-            payment_link_id: paymentLink.id,
-            success_url: `${protocol}://${host}/billing?subscription_success=true`,
-            failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
-          });
-        } catch (paymentLinkError) {
-          console.error("Payment link creation failed:", paymentLinkError);
-          return res.status(500).json({
-            message: "Failed to create payment link",
-            error: paymentLinkError.message,
-            details: "Unable to generate payment URL. Please try again.",
-          });
+            console.log("Razorpay subscription created:", subscription.id);
+
+            return res.json({
+              subscriptionId: subscription.id,
+              customerId: customer.id,
+              amount: planAmount,
+              currency: "INR",
+              status: subscription.status,
+              short_url: subscription.short_url,
+              success_url: `${protocol}://${host}/billing?subscription_success=true`,
+              failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
+            });
+          }
+        } catch (subscriptionError) {
+          console.log("Subscription creation failed, falling back to payment link:", subscriptionError.message);
+          
+          // Fallback to payment link
+          try {
+            const paymentLink = await razorpay.paymentLink.create({
+              amount: planAmount,
+              currency: "INR",
+              accept_partial: false,
+              description: `Subscription: ${planName}`,
+              customer: {
+                id: customer.id
+              },
+              notify: {
+                sms: false,
+                email: true
+              },
+              reminder_enable: true,
+              callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
+              callback_method: 'get',
+              notes: {
+                planId: planId,
+                planName: planName,
+                userId: userId.toString()
+              },
+              expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+              reference_id: `chk_${userId}_${Date.now().toString().slice(-8)}`
+            });
+
+            console.log("Payment link created successfully:", paymentLink.short_url);
+
+            return res.json({
+              subscriptionId: `payment_link_${paymentLink.id}`,
+              customerId: customer.id,
+              amount: planAmount,
+              currency: "INR",
+              status: "created",
+              short_url: paymentLink.short_url,
+              payment_link_id: paymentLink.id,
+              success_url: `${protocol}://${host}/billing?subscription_success=true`,
+              failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
+            });
+          } catch (paymentLinkError) {
+            console.error("Payment link creation also failed:", paymentLinkError);
+            return res.status(500).json({
+              message: "Failed to create subscription or payment link",
+              error: paymentLinkError.message,
+              details: "Unable to generate payment URL. Please try again.",
+            });
+          }
         }
       } catch (error: any) {
         console.error("Error creating checkout session:", error);
