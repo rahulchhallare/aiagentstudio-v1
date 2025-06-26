@@ -901,8 +901,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let customer;
       try {
         const customers = await razorpay.customers.all({ email: email });
-        if (customers.items && customers.items.length > 0) {
-          customer = customers.items[0];
+        
+        // Find exact email match
+        const exactMatch = customers.items?.find(c => c.email === email);
+        
+        if (exactMatch) {
+          customer = exactMatch;
+          console.log("Found existing customer for manual payment:", customer.id, "email:", customer.email);
         } else {
           customer = await razorpay.customers.create({
             name: email.split("@")[0],
@@ -912,6 +917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId: userId.toString(),
             },
           });
+          console.log("Created new customer for manual payment:", customer.id, "email:", customer.email);
         }
       } catch (customerError) {
         console.error("Failed to handle customer:", customerError);
@@ -1061,10 +1067,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log("Looking for existing customer with email:", email);
           const customers = await razorpay.customers.all({ email: email });
-          if (customers.items && customers.items.length > 0) {
-            customer = customers.items[0];
-            console.log("Found existing customer:", customer.id);
+          
+          // Properly filter to find exact email match
+          const exactMatch = customers.items?.find(c => c.email === email);
+          
+          if (exactMatch) {
+            customer = exactMatch;
+            console.log("Found existing customer:", customer.id, "for email:", customer.email);
           } else {
+            console.log("No exact email match found. Creating new customer.");
             throw new Error("No existing customer found");
           }
         } catch (customerError) {
@@ -1078,7 +1089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 userId: userId.toString(),
               },
             });
-            console.log("Created new customer:", customer.id);
+            console.log("Created new customer:", customer.id, "for email:", customer.email);
           } catch (createError) {
             console.error("Failed to create customer:", createError);
             return res.status(500).json({
@@ -1317,19 +1328,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const existingCustomers = await razorpay.customers.all({
           email: user.email,
-          count: 1,
+          count: 10, // Get more results to check
         });
 
-        if (existingCustomers.items && existingCustomers.items.length > 0) {
-          customer = existingCustomers.items[0];
+        // Find exact email match
+        const exactMatch = existingCustomers.items?.find(c => c.email === user.email);
+
+        if (exactMatch) {
+          customer = exactMatch;
+          console.log("Found existing customer for upgrade:", customer.id, "email:", customer.email);
         } else {
           customer = await razorpay.customers.create({
             name: user.username,
             email: user.email,
             contact: "+919000000000",
           });
+          console.log("Created new customer for upgrade:", customer.id, "email:", customer.email);
         }
       } catch (customerError) {
+        console.error("Failed to handle customer for upgrade:", customerError);
         return res.status(500).json({ error: "Failed to handle customer" });
       }
 
