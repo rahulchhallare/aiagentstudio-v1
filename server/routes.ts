@@ -1148,9 +1148,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Try to create a proper Razorpay subscription first
+        let razorpayPlanId: string | undefined;
+        
         try {
-          let razorpayPlanId: string | undefined;
-          
           switch (planId) {
             case "pro-monthly":
               razorpayPlanId = PLAN_IDS.PRO_MONTHLY;
