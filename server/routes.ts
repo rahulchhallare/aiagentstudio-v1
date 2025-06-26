@@ -1076,7 +1076,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let customer;
         try {
           console.log("Looking for existing customer with email:", email);
-          const customers = await razorpay.customers.all({ email: email });
+          const customers = await razorpay.customers.all({ 
+            email: email,
+            count: 10 
+          });
+          
+          console.log("Razorpay customers API response:", {
+            count: customers.count,
+            items: customers.items?.length || 0
+          });
           
           // Properly filter to find exact email match
           const exactMatch = customers.items?.find(c => c.email === email);
@@ -1090,21 +1098,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (customerError) {
           console.log("Creating new customer for email:", email);
+          console.log("Customer creation error context:", customerError.message);
+          
           try {
-            customer = await razorpay.customers.create({
-              name: email.split("@")[0],
+            // Validate email format before creating customer
+            if (!email || !email.includes('@')) {
+              throw new Error("Invalid email format");
+            }
+
+            const customerName = email.split("@")[0] || "Customer";
+            
+            const customerParams = {
+              name: customerName,
               email: email,
-              contact: "",
+              contact: "", // Empty string is acceptable
               notes: {
                 userId: userId.toString(),
+                created_via: "checkout_session"
               },
-            });
+            };
+
+            console.log("Creating customer with params:", JSON.stringify(customerParams, null, 2));
+
+            customer = await razorpay.customers.create(customerParams);
             console.log("Created new customer:", customer.id, "for email:", customer.email);
-          } catch (createError) {
-            console.error("Failed to create customer:", createError);
+          } catch (createError: any) {
+            console.error("Failed to create customer:", {
+              message: createError.message,
+              error: createError.error || createError,
+              statusCode: createError.statusCode
+            });
             return res.status(500).json({
               message: "Failed to create customer account",
-              error: createError.message,
+              error: createError.message || "Unknown customer creation error",
+              details: createError.error?.description || "Please check your account details and try again"
             });
           }
         }
@@ -1146,9 +1173,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           console.log(`Attempting to create Razorpay subscription with plan ID: ${razorpayPlanId}`);
+          console.log(`Customer ID: ${customer.id}`);
+          console.log(`User ID: ${userId}`);
 
-          // Create actual Razorpay subscription
-          const subscription = await razorpay.subscriptions.create({
+          // Validate customer exists and is properly formatted
+          if (!customer.id || typeof customer.id !== 'string') {
+            throw new Error(`Invalid customer ID: ${customer.id}`);
+          }
+
+          // Create actual Razorpay subscription with proper error handling
+          const subscriptionParams = {
             plan_id: razorpayPlanId,
             customer_id: customer.id,
             quantity: 1,
@@ -1158,9 +1192,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               planId: planId,
               planName: planName
             }
-          });
+          };
+
+          console.log("Creating subscription with params:", JSON.stringify(subscriptionParams, null, 2));
+
+          const subscription = await razorpay.subscriptions.create(subscriptionParams);
 
           console.log("Razorpay subscription created successfully:", subscription.id);
+          console.log("Subscription status:", subscription.status);
+          console.log("Subscription short_url:", subscription.short_url);
 
           return res.json({
             subscriptionId: subscription.id,
@@ -1172,8 +1212,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             success_url: `${protocol}://${host}/billing?subscription_success=true`,
             failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
           });
-        } catch (subscriptionError) {
-          console.log("Subscription creation failed, falling back to payment link. Error:", subscriptionError.message);
+        } catch (subscriptionError: any) {
+          console.error("Subscription creation failed:", {
+            message: subscriptionError.message,
+            error: subscriptionError.error || subscriptionError,
+            statusCode: subscriptionError.statusCode,
+            planId: razorpayPlanId,
+            customerId: customer?.id
+          });
+          
+          // Log detailed error information
+          if (subscriptionError.error) {
+            console.error("Razorpay error details:", {
+              code: subscriptionError.error.code,
+              description: subscriptionError.error.description,
+              field: subscriptionError.error.field,
+              step: subscriptionError.error.step,
+              reason: subscriptionError.error.reason
+            });
+          }
+          
+          console.log("Subscription creation failed, falling back to payment link. Error:", subscriptionError.message || "Unknown error");
           
           // Fallback to payment link
           try {
