@@ -540,7 +540,7 @@ export default function Billing() {
     if (planName.includes("pro monthly")) {
       return {
         name: "Pro",
-        price: "$29",
+        price: "$19",
         interval: "month",
         features: [
           "Up to 10 AI agents",
@@ -556,7 +556,7 @@ export default function Billing() {
     if (planName.includes("pro yearly")) {
       return {
         name: "Pro",
-        price: "$290",
+        price: "$183",
         interval: "year",
         features: [
           "Up to 10 AI agents",
@@ -572,7 +572,7 @@ export default function Billing() {
     if (planName.includes("enterprise")) {
       return {
         name: "Enterprise",
-        price: planName.includes("yearly") ? "$990" : "$99",
+        price: planName.includes("yearly") ? "$480" : "$50",
         interval: planName.includes("yearly") ? "year" : "month",
         features: [
           "Unlimited AI agents",
@@ -658,8 +658,19 @@ export default function Billing() {
               }
             }
           } else {
-            // Fallback: approximate conversion (₹83 ≈ $1)
-            usdAmount = Math.round(inrAmount / 83);
+            // Enhanced fallback: map common amounts to known plans
+            if (inrAmount >= 15000 && inrAmount <= 16000) {
+              usdAmount = 183; // Pro Yearly
+            } else if (inrAmount >= 1500 && inrAmount <= 1700) {
+              usdAmount = 19; // Pro Monthly
+            } else if (inrAmount >= 4000 && inrAmount <= 4500) {
+              usdAmount = 50; // Enterprise Monthly
+            } else if (inrAmount >= 39000 && inrAmount <= 41000) {
+              usdAmount = 480; // Enterprise Yearly
+            } else {
+              // Fallback: approximate conversion (₹83 ≈ $1)
+              usdAmount = Math.round(inrAmount / 83);
+            }
           }
         }
 
