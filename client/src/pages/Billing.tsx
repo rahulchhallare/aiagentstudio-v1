@@ -640,13 +640,10 @@ export default function Billing() {
           // Check payment description to determine correct plan amount
           const description = payment.description?.toLowerCase() || "";
 
-          if (
-            description.includes("enterprise monthly") ||
-            description.includes("enterprise")
-          ) {
-            usdAmount = 50; // Enterprise Monthly (current price)
-          } else if (description.includes("enterprise yearly")) {
-            usdAmount = 480; // Enterprise Yearly (current price)
+          if (description.includes("enterprise yearly")) {
+              usdAmount = 480; // Enterprise Yearly (current price)
+            } else if (description.includes("enterprise monthly")) {
+              usdAmount = 50; // Enterprise Monthly (current price)
           } else if (
             description.includes("pro monthly") ||
             description.includes("pro")
