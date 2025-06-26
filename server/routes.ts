@@ -1122,7 +1122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Try to create a proper Razorpay subscription first
         try {
-          let razorpayPlanId: string;
+          let razorpayPlanId: string | undefined;
           
           switch (planId) {
             case "pro-monthly":
@@ -1138,38 +1138,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
               razorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
               break;
             default:
-              throw new Error("Invalid plan ID");
+              throw new Error(`Invalid plan ID: ${planId}`);
           }
 
-          if (razorpayPlanId) {
-            // Create actual Razorpay subscription
-            const subscription = await razorpay.subscriptions.create({
-              plan_id: razorpayPlanId,
-              customer_id: customer.id,
-              quantity: 1,
-              total_count: 120, // 10 years
-              notes: {
-                userId: userId.toString(),
-                planId: planId,
-                planName: planName
-              }
-            });
-
-            console.log("Razorpay subscription created:", subscription.id);
-
-            return res.json({
-              subscriptionId: subscription.id,
-              customerId: customer.id,
-              amount: planAmount,
-              currency: "INR",
-              status: subscription.status,
-              short_url: subscription.short_url,
-              success_url: `${protocol}://${host}/billing?subscription_success=true`,
-              failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
-            });
+          if (!razorpayPlanId) {
+            throw new Error(`Razorpay plan ID not configured for ${planId}. Please set the environment variable.`);
           }
+
+          console.log(`Attempting to create Razorpay subscription with plan ID: ${razorpayPlanId}`);
+
+          // Create actual Razorpay subscription
+          const subscription = await razorpay.subscriptions.create({
+            plan_id: razorpayPlanId,
+            customer_id: customer.id,
+            quantity: 1,
+            total_count: 120, // 10 years
+            notes: {
+              userId: userId.toString(),
+              planId: planId,
+              planName: planName
+            }
+          });
+
+          console.log("Razorpay subscription created successfully:", subscription.id);
+
+          return res.json({
+            subscriptionId: subscription.id,
+            customerId: customer.id,
+            amount: planAmount,
+            currency: "INR",
+            status: subscription.status,
+            short_url: subscription.short_url,
+            success_url: `${protocol}://${host}/billing?subscription_success=true`,
+            failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
+          });
         } catch (subscriptionError) {
-          console.log("Subscription creation failed, falling back to payment link:", subscriptionError.message);
+          console.log("Subscription creation failed, falling back to payment link. Error:", subscriptionError.message);
           
           // Fallback to payment link
           try {
