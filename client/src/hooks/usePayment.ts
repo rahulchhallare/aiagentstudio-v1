@@ -157,7 +157,7 @@ export function usePayment() {
         return;
       }
 
-      // For Razorpay subscriptions, redirect to hosted checkout page
+      // For Razorpay subscriptions, redirect to hosted checkout page or open Razorpay checkout
       if (short_url) {
         console.log('Redirecting to Razorpay hosted checkout:', short_url);
         
