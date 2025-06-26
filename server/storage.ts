@@ -20,6 +20,16 @@ export interface IStorage {
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
+
+  // Contact Form
+  createContactSubmission(data: {
+    name: string;
+    email: string;
+    company?: string;
+    subject: string;
+    message: string;
+    inquiryType?: string;
+  }): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -151,6 +161,20 @@ export class MemStorage implements IStorage {
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
+
+  async createContactSubmission(data: {
+    name: string;
+    email: string;
+    company?: string;
+    subject: string;
+    message: string;
+    inquiryType?: string;
+  }) {
+    // This would require a contact_submissions table in your database
+    // For now, we'll just log it - you can implement the table later
+    console.log("Contact submission would be saved:", data);
+    return { id: Date.now(), ...data, created_at: new Date() };
+  }
 }
 
 import { createClient } from '@supabase/supabase-js';
@@ -161,11 +185,11 @@ export class SupabaseStorage implements IStorage {
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase credentials not found in environment variables');
     }
-    
+
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
@@ -175,7 +199,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -186,7 +210,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('username', username)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -197,7 +221,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('email', email)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -208,7 +232,7 @@ export class SupabaseStorage implements IStorage {
       .insert(insertUser)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -218,7 +242,7 @@ export class SupabaseStorage implements IStorage {
       .from('users')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw new Error(error.message);
     return data || [];
   }
@@ -229,7 +253,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -240,7 +264,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) return [];
     return data || [];
   }
@@ -251,7 +275,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('deploy_id', deployId)
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -263,7 +287,7 @@ export class SupabaseStorage implements IStorage {
         .insert(insertAgent)
         .select()
         .single();
-      
+
       if (error) {
         console.error('Supabase agent creation error:', error);
         throw new Error(error.message);
@@ -282,7 +306,7 @@ export class SupabaseStorage implements IStorage {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) return undefined;
     return data;
   }
@@ -292,7 +316,7 @@ export class SupabaseStorage implements IStorage {
       .from('agents')
       .delete()
       .eq('id', id);
-    
+
     return !error;
   }
 
@@ -302,7 +326,7 @@ export class SupabaseStorage implements IStorage {
       .insert(insertWaitlist)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -312,7 +336,7 @@ export class SupabaseStorage implements IStorage {
       .from('waitlist')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) return [];
     return data || [];
   }
@@ -324,54 +348,41 @@ export class SupabaseStorage implements IStorage {
       .insert(subscription)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
 
   async updateSubscription(subscriptionId: string, updates: any): Promise<any> {
-    console.log('=== UPDATE SUBSCRIPTION DEBUG ===');
-    console.log('Subscription ID:', subscriptionId);
-    console.log('Updates to apply:', updates);
-    
+    const finalUpdates = { 
+      ...updates, 
+      updated_at: new Date()
+    };
+
     // Try to update by razorpay_subscription_id first, then by stripe_subscription_id
-    let data, error;
-    
-    // First try Razorpay subscription ID
     const razorpayResult = await this.supabase
       .from('subscriptions')
-      .update({ ...updates, updated_at: new Date() })
+      .update(finalUpdates)
       .eq('razorpay_subscription_id', subscriptionId)
       .select()
       .single();
-    
+
     if (!razorpayResult.error && razorpayResult.data) {
-      console.log('Updated by razorpay_subscription_id:', razorpayResult.data);
-      console.log('=== END UPDATE DEBUG ===');
       return razorpayResult.data;
     }
-    
-    // If not found by Razorpay ID, try Stripe ID
+
     const stripeResult = await this.supabase
       .from('subscriptions')
-      .update({ ...updates, updated_at: new Date() })
+      .update(finalUpdates)
       .eq('stripe_subscription_id', subscriptionId)
       .select()
       .single();
-    
-    data = stripeResult.data;
-    error = stripeResult.error;
-    
-    if (error) {
-      console.error('Supabase update error:', error);
-      console.error('Error details:', error.details);
-      console.error('Error hint:', error.hint);
-      throw new Error(error.message);
+
+    if (stripeResult.error) {
+      throw new Error(stripeResult.error.message);
     }
-    
-    console.log('Supabase update successful:', data);
-    console.log('=== END UPDATE DEBUG ===');
-    return data;
+
+    return stripeResult.data;
   }
 
   async getSubscriptionByUserId(userId: number): Promise<any> {
@@ -382,7 +393,7 @@ export class SupabaseStorage implements IStorage {
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
-    
+
     if (error) return null;
     return data;
   }
@@ -394,7 +405,7 @@ export class SupabaseStorage implements IStorage {
       .insert(payment)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -405,9 +416,21 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) return [];
     return data || [];
+  }
+
+  async deletePaymentHistory(id: number): Promise<any> {
+    const { data, error } = await this.supabase
+        .from('payment_history')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) return null;
+    return data;
   }
 
   // Webhook event methods
@@ -417,7 +440,7 @@ export class SupabaseStorage implements IStorage {
       .insert(event)
       .select()
       .single();
-    
+
     if (error) throw new Error(error.message);
     return data;
   }
@@ -428,9 +451,51 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('stripe_event_id', stripeEventId)
       .single();
-    
+
     if (error) return null;
     return data;
+  }
+
+  async getWebhookEventById(eventId: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('webhook_events')
+      .select('*')
+      .eq('razorpay_event_id', eventId)
+      .single();
+
+      if (error) return null;
+      return data;
+  }
+
+  async createContactSubmission(data: {
+    name: string;
+    email: string;
+    company?: string;
+    subject: string;
+    message: string;
+    inquiryType?: string;
+  }) {
+    // Map camelCase to snake_case for database
+    const dbData = {
+      name: data.name,
+      email: data.email,
+      company: data.company,
+      subject: data.subject,
+      message: data.message,
+      inquiry_type: data.inquiryType
+    };
+    
+    const { data: result, error } = await this.supabase
+      .from('contact_submissions')
+      .insert(dbData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase contact submission error:', error);
+      throw new Error(error.message);
+    }
+    return result;
   }
 }
 

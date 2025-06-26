@@ -308,8 +308,8 @@ export default function Pricing() {
     {
       name: "Pro",
       description: "For professionals and small teams",
-      price: { monthly: "$29", yearly: "$290" },
-      savings: { monthly: "", yearly: "Save $58 per year" },
+      price: { monthly: "$19", yearly: "$183" },
+      savings: { monthly: "", yearly: "Save $45 per year" },
       features: [
         "Up to 10 AI agents",
         "1,000 API requests per month",
@@ -346,8 +346,8 @@ export default function Pricing() {
     {
       name: "Enterprise",
       description: "For businesses with advanced needs",
-      price: { monthly: "$99", yearly: "$990" },
-      savings: { monthly: "", yearly: "Save $198 per year" },
+      price: { monthly: "$50", yearly: "$480" },
+      savings: { monthly: "", yearly: "Save $120 per year" },
       features: [
         "Unlimited AI agents",
         "10,000 API requests per month",

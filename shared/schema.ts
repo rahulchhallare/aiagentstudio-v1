@@ -69,6 +69,17 @@ export const webhook_events = pgTable("webhook_events", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+export const contact_submissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  company: text("company"),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  inquiry_type: text("inquiry_type"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -166,3 +177,12 @@ export type InsertWebhookEvent = typeof webhook_events.$inferInsert;
 export type WebhookEvent = typeof webhook_events.$inferSelect;
 
 export type FlowData = z.infer<typeof flowDataSchema>;
+
+export const insertContactSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email format"),
+  company: z.string().optional(),
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(1, "Message is required"),
+  inquiryType: z.string().optional(),
+});

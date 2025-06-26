@@ -1,0 +1,44 @@
+chunk-RPCDYKBN.js?v=bd32ed25:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+Billing.tsx:106 Fetched subscription data: {id: 17, user_id: 5, stripe_subscription_id: null, stripe_customer_id: null, status: 'cancelled', …}
+Billing.tsx:129 Payment history fetched: (29) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Billing.tsx:200 
+            
+            
+           POST https://34d59a28-2dee-4698-829a-8001a9709ca3-00-18bl5upzhty49.janeway.replit.dev/api/create-manual-payment 400 (Bad Request)
+(anonymous) @ Billing.tsx:200
+onClick @ Billing.tsx:910
+callCallback2 @ chunk-RPCDYKBN.js?v=bd32ed25:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=bd32ed25:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=bd32ed25:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=bd32ed25:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=bd32ed25:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=bd32ed25:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=bd32ed25:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=bd32ed25:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=bd32ed25:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=bd32ed25:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=bd32ed25:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=bd32ed25:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=bd32ed25:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5449
+Billing.tsx:223 Error creating payment: Error: Failed to create payment link
+    at Billing.tsx:220:19
+(anonymous) @ Billing.tsx:223
+await in (anonymous)
+onClick @ Billing.tsx:910
+callCallback2 @ chunk-RPCDYKBN.js?v=bd32ed25:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=bd32ed25:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=bd32ed25:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=bd32ed25:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=bd32ed25:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=bd32ed25:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=bd32ed25:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=bd32ed25:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=bd32ed25:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=bd32ed25:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=bd32ed25:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=bd32ed25:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=bd32ed25:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=bd32ed25:5449

@@ -8,17 +8,18 @@ export function usePayment() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Map frontend plan names to actual Razorpay plan IDs
+  // Map frontend plan names to backend plan identifiers
+  // The actual Razorpay plan IDs will be resolved on the server side
   const mapPlanId = (planId: string): string => {
     const planMapping: Record<string, string> = {
-      'pro-monthly': 'plan_QhReRFpIgKH7uT', // Use actual Razorpay plan ID
-      'pro-yearly': 'plan_pro_yearly', 
-      'enterprise-monthly': 'plan_enterprise_monthly',
-      'enterprise-yearly': 'plan_enterprise_yearly',
-      'pro_monthly': 'plan_QhReRFpIgKH7uT', // Use actual Razorpay plan ID
-      'pro_yearly': 'plan_pro_yearly',
-      'enterprise_monthly': 'plan_enterprise_monthly', 
-      'enterprise_yearly': 'plan_enterprise_yearly'
+      'pro-monthly': 'pro-monthly',
+      'pro-yearly': 'pro-yearly', 
+      'enterprise-monthly': 'enterprise-monthly',
+      'enterprise-yearly': 'enterprise-yearly',
+      'pro_monthly': 'pro-monthly',
+      'pro_yearly': 'pro-yearly',
+      'enterprise_monthly': 'enterprise-monthly', 
+      'enterprise_yearly': 'enterprise-yearly'
     };
 
     return planMapping[planId] || planId;
@@ -29,6 +30,24 @@ export function usePayment() {
       toast({
         title: "Authentication required",
         description: "Please log in to continue with payment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!planId) {
+      toast({
+        title: "Invalid plan",
+        description: "Please select a valid plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user.id || !user.email) {
+      toast({
+        title: "User information missing",
+        description: "Please ensure you are properly logged in.",
         variant: "destructive",
       });
       return;
@@ -49,6 +68,17 @@ export function usePayment() {
 
       console.log('Request body:', requestBody);
 
+      // Validate request body before sending
+      if (!requestBody.planId || !requestBody.userId || !requestBody.email) {
+        throw new Error(`Missing required fields: planId=${requestBody.planId}, userId=${requestBody.userId}, email=${requestBody.email}`);
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(requestBody.email)) {
+        throw new Error('Invalid email format');
+      }
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -60,37 +90,105 @@ export function usePayment() {
       console.log('Response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Response error:', errorData);
-        throw new Error(`Failed to create checkout session: ${response.status} ${errorData}`);
+        let errorData;
+        let responseText = '';
+        
+        try {
+          responseText = await response.text();
+          // Check if response is JSON
+          if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            errorData = JSON.parse(responseText);
+          } else {
+            // Response is HTML or plain text
+            console.error('Non-JSON response received:', responseText.substring(0, 200));
+            errorData = { 
+              message: response.status === 404 ? 'API endpoint not found' : 'Server returned an unexpected response'
+            };
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          console.error('Raw response text:', responseText.substring(0, 200));
+          errorData = { 
+            message: 'Server error - received invalid response format'
+          };
+        }
+        
+        console.error('Response error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          responseText: responseText.substring(0, 200)
+        });
+        
+        let errorMessage = 'Failed to create payment session';
+        
+        if (response.status === 404) {
+          errorMessage = 'Payment service not available. Please contact support.';
+        } else if (response.status === 400) {
+          errorMessage = errorData.message || 'Invalid request parameters. Please check your plan selection.';
+        } else if (response.status === 500) {
+          errorMessage = errorData.message || 'Server error. Please try again or contact support.';
+        } else {
+          errorMessage = `Payment creation failed (${response.status}): ${errorData.message || 'Unknown error'}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const responseData = await response.json();
       console.log('Response data:', responseData);
 
-      const { orderId, amount, currency } = responseData;
+      const { subscriptionId, customerId, amount, currency, status, short_url, fallback_payment, message } = responseData;
 
-      if (!orderId) {
-        throw new Error('No order ID received from server');
+      if (!subscriptionId) {
+        throw new Error('No subscription ID received from server');
       }
 
+      // Check for fallback payment scenario
+      if (fallback_payment) {
+        toast({
+          title: "Payment setup required",
+          description: message || "Subscription created. Please complete payment setup.",
+          variant: "default",
+        });
+        
+        // Redirect to billing page for manual payment setup
+        window.location.href = short_url || '/billing';
+        return;
+      }
+
+      // For Razorpay subscriptions, redirect to hosted checkout page
+      if (short_url) {
+        console.log('Redirecting to Razorpay hosted checkout:', short_url);
+        
+        // Check if the URL is a valid Razorpay hosted page
+        if (short_url.includes('rzp.io') || short_url.includes('razorpay.com')) {
+          // Redirect directly to Razorpay hosted page
+          window.location.href = short_url;
+          return;
+        } else {
+          // Handle internal fallback URLs
+          window.location.href = short_url;
+          return;
+        }
+      }
+
+      // Fallback: Use Razorpay checkout (for existing customers)
       const Razorpay = await loadRazorpay();
       if (!Razorpay) {
         throw new Error('Razorpay failed to load');
       }
 
-      console.log('Opening Razorpay checkout with order ID:', orderId);
+      console.log('Opening Razorpay checkout with subscription ID:', subscriptionId);
 
       const options = {
         key: RAZORPAY_KEY_ID,
-        amount: amount,
-        currency: currency,
+        subscription_id: subscriptionId,
         name: 'AIagentStudio.ai',
         description: 'Subscription Payment',
-        order_id: orderId,
         handler: async function (response: any) {
-          console.log('Payment success:', response);
-          // Verify payment on server
+          console.log('Subscription payment success:', response);
+          // Verify subscription on server
           try {
             const verifyResponse = await fetch('/api/verify-payment', {
               method: 'POST',
@@ -98,7 +196,7 @@ export function usePayment() {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_subscription_id: response.razorpay_subscription_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 userId: user.id,
@@ -107,18 +205,18 @@ export function usePayment() {
 
             if (verifyResponse.ok) {
               toast({
-                title: "Payment successful!",
-                description: "Your subscription has been activated. Amount charged in INR equivalent to USD pricing.",
+                title: "Subscription activated!",
+                description: "Your subscription has been activated successfully. Recurring payments will be processed automatically.",
               });
               // Redirect to billing page
               window.location.href = '/billing';
             } else {
-              throw new Error('Payment verification failed');
+              throw new Error('Subscription verification failed');
             }
           } catch (error) {
-            console.error('Payment verification error:', error);
+            console.error('Subscription verification error:', error);
             toast({
-              title: "Payment verification failed",
+              title: "Subscription verification failed",
               description: "Please contact support for assistance.",
               variant: "destructive",
             });
@@ -256,6 +354,123 @@ export function usePayment() {
     }
   };
 
+  const createManualPayment = async (planId: string, amount: number) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to continue with payment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!planId || !amount) {
+      toast({
+        title: "Invalid parameters",
+        description: "Plan ID and amount are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('Creating manual payment for plan:', planId, 'amount:', amount);
+    setIsLoading(true);
+
+    try {
+      const requestBody = {
+        planId: mapPlanId(planId),
+        userId: user.id,
+        email: user.email,
+        amount: amount
+      };
+
+      console.log('Manual payment request body:', requestBody);
+
+      // Validate request body
+      if (!requestBody.planId || !requestBody.userId || !requestBody.email || !requestBody.amount) {
+        throw new Error(`Missing required fields: planId=${requestBody.planId}, userId=${requestBody.userId}, email=${requestBody.email}, amount=${requestBody.amount}`);
+      }
+
+      const response = await fetch('/api/create-manual-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('Manual payment response status:', response.status);
+
+      if (!response.ok) {
+        let errorData;
+        let responseText = '';
+        
+        try {
+          responseText = await response.text();
+          if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            errorData = JSON.parse(responseText);
+          } else {
+            console.error('Non-JSON response received:', responseText.substring(0, 200));
+            errorData = { 
+              message: response.status === 404 ? 'API endpoint not found' : 'Server returned an unexpected response'
+            };
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          console.error('Raw response text:', responseText.substring(0, 200));
+          errorData = { 
+            message: 'Server error - received invalid response format'
+          };
+        }
+        
+        console.error('Manual payment error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          responseText: responseText.substring(0, 200)
+        });
+        
+        let errorMessage = 'Failed to create manual payment';
+        
+        if (response.status === 400) {
+          errorMessage = errorData.message || 'Invalid request parameters.';
+        } else if (response.status === 500) {
+          errorMessage = errorData.message || 'Server error. Please try again.';
+        } else {
+          errorMessage = `Payment creation failed (${response.status}): ${errorData.message || 'Unknown error'}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const responseData = await response.json();
+      console.log('Manual payment response data:', responseData);
+
+      if (responseData.success && responseData.paymentLink) {
+        toast({
+          title: "Payment link created",
+          description: "Redirecting to payment page...",
+        });
+        
+        // Redirect to payment link in same tab
+        window.location.href = responseData.paymentLink;
+        return responseData;
+      } else {
+        throw new Error('Invalid response from payment service');
+      }
+
+    } catch (error: any) {
+      console.error('Error creating manual payment:', error);
+      toast({
+        title: "Payment failed",
+        description: error.message || "Failed to create payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const createPortalSession = async (customerId?: string) => {
     // For Razorpay, we don't have a direct equivalent to Stripe's customer portal
     // This function is kept for compatibility but subscription management is handled directly in the billing page
@@ -264,6 +479,7 @@ export function usePayment() {
 
   return {
     createCheckoutSession,
+    createManualPayment,
     cancelSubscription,
     updateSubscription,
     upgradeSubscription,
