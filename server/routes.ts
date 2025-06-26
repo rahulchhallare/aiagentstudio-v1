@@ -1120,7 +1120,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             console.log("Creating customer with params:", JSON.stringify(customerParams, null, 2));
 
+            // Log the actual request being sent to Razorpay
+            console.log("=== RAZORPAY CUSTOMER CREATE REQUEST ===");
+            console.log("Endpoint: POST /v1/customers");
+            console.log("Request Body:", JSON.stringify(customerParams, null, 2));
+            console.log("Timestamp:", new Date().toISOString());
+
             customer = await razorpay.customers.create(customerParams);
+
+            // Log the complete response from Razorpay
+            console.log("=== RAZORPAY CUSTOMER CREATE RESPONSE ===");
+            console.log("Response Body:", JSON.stringify(customer, null, 2));
+            console.log("Response Status: SUCCESS");
+            console.log("Timestamp:", new Date().toISOString());
             console.log("Created new customer:", customer.id, "for email:", customer.email);
           } catch (createError: any) {
             console.error("Failed to create customer:", {
@@ -1196,10 +1208,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log("Creating subscription with params:", JSON.stringify(subscriptionParams, null, 2));
 
+          // Log the actual request being sent to Razorpay
+          console.log("=== RAZORPAY SUBSCRIPTION CREATE REQUEST ===");
+          console.log("Endpoint: POST /v1/subscriptions");
+          console.log("Request Body:", JSON.stringify(subscriptionParams, null, 2));
+          console.log("Timestamp:", new Date().toISOString());
+
           const subscription = await razorpay.subscriptions.create(subscriptionParams);
 
-          console.log("Razorpay subscription created successfully:", subscription.id);
-          console.log("Subscription status:", subscription.status);
+          // Log the complete response from Razorpay
+          console.log("=== RAZORPAY SUBSCRIPTION CREATE RESPONSE ===");
+          console.log("Response Body:", JSON.stringify(subscription, null, 2));
+          console.log("Response Status: SUCCESS");
+          console.log("Timestamp:", new Date().toISOString());
+          console.log("Subscription ID:", subscription.id);
+          console.log("Subscription Status:", subscription.status);
           console.log("Subscription short_url:", subscription.short_url);
 
           // Check if subscription has a payment URL, if not create a payment link instead
@@ -1219,6 +1242,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
           });
         } catch (subscriptionError: any) {
+          // Log the complete error response from Razorpay
+          console.log("=== RAZORPAY SUBSCRIPTION CREATE ERROR RESPONSE ===");
+          console.log("Error Response:", JSON.stringify(subscriptionError, null, 2));
+          console.log("Error Message:", subscriptionError.message);
+          console.log("Error Status Code:", subscriptionError.statusCode);
+          console.log("Timestamp:", new Date().toISOString());
+          
           console.error("Subscription creation failed:", {
             message: subscriptionError.message,
             error: subscriptionError.error || subscriptionError,
@@ -1242,7 +1272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Fallback to payment link
           try {
-            const paymentLink = await razorpay.paymentLink.create({
+            const paymentLinkParams = {
               amount: planAmount,
               currency: "INR",
               accept_partial: false,
@@ -1266,8 +1296,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
               expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
               reference_id: `sub_${userId}_${Date.now().toString().slice(-8)}`
-            });
+            };
 
+            // Log the actual request being sent to Razorpay
+            console.log("=== RAZORPAY PAYMENT LINK CREATE REQUEST ===");
+            console.log("Endpoint: POST /v1/payment_links");
+            console.log("Request Body:", JSON.stringify(paymentLinkParams, null, 2));
+            console.log("Timestamp:", new Date().toISOString());
+
+            const paymentLink = await razorpay.paymentLink.create(paymentLinkParams);
+
+            // Log the complete response from Razorpay
+            console.log("=== RAZORPAY PAYMENT LINK CREATE RESPONSE ===");
+            console.log("Response Body:", JSON.stringify(paymentLink, null, 2));
+            console.log("Response Status: SUCCESS");
+            console.log("Timestamp:", new Date().toISOString());
             console.log("Payment link created successfully:", paymentLink.short_url);
 
             return res.json({
