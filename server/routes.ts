@@ -1186,7 +1186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             plan_id: razorpayPlanId,
             customer_id: customer.id,
             quantity: 1,
-            total_count: 120, // 10 years
+            total_count: 100, // Maximum allowed by Razorpay
             notes: {
               userId: userId.toString(),
               planId: planId,

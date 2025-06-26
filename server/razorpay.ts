@@ -210,7 +210,7 @@ export async function createRazorpaySubscription(planId: string, customerId: str
       plan_id: planId,
       customer_id: customerId,
       quantity: 1,
-      total_count: 120, // 10 years worth of billing cycles
+      total_count: 100, // Maximum allowed by Razorpay
       addons: [],
       notes: {
         userId: userId.toString(),
