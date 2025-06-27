@@ -65,7 +65,7 @@ export default function Billing() {
   const {
     cancelSubscription,
     upgradeSubscription,
-    createManualPayment,
+    createCheckoutSession,
     isLoading: paymentLoading,
   } = usePayment();
   const { toast } = useToast();
@@ -201,56 +201,10 @@ export default function Billing() {
     async (planId: string) => {
       if (!user) return;
 
-      // If user is on Free plan (no active subscription), create new subscription via payment
+      // If user is on Free plan (no active subscription), create new subscription
       if (!subscription || subscription.status !== "active") {
-        // Create payment link for new subscription
         try {
-          // Get the amount from server pricing
-          let amount: number;
-
-          // Fetch current pricing from server
-          try {
-            const pricingResponse = await fetch("/api/exchange-rate");
-            const { rate } = await pricingResponse.json();
-
-            switch (planId) {
-              case "pro-monthly":
-                amount = Math.round(19 * rate * 100); // $19 converted to paise
-                break;
-              case "pro-yearly":
-                amount = Math.round(183 * rate * 100); // $183 converted to paise
-                break;
-              case "enterprise-monthly":
-                amount = Math.round(50 * rate * 100); // $50 converted to paise
-                break;
-              case "enterprise-yearly":
-                amount = Math.round(480 * rate * 100); // $480 converted to paise
-                break;
-              default:
-                throw new Error("Invalid plan ID");
-            }
-          } catch (error) {
-            console.error("Error fetching pricing:", error);
-            // Fallback to hardcoded amounts with exchange rate of 83
-            switch (planId) {
-              case "pro-monthly":
-                amount = Math.round(19 * 83 * 100); // ₹1,577
-                break;
-              case "pro-yearly":
-                amount = Math.round(183 * 83 * 100); // ₹15,189
-                break;
-              case "enterprise-monthly":
-                amount = Math.round(50 * 83 * 100); // ₹4,150
-                break;
-              case "enterprise-yearly":
-                amount = Math.round(480 * 83 * 100); // ₹39,840
-                break;
-              default:
-                throw new Error("Invalid plan ID");
-            }
-          }
-
-          const result = await createManualPayment(planId, amount);
+          const result = await createCheckoutSession(planId);
           if (result) {
             toast({
               title: "Redirecting to Payment",
@@ -259,10 +213,10 @@ export default function Billing() {
             });
           }
         } catch (error) {
-          console.error("Error creating payment:", error);
+          console.error("Error creating subscription:", error);
           toast({
             title: "Error",
-            description: "Failed to create payment. Please try again.",
+            description: "Failed to create subscription. Please try again.",
             variant: "destructive",
           });
         }
@@ -628,43 +582,36 @@ export default function Billing() {
         const description = payment.description?.toLowerCase() || "";
         
         // Check description first for most accurate plan detection
-        if (description.includes("pro yearly")) {
+        if (description.includes("pro yearly") || description.includes("pro annual")) {
           usdAmount = 183; // Pro Yearly
-        } else if (description.includes("pro monthly") || (description.includes("pro") && !description.includes("yearly"))) {
+        } else if (description.includes("pro monthly") || (description.includes("pro") && !description.includes("yearly") && !description.includes("annual"))) {
           usdAmount = 19; // Pro Monthly
-        } else if (description.includes("enterprise yearly")) {
+        } else if (description.includes("enterprise yearly") || description.includes("enterprise annual")) {
           usdAmount = 480; // Enterprise Yearly
-        } else if (description.includes("enterprise monthly") || (description.includes("enterprise") && !description.includes("yearly"))) {
+        } else if (description.includes("enterprise monthly") || (description.includes("enterprise") && !description.includes("yearly") && !description.includes("annual"))) {
           usdAmount = 50; // Enterprise Monthly
         } else if (inrAmount === 0) {
           // For zero amounts (cancellations, etc.), keep as 0
           usdAmount = 0;
         } else {
           // Map INR amounts to USD equivalents with wider ranges for exchange rate fluctuations
-          if (inrAmount >= 1400 && inrAmount <= 1700) {
-            usdAmount = 19; // Pro Monthly (~₹1,577 at ₹83/$1)
-          } else if (inrAmount >= 14500 && inrAmount <= 16000) {
-            usdAmount = 183; // Pro Yearly (~₹15,189 at ₹83/$1)
-          } else if (inrAmount >= 3800 && inrAmount <= 4500) {
-            usdAmount = 50; // Enterprise Monthly (~₹4,150 at ₹83/$1)
-          } else if (inrAmount >= 38000 && inrAmount <= 42000) {
-            usdAmount = 480; // Enterprise Yearly (~₹39,840 at ₹83/$1)
+          // Use more accurate ranges based on current exchange rates (75-85 INR per USD)
+          if (inrAmount >= 1350 && inrAmount <= 1750) {
+            usdAmount = 19; // Pro Monthly (₹19*75 to ₹19*85 range)
+          } else if (inrAmount >= 13700 && inrAmount <= 17200) {
+            usdAmount = 183; // Pro Yearly (₹183*75 to ₹183*85 range)
+          } else if (inrAmount >= 3750 && inrAmount <= 4750) {
+            usdAmount = 50; // Enterprise Monthly (₹50*75 to ₹50*85 range)
+          } else if (inrAmount >= 36000 && inrAmount <= 44000) {
+            usdAmount = 480; // Enterprise Yearly (₹480*75 to ₹480*85 range)
           } else if (description.includes("upgrade") || description.includes("prorated")) {
-            // For upgrade/prorated transactions, try to identify target plan
-            if (inrAmount > 35000) {
-              usdAmount = 480; // Likely Enterprise Yearly upgrade
-            } else if (inrAmount > 12000) {
-              usdAmount = 183; // Likely Pro Yearly upgrade
-            } else if (inrAmount > 3000) {
-              usdAmount = 50; // Likely Enterprise Monthly upgrade
-            } else if (inrAmount > 1000) {
-              usdAmount = 19; // Likely Pro Monthly upgrade
-            } else {
-              usdAmount = Math.round(inrAmount / 83);
-            }
+            // For upgrade/prorated transactions, calculate based on current exchange rate
+            // Estimate exchange rate from amount
+            const estimatedRate = 80; // Conservative estimate
+            usdAmount = Math.round(inrAmount / estimatedRate);
           } else {
-            // Final fallback: approximate conversion (₹83 ≈ $1)
-            usdAmount = Math.round(inrAmount / 83);
+            // Final fallback: use conservative exchange rate of 80
+            usdAmount = Math.round(inrAmount / 80);
           }
         }
 
