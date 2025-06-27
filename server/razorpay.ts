@@ -204,13 +204,21 @@ export async function createRazorpayCustomer(email: string, name: string, userId
   }
 }
 
-export async function createRazorpaySubscription(planId: string, customerId: string, userId: number) {
+export async function createRazorpaySubscription(planId: string, customerId: string, userId: number, planType?: string) {
   try {
+    // Set total_count based on plan type for 2-year subscription
+    let totalCount = 100; // default fallback
+    if (planType === 'pro-monthly' || planType === 'enterprise-monthly') {
+      totalCount = 24; // 24 monthly cycles = 2 years
+    } else if (planType === 'pro-yearly' || planType === 'enterprise-yearly') {
+      totalCount = 2; // 2 yearly cycles = 2 years
+    }
+
     const subscription = await razorpay.subscriptions.create({
       plan_id: planId,
       customer_id: customerId,
       quantity: 1,
-      total_count: 100, // Maximum allowed by Razorpay
+      total_count: totalCount,
       addons: [],
       notes: {
         userId: userId.toString(),

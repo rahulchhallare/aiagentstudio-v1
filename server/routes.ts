@@ -1193,11 +1193,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error(`Invalid customer ID: ${customer.id}`);
           }
 
+          // Set total_count based on plan type for 2-year subscription
+          let totalCount = 100; // default fallback
+          if (planId === 'pro-monthly' || planId === 'enterprise-monthly') {
+            totalCount = 24; // 24 monthly cycles = 2 years
+          } else if (planId === 'pro-yearly' || planId === 'enterprise-yearly') {
+            totalCount = 2; // 2 yearly cycles = 2 years
+          }
+
           // Create actual Razorpay subscription with proper error handling
           const subscriptionParams = {
             plan_id: razorpayPlanId,
             quantity: 1,
-            total_count: 100, // Maximum allowed by Razorpay
+            total_count: totalCount,
             notes: {
               userId: userId.toString(),
               planId: planId,
