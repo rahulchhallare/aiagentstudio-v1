@@ -1610,8 +1610,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "New plan ID and user ID are required" });
       }
 
-      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
-      if (!subscription) {
+      const currentSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!currentSubscription) {
         return res.status(404).json({ error: "Subscription not found" });
       }
 
@@ -1639,32 +1639,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Invalid plan ID for downgrade" });
       }
 
-      const subscriptionIdToUpdate =
-        subscription.razorpay_subscription_id ||
-        subscription.stripe_subscription_id ||
-        id;
-
-      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
+      // Use the new switchSubscriptionPlan method to mark old as inactive and create new
+      const newSubscription = await storage.switchSubscriptionPlan(parseInt(userId), {
+        razorpay_subscription_id: `downgrade_${currentSubscription.id}_${Date.now()}`,
+        razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",
         status: "active",
         plan_name: newPlanName,
         plan_id: actualRazorpayPlanId,
         price_id: actualRazorpayPlanId,
-        updated_at: new Date(),
+        current_period_start: new Date(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       });
 
       await storage.createPaymentHistory({
         user_id: parseInt(userId),
-        razorpay_payment_id: `downgrade_${subscriptionIdToUpdate}_${Date.now()}`,
+        razorpay_payment_id: `downgrade_${currentSubscription.id}_${Date.now()}`,
         amount: 0,
         currency: "INR",
         status: "succeeded",
-        description: `Plan downgraded from ${subscription.plan_name} to ${newPlanName}`,
+        description: `Plan downgraded from ${currentSubscription.plan_name} to ${newPlanName}`,
       });
 
       res.json({
         success: true,
-        subscription: dbUpdate,
-        message: `Successfully downgraded from ${subscription.plan_name} to ${newPlanName}`,
+        subscription: newSubscription,
+        message: `Successfully downgraded from ${currentSubscription.plan_name} to ${newPlanName}`,
       });
     } catch (error) {
       console.error("Error downgrading subscription:", error);
@@ -1732,20 +1731,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "User ID is required" });
       }
 
-      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
-      if (!subscription) {
+      const currentSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!currentSubscription) {
         return res.status(404).json({ error: "Subscription not found" });
       }
 
-      const subscriptionIdToUpdate =
-        subscription.razorpay_subscription_id ||
-        subscription.stripe_subscription_id ||
-        id;
-
       // Cancel the Razorpay subscription if it exists
       try {
-        if (subscription.razorpay_subscription_id) {
-          await razorpay.subscriptions.cancel(subscription.razorpay_subscription_id, {
+        if (currentSubscription.razorpay_subscription_id) {
+          await razorpay.subscriptions.cancel(currentSubscription.razorpay_subscription_id, {
             cancel_at_cycle_end: 0, // Cancel immediately
           });
         }
@@ -1754,29 +1748,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continue with local cancellation even if Razorpay fails
       }
 
-      // Update subscription status to cancelled
-      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
+      // Use the new switchSubscriptionPlan method to mark old as inactive and create new free plan
+      const newSubscription = await storage.switchSubscriptionPlan(parseInt(userId), {
+        razorpay_subscription_id: `free_${currentSubscription.id}_${Date.now()}`,
+        razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",
         status: "cancelled",
         plan_name: "Free",
         plan_id: "free",
         price_id: "free",
-        cancel_at_period_end: false,
-        updated_at: new Date(),
+        current_period_start: new Date(),
+        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now (free plan)
       });
 
       // Create payment history record for the downgrade
       await storage.createPaymentHistory({
         user_id: parseInt(userId),
-        razorpay_payment_id: `downgrade_free_${subscriptionIdToUpdate}_${Date.now()}`,
+        razorpay_payment_id: `downgrade_free_${currentSubscription.id}_${Date.now()}`,
         amount: 0,
         currency: "INR",
         status: "succeeded",
-        description: `Plan downgraded from ${subscription.plan_name} to Free`,
+        description: `Plan downgraded from ${currentSubscription.plan_name} to Free`,
       });
 
       res.json({
         success: true,
-        subscription: dbUpdate,
+        subscription: newSubscription,
         message: "Successfully downgraded to Free plan. Your subscription has been cancelled.",
       });
     } catch (error) {

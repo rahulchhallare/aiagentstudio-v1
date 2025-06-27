@@ -359,30 +359,92 @@ export class SupabaseStorage implements IStorage {
       updated_at: new Date()
     };
 
-    // Try to update by razorpay_subscription_id first, then by stripe_subscription_id
-    const razorpayResult = await this.supabase
+    // First try to find which column contains the subscription ID
+    let targetColumn: string | null = null;
+    let existingRecord: any = null;
+
+    // Check razorpay_subscription_id first
+    const razorpayCheck = await this.supabase
       .from('subscriptions')
-      .update(finalUpdates)
+      .select('*')
       .eq('razorpay_subscription_id', subscriptionId)
-      .select()
-      .single();
+      .maybeSingle();
 
-    if (!razorpayResult.error && razorpayResult.data) {
-      return razorpayResult.data;
+    if (!razorpayCheck.error && razorpayCheck.data) {
+      targetColumn = 'razorpay_subscription_id';
+      existingRecord = razorpayCheck.data;
+    } else {
+      // Check stripe_subscription_id
+      const stripeCheck = await this.supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('stripe_subscription_id', subscriptionId)
+        .maybeSingle();
+
+      if (!stripeCheck.error && stripeCheck.data) {
+        targetColumn = 'stripe_subscription_id';
+        existingRecord = stripeCheck.data;
+      }
     }
 
-    const stripeResult = await this.supabase
+    if (!targetColumn || !existingRecord) {
+      throw new Error(`No subscription found with ID: ${subscriptionId}`);
+    }
+
+    // Update the specific record using the primary key
+    const updateResult = await this.supabase
       .from('subscriptions')
       .update(finalUpdates)
-      .eq('stripe_subscription_id', subscriptionId)
+      .eq('id', existingRecord.id)
       .select()
       .single();
 
-    if (stripeResult.error) {
-      throw new Error(stripeResult.error.message);
+    if (updateResult.error) {
+      throw new Error(updateResult.error.message);
     }
 
-    return stripeResult.data;
+    return updateResult.data;
+  }
+
+  async switchSubscriptionPlan(userId: number, newPlanData: {
+    razorpay_subscription_id?: string;
+    razorpay_customer_id?: string;
+    status: string;
+    plan_name: string;
+    plan_id: string;
+    price_id: string;
+    current_period_start: Date;
+    current_period_end: Date;
+  }): Promise<any> {
+    // First, mark all existing active subscriptions for this user as inactive
+    await this.supabase
+      .from('subscriptions')
+      .update({ 
+        status: 'inactive',
+        updated_at: new Date()
+      })
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    // Create new subscription record
+    const newSubscription = {
+      user_id: userId,
+      ...newPlanData,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    const { data, error } = await this.supabase
+      .from('subscriptions')
+      .insert(newSubscription)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
   }
 
   async getSubscriptionByUserId(userId: number): Promise<any> {
@@ -484,7 +546,7 @@ export class SupabaseStorage implements IStorage {
       message: data.message,
       inquiry_type: data.inquiryType
     };
-    
+
     const { data: result, error } = await this.supabase
       .from('contact_submissions')
       .insert(dbData)
