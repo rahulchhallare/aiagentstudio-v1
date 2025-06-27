@@ -1196,7 +1196,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create actual Razorpay subscription with proper error handling
           const subscriptionParams = {
             plan_id: razorpayPlanId,
-            customer_id: customer.id,
             quantity: 1,
             total_count: 100, // Maximum allowed by Razorpay
             notes: {
