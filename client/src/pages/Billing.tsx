@@ -272,40 +272,15 @@ export default function Billing() {
           }
           return;
         } else {
-          // Regular upgrade
+          // Regular upgrade - use subscription flow instead of payment link
           try {
-            const response = await fetch(
-              `/api/subscription/${subscription.razorpay_subscription_id || subscription.id}/upgrade`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  newPlanId: planId,
-                  userId: user.id,
-                }),
-              },
-            );
-
-            if (response.ok) {
-              const result = await response.json();
-
-              // Check if payment is required
-              if (result.paymentRequired && result.paymentLink) {
-                // Redirect to payment link in same tab
-                window.location.href = result.paymentLink;
-              } else {
-                // Regular upgrade without payment (shouldn't happen for Pro to Enterprise)
-                toast({
-                  title: "Upgrade Successful!",
-                  description: result.message,
-                });
-                fetchBillingData();
-              }
-            } else {
-              const error = await response.text();
-              throw new Error(error);
+            const result = await createCheckoutSession(planId);
+            if (result) {
+              toast({
+                title: "Redirecting to Payment",
+                description:
+                  "Complete your payment to upgrade your subscription.",
+              });
             }
           } catch (error) {
             console.error("Error upgrading subscription:", error);
