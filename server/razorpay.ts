@@ -12,16 +12,21 @@ export const razorpay = new Razorpay({
 
 // Plan IDs for your subscription plans - these should be set in your Replit secrets
 export const PLAN_IDS = {
-  PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID!,
-  PRO_YEARLY: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID!,
-  ENTERPRISE_MONTHLY: process.env.RAZORPAY_ENTERPRISE_MONTHLY_PLAN_ID!,
-  ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID!,
+  PRO_MONTHLY: process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID,
+  PRO_YEARLY: process.env.RAZORPAY_PRO_YEARLY_PLAN_ID,
+  ENTERPRISE_MONTHLY: process.env.RAZORPAY_ENTERPRISE_MONTHLY_PLAN_ID,
+  ENTERPRISE_YEARLY: process.env.RAZORPAY_ENTERPRISE_YEARLY_PLAN_ID,
 };
 
 // Validate that all required plan IDs are set
 const missingPlanIds = Object.entries(PLAN_IDS).filter(([key, value]) => !value);
 if (missingPlanIds.length > 0) {
   console.warn('Missing Razorpay plan IDs:', missingPlanIds.map(([key]) => key));
+  console.warn('Subscription creation will fall back to payment links for missing plan IDs.');
+  console.warn('Please set these environment variables in Replit Secrets:');
+  missingPlanIds.forEach(([key]) => {
+    console.warn(`- RAZORPAY_${key}_PLAN_ID`);
+  });
 }
 
 // Cache for exchange rate (refreshed every hour)
@@ -199,19 +204,34 @@ export async function createRazorpayCustomer(email: string, name: string, userId
   }
 }
 
-export async function createRazorpaySubscription(planId: string, customerId: string, userId: number) {
+export async function createRazorpaySubscription(planId: string, customerId: string, userId: number, planType?: string) {
   try {
+    // Set total_count based on plan type for 2-year subscription
+    let totalCount = 100; // default fallback
+    if (planType === 'pro-monthly' || planType === 'enterprise-monthly') {
+      totalCount = 24; // 24 monthly cycles = 2 years
+    } else if (planType === 'pro-yearly' || planType === 'enterprise-yearly') {
+      totalCount = 2; // 2 yearly cycles = 2 years
+    }
+
     const subscription = await razorpay.subscriptions.create({
       plan_id: planId,
       customer_id: customerId,
       quantity: 1,
-      total_count: 120, // 10 years worth of billing cycles
+      total_count: totalCount,
       addons: [],
       notes: {
         userId: userId.toString(),
         planId: planId
       }
     });
+    
+    // Validate that the subscription has a proper payment URL
+    if (!subscription.short_url || subscription.short_url.includes('api.razorpay.com/v1/t/')) {
+      console.warn('Subscription created but has invalid payment URL:', subscription.short_url);
+      throw new Error('Subscription created but payment URL is not accessible');
+    }
+    
     return subscription;
   } catch (error) {
     console.error('Error creating Razorpay subscription:', error);

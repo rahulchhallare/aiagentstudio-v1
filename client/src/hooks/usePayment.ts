@@ -162,10 +162,15 @@ export function usePayment() {
         console.log('Redirecting to Razorpay hosted checkout:', short_url);
         
         // Check if the URL is a valid Razorpay hosted page
-        if (short_url.includes('rzp.io') || short_url.includes('razorpay.com')) {
+        if (short_url.includes('rzp.io') || short_url.includes('razorpay.com/v1/payments')) {
           // Redirect directly to Razorpay hosted page
+          console.log('Valid Razorpay URL detected, redirecting...');
           window.location.href = short_url;
           return;
+        } else if (short_url.includes('api.razorpay.com/v1/t/')) {
+          // This is an internal API URL, not a customer-facing page
+          console.warn('Received internal API URL instead of customer page:', short_url);
+          throw new Error('Invalid payment URL received from server');
         } else {
           // Handle internal fallback URLs
           window.location.href = short_url;
