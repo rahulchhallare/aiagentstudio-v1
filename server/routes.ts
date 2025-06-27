@@ -1651,14 +1651,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       });
 
-      await storage.createPaymentHistory({
-        user_id: parseInt(userId),
-        razorpay_payment_id: `downgrade_${currentSubscription.id}_${Date.now()}`,
-        amount: 0,
-        currency: "INR",
-        status: "succeeded",
-        description: `Plan downgraded from ${currentSubscription.plan_name} to ${newPlanName}`,
-      });
+      // Don't create misleading payment history for downgrades
+      // The plan change is tracked in the subscription table
 
       res.json({
         success: true,
@@ -1760,15 +1754,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now (free plan)
       });
 
-      // Create payment history record for the downgrade
-      await storage.createPaymentHistory({
-        user_id: parseInt(userId),
-        razorpay_payment_id: `downgrade_free_${currentSubscription.id}_${Date.now()}`,
-        amount: 0,
-        currency: "INR",
-        status: "succeeded",
-        description: `Plan downgraded from ${currentSubscription.plan_name} to Free`,
-      });
+      // Don't create misleading payment history for downgrades to free
+      // The plan change is tracked in the subscription table
 
       res.json({
         success: true,
