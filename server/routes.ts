@@ -1201,7 +1201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notes: {
               userId: userId.toString(),
               planId: planId,
-              planName: planName
+              planName: planName,
+              customer_id: customer.id
             }
           };
 
