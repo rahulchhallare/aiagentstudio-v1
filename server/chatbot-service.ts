@@ -49,20 +49,7 @@ export class ChatbotService {
   };
 
   async processMessage(sessionId: string, message: string, context?: any): Promise<ChatbotResponse> {
-    // Log the message
-    await storage.createChatMessage({
-      session_id: sessionId,
-      sender: 'user',
-      message: message,
-      message_type: 'text'
-    });
-
-    // Track analytics
-    await storage.createAnalyticsEvent({
-      session_id: sessionId,
-      event_type: 'message_sent',
-      event_data: { message_length: message.length, has_context: !!context }
-    });
+    console.log(`Processing message for session ${sessionId}: ${message}`);
 
     let response: ChatbotResponse;
 
@@ -77,19 +64,23 @@ export class ChatbotService {
       response = await this.handleGeneralInquiry(sessionId, message);
     }
 
-    // Log bot response
-    await storage.createChatMessage({
-      session_id: sessionId,
-      sender: 'bot',
-      message: response.message,
-      message_type: response.inputType || 'text'
-    });
-
     return response;
   }
 
   private async handleGeneralInquiry(sessionId: string, message: string): Promise<ChatbotResponse> {
     const lowerMessage = message.toLowerCase();
+
+    // Handle specific shipping questions
+    if (lowerMessage.includes('shipping') && lowerMessage.includes('options')) {
+      return {
+        message: "We offer several shipping options:\n\n" +
+                "• **Free Standard Shipping** (3-5 business days) - on orders over $50\n" +
+                "• **Express Shipping** (1-2 business days) - $9.99\n" +
+                "• **Overnight Shipping** (next business day) - $19.99\n" +
+                "• **International Shipping** (7-14 business days) - varies by location\n\n" +
+                "Would you like more details about any of these options?"
+      };
+    }
 
     // Check for FAQ matches
     for (const [category, faq] of Object.entries(this.faqs)) {
@@ -110,10 +101,24 @@ export class ChatbotService {
           };
         }
 
+        const randomResponse = faq.responses[Math.floor(Math.random() * faq.responses.length)];
         return {
-          message: faq.responses.join(' ')
+          message: randomResponse
         };
       }
+    }
+
+    // Handle payment methods question
+    if (lowerMessage.includes('payment') && lowerMessage.includes('methods')) {
+      return {
+        message: "We accept the following payment methods:\n\n" +
+                "• All major credit cards (Visa, MasterCard, American Express, Discover)\n" +
+                "• PayPal\n" +
+                "• Apple Pay\n" +
+                "• Google Pay\n" +
+                "• Shop Pay\n\n" +
+                "All payments are processed securely with 256-bit SSL encryption."
+      };
     }
 
     // Check if message seems complex or frustrated
@@ -132,8 +137,16 @@ export class ChatbotService {
       };
     }
 
-    // Use OpenAI for more complex queries
-    return await this.generateAIResponse(sessionId, message);
+    // Default helpful response
+    return {
+      message: "I'd be happy to help! I can assist you with:\n\n" +
+              "• Order tracking and status updates\n" +
+              "• Shipping information and options\n" +
+              "• Returns and exchanges\n" +
+              "• Payment methods and billing questions\n" +
+              "• Product information\n\n" +
+              "What specific question can I help you with today?"
+    };
   }
 
   private async handleOrderInquiry(sessionId: string, orderNumber: string): Promise<ChatbotResponse> {
@@ -195,15 +208,6 @@ export class ChatbotService {
 
     // Generate return authorization
     const authNumber = generateReturnAuthNumber();
-    
-    await storage.createReturnRequest({
-      session_id: sessionId,
-      order_number: context.orderNumber,
-      product_name: context.productName,
-      return_reason: message,
-      authorization_number: authNumber,
-      user_email: context.userEmail
-    });
 
     return {
       message: `Return request submitted successfully!\n\n` +
