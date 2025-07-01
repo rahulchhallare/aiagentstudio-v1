@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Chatbot from '@/components/Chatbot';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { MessageCircle, BarChart3, Shield, Globe, Clock, Zap } from 'lucide-react';
 
 export default function ChatbotDemo() {
