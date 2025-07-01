@@ -1,14 +1,15 @@
 # AI Agent Studio
 
 ## Overview
-Full-stack AI agent application with Express.js backend and React frontend. Features subscription management, AI agent creation and execution, and secure payment processing.
+Full-stack AI agent application with Express.js backend and React frontend. Features subscription management, AI agent creation and execution, secure payment processing, and a comprehensive customer service chatbot system.
 
 ## Project Architecture
 - **Backend**: Express.js with TypeScript, Drizzle ORM for database
 - **Frontend**: React with Vite, TailwindCSS for styling
-- **Database**: PostgreSQL (Supabase/Neon)
-- **Payment**: Stripe integration for subscriptions
-- **AI**: OpenAI integration for agent responses
+- **Database**: PostgreSQL with Drizzle ORM
+- **Payment**: Stripe integration for subscriptions  
+- **AI**: OpenAI integration for agent responses and chatbot
+- **Chatbot**: Full customer service system with GDPR compliance, order tracking, returns workflow
 
 ## Recent Changes
 - 2025-01-22: Migrated from Replit Agent to standard Replit environment
@@ -45,6 +46,12 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Fixed subscription activation to properly map plan IDs and activate correct plans after payment completion
 - Fixed upgrade flow after downgrades - payments now automatically activate correct subscription plans via webhook
 - Enhanced webhook handler to detect plan type by payment amount and auto-activate subscriptions
+- 2025-01-01: Added comprehensive customer service chatbot system
+- Built complete chatbot with FAQ handling, order tracking, returns workflow, and human escalation
+- Implemented GDPR consent management and data privacy compliance  
+- Created embeddable widget for easy website integration
+- Added analytics dashboard for monitoring chatbot performance and user interactions
+- Integrated with PostgreSQL database for chat session and message storage
 
 ## User Preferences
 - Language: English

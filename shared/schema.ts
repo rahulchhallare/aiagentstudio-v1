@@ -176,6 +176,18 @@ export type PaymentHistory = typeof payment_history.$inferSelect;
 export type InsertWebhookEvent = typeof webhook_events.$inferInsert;
 export type WebhookEvent = typeof webhook_events.$inferSelect;
 
+export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
+export type ChatSession = typeof chat_sessions.$inferSelect;
+
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chat_messages.$inferSelect;
+
+export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
+export type ReturnRequest = typeof return_requests.$inferSelect;
+
+export type InsertChatbotAnalytics = z.infer<typeof insertChatbotAnalyticsSchema>;
+export type ChatbotAnalytics = typeof chatbot_analytics.$inferSelect;
+
 export type FlowData = z.infer<typeof flowDataSchema>;
 
 export const insertContactSchema = z.object({

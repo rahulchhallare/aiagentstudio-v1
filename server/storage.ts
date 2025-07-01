@@ -21,6 +21,17 @@ export interface IStorage {
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
 
+  // Chatbot operations
+  createChatSession(session: InsertChatSession): Promise<ChatSession>;
+  getChatSession(sessionId: string): Promise<ChatSession | undefined>;
+  updateChatSession(sessionId: string, updates: Partial<InsertChatSession>): Promise<ChatSession | undefined>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getChatMessages(sessionId: string): Promise<ChatMessage[]>;
+  createReturnRequest(returnRequest: InsertReturnRequest): Promise<ReturnRequest>;
+  getReturnRequest(authNumber: string): Promise<ReturnRequest | undefined>;
+  createAnalyticsEvent(analytics: InsertChatbotAnalytics): Promise<ChatbotAnalytics>;
+  getChatbotAnalytics(startDate?: Date, endDate?: Date): Promise<ChatbotAnalytics[]>;
+
   // Contact Form
   createContactSubmission(data: {
     name: string;
