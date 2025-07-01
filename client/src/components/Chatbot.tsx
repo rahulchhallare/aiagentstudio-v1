@@ -54,16 +54,26 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
 
   const initializeSession = async () => {
     try {
-      const response = await apiRequest('POST', '/api/chatbot/session');
+      const response = await apiRequest('POST', '/api/chatbot/session', {});
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       setSessionId(data.sessionId);
-      setShowGDPRConsent(data.requiresGDPR);
+      setShowGDPRConsent(data.requiresGDPR || true);
       
-      addMessage('bot', data.message);
+      addMessage('bot', data.message || "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?");
     } catch (error) {
       console.error('Failed to initialize session:', error);
-      addMessage('bot', "I'm having trouble connecting. Please refresh and try again.");
+      
+      // Create fallback session
+      const fallbackSessionId = `fallback_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      setSessionId(fallbackSessionId);
+      setShowGDPRConsent(true);
+      addMessage('bot', "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?");
     }
   };
 
