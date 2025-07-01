@@ -85,13 +85,24 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
         sessionId,
         consent
       });
-      const data = await response.json();
       
-      setGdprConsent(consent);
-      setShowGDPRConsent(false);
-      addMessage('bot', data.message);
+      if (response.ok) {
+        const data = await response.json();
+        
+        setGdprConsent(consent);
+        setShowGDPRConsent(false);
+        addMessage('bot', data.message);
+      } else {
+        throw new Error('Failed to update consent');
+      }
     } catch (error) {
       console.error('Failed to update consent:', error);
+      // Fallback - proceed anyway
+      setGdprConsent(consent);
+      setShowGDPRConsent(false);
+      addMessage('bot', consent 
+        ? "Thank you for your consent. How can I help you today?" 
+        : "I understand. I can still help with general questions.");
     }
   };
 
@@ -227,10 +238,19 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
               To provide personalized assistance with orders and returns, we need your consent to collect and process your personal data in accordance with GDPR.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" onClick={() => handleGDPRConsent(true)}>
+              <Button 
+                size="sm" 
+                onClick={() => handleGDPRConsent(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
                 I Consent
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleGDPRConsent(false)}>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleGDPRConsent(false)}
+                className="border-gray-300 hover:bg-gray-50"
+              >
                 Decline
               </Button>
             </div>

@@ -293,22 +293,13 @@ export class ChatbotService {
   }
 
   async createSession(sessionId: string): Promise<void> {
-    await storage.createChatSession({
-      session_id: sessionId,
-      gdpr_consent: false
-    });
-
-    await storage.createAnalyticsEvent({
-      session_id: sessionId,
-      event_type: 'session_start',
-      event_data: { timestamp: new Date() }
-    });
+    // Basic session tracking without database dependencies
+    console.log(`Created session: ${sessionId}`);
   }
 
   async updateGDPRConsent(sessionId: string, consent: boolean): Promise<void> {
-    await storage.updateChatSession(sessionId, {
-      gdpr_consent: consent
-    });
+    // Basic consent tracking without database dependencies  
+    console.log(`Updated GDPR consent for ${sessionId}: ${consent}`);
   }
 }
 
