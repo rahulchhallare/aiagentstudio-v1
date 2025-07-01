@@ -209,6 +209,14 @@ export default function CanvasHome() {
       category: "customer-support",
       new: true,
     },
+    {
+      id: "chatbot-1",
+      title: "E-commerce Customer Service Bot",
+      description:
+        "24/7 AI-powered customer support with order tracking, returns, and human escalation",
+      category: "customer-support",
+      popular: true,
+    },
   ];
 
   const filteredTemplates = templates.filter(
@@ -219,6 +227,12 @@ export default function CanvasHome() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
+    // Special handling for chatbot demo
+    if (templateId === "chatbot-1") {
+      navigate("/chatbot");
+      return;
+    }
+    
     // Store template ID for after login/signup
     localStorage.setItem("selectedTemplate", templateId);
 
@@ -529,6 +543,15 @@ export default function CanvasHome() {
         </div>
       </div>
       <Footer />
+      
+      {/* Customer Service Chatbot */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <div className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg cursor-pointer transition-colors" onClick={() => window.open('/chatbot', '_blank')}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.279 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.279-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
