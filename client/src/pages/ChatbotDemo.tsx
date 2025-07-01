@@ -55,6 +55,7 @@ export default function ChatbotDemo() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header onLoginClick={() => {}} onSignupClick={() => {}} />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">

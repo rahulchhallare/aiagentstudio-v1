@@ -40,7 +40,7 @@ export default function Analytics() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header onLoginClick={() => {}} onSignupClick={() => {}} />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
@@ -54,7 +54,7 @@ export default function Analytics() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header onLoginClick={() => {}} onSignupClick={() => {}} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">

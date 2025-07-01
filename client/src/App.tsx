@@ -34,6 +34,8 @@ import UseCases from "@/pages/UseCases";
 import RefundPolicy from "@/pages/RefundPolicy";
 import Tutorials from "@/pages/Tutorials";
 import ApiReference from "@/pages/ApiReference";
+import ChatbotDemo from "@/pages/ChatbotDemo";
+import Analytics from "@/pages/Analytics";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -59,6 +61,8 @@ function Router() {
       <Route path="/features" component={Features} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/documentation" component={Documentation} />
+      <Route path="/chatbot" component={ChatbotDemo} />
+      <Route path="/analytics" component={Analytics} />
       <Route path="/agent/:deployId" component={DeployedAgent} />
       <Route path="/agent-tester" component={AgentTester} />
       <Route path="/simple-test" component={SimpleTest} />
