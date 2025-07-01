@@ -52,6 +52,8 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Created embeddable widget for easy website integration
 - Added analytics dashboard for monitoring chatbot performance and user interactions
 - Integrated with PostgreSQL database for chat session and message storage
+- Added chatbot to homepage and main navigation for easy access
+- Featured customer service chatbot prominently in the platform showcase
 
 ## User Preferences
 - Language: English
