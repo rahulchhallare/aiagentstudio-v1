@@ -257,7 +257,7 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[300px]">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -302,7 +302,34 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t">
+        {/* Input Section - Always visible */}
+        <div className="border-t bg-white p-4">
+          <div className="flex gap-2">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(e)}
+              placeholder="Type your message..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={isLoading || !inputMessage.trim()}
+              size="sm"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+        
+        <div className="p-4 bg-white">
           <div className="flex gap-2">
             <Input
               value={currentMessage}
@@ -317,7 +344,11 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
               disabled={isLoading || !currentMessage.trim() || showGDPRConsent}
               size="sm"
             >
-              <Send className="h-4 w-4" />
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
           
