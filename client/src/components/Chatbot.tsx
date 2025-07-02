@@ -302,31 +302,6 @@ export default function Chatbot({ isOpen, onToggle }: ChatbotProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Section - Always visible */}
-        <div className="border-t bg-white p-4">
-          <div className="flex gap-2">
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(e)}
-              placeholder="Type your message..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={isLoading || !inputMessage.trim()}
-              size="sm"
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-
         <Separator />
         
         <div className="p-4 bg-white">
