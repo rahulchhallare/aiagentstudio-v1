@@ -54,6 +54,13 @@ Full-stack AI agent application with Express.js backend and React frontend. Feat
 - Integrated with PostgreSQL database for chat session and message storage
 - Added chatbot to homepage and main navigation for easy access
 - Featured customer service chatbot prominently in the platform showcase
+- 2025-01-02: CRITICAL CHATBOT FIXES - Fixed conversation flow and context management
+- Resolved context loss issue where chatbot gave generic responses regardless of user input
+- Fixed return request flow to properly handle "yes" confirmations and collect order numbers  
+- Enhanced session state management to maintain conversation context between messages
+- Added proper handling for numbered menu selections (1, 2, 3) from service options
+- Improved order tracking with comprehensive mock data for demo purposes
+- Chatbot now ready for Shopify/e-commerce integration with proper customer support workflows
 
 ## User Preferences
 - Language: English

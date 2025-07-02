@@ -48,19 +48,40 @@ export class ChatbotService {
   };
 
   async processMessage(sessionId: string, message: string, context?: any): Promise<ChatbotResponse> {
-    console.log(`Processing message for session ${sessionId}: ${message}`);
+    console.log(`Processing message for session ${sessionId}: ${message}`, context);
 
+    // Initialize or get session context
+    if (!this.sessions[sessionId]) {
+      this.sessions[sessionId] = { messages: [], context: {} };
+    }
+
+    // Use passed context or session context
+    const sessionContext = context || this.sessions[sessionId].context;
     let response: ChatbotResponse;
 
-    // Handle different conversation states
-    if (context?.awaitingOrderNumber) {
+    // Handle different conversation states based on context
+    if (sessionContext.awaitingOrderNumber) {
       response = await this.handleOrderInquiry(sessionId, message);
-    } else if (context?.awaitingReturnInfo) {
-      response = await this.handleReturnProcess(sessionId, message, context);
-    } else if (context?.awaitingEmail) {
+      // Update session context after handling
+      this.sessions[sessionId].context = {};
+    } else if (sessionContext.awaitingReturnConfirmation) {
+      response = await this.handleReturnConfirmation(sessionId, message);
+    } else if (sessionContext.awaitingReturnInfo) {
+      response = await this.handleReturnProcess(sessionId, message, sessionContext);
+    } else if (sessionContext.awaitingEmail) {
       response = await this.handleEmailCollection(sessionId, message);
     } else {
       response = await this.handleGeneralInquiry(sessionId, message);
+    }
+
+    // Store the context for next message
+    if (response.nextStep) {
+      this.sessions[sessionId].context = {
+        awaitingOrderNumber: response.nextStep === 'order_tracking',
+        awaitingReturnConfirmation: response.nextStep === 'return_confirmation',
+        awaitingReturnInfo: response.nextStep === 'return_process',
+        awaitingEmail: response.nextStep === 'human_escalation'
+      };
     }
 
     return response;
