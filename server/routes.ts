@@ -1846,6 +1846,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chatbot endpoints
+  app.post("/api/chatbot/session", async (req: Request, res: Response) => {
+    try {
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      res.json({
+        sessionId,
+        message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
+        status: "connected",
+        requiresGDPR: true
+      });
+    } catch (error) {
+      console.error('Error creating chatbot session:', error);
+      res.status(500).json({ 
+        error: 'Failed to create session',
+        sessionId: `fallback_${Date.now()}`,
+        message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
+        status: "connected",
+        requiresGDPR: true
+      });
+    }
+  });
+
+  app.post("/api/chatbot/message", async (req: Request, res: Response) => {
+    try {
+      const { sessionId, message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      console.log(`Chatbot message received: ${message}`);
+      const response = await chatbotService.processMessage(sessionId, message);
+      console.log(`Chatbot response: ${JSON.stringify(response)}`);
+      res.json(response);
+    } catch (error) {
+      console.error('Error processing chatbot message:', error);
+      res.status(500).json({ 
+        message: "I'm sorry, I'm having technical difficulties. Please try again.",
+        error: true
+      });
+    }
+  });
+
+  app.post("/api/chatbot/consent", async (req: Request, res: Response) => {
+    try {
+      const { sessionId, consent } = req.body;
+      
+      res.json({
+        message: consent 
+          ? "Thank you for your consent. How can I help you today?" 
+          : "I understand. I can still help with general questions without storing personal data.",
+        status: "consent_updated"
+      });
+    } catch (error) {
+      console.error('Error updating consent:', error);
+      res.status(500).json({ error: 'Failed to update consent' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

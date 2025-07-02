@@ -228,18 +228,6 @@ export class ChatbotService {
       };
     }
 
-    // Update session with email and escalation flag
-    await storage.updateChatSession(sessionId, {
-      user_email: email,
-      escalated_to_human: true
-    });
-
-    await storage.createAnalyticsEvent({
-      session_id: sessionId,
-      event_type: 'escalation',
-      event_data: { reason: 'user_request', email: email }
-    });
-
     return {
       message: `Thank you! I've escalated your inquiry to our human support team. ` +
                `They'll contact you at ${email} within 2 hours during business hours ` +
