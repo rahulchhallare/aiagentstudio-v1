@@ -52,38 +52,50 @@ export class ChatbotService {
   async processMessage(sessionId: string, message: string, context?: any): Promise<ChatbotResponse> {
     console.log(`Processing message for session ${sessionId}: ${message}`, context);
 
-    // Initialize or get session context
+    // Initialize session if not exists
     if (!this.sessions[sessionId]) {
       this.sessions[sessionId] = { messages: [], context: {} };
     }
 
-    // Use passed context or session context
+    // Use client-passed context first, then session context
     const sessionContext = context || this.sessions[sessionId].context;
+    console.log('Using context:', sessionContext);
+    
     let response: ChatbotResponse;
 
-    // Handle different conversation states based on context
-    if (sessionContext.awaitingOrderNumber) {
+    // Handle conversation states based on context
+    if (sessionContext.awaitingOrderNumber || sessionContext.currentStep === 'order_tracking') {
+      console.log('Handling order inquiry...');
       response = await this.handleOrderInquiry(sessionId, message);
-      // Update session context after handling
+      // Clear context after successful order lookup
       this.sessions[sessionId].context = {};
-    } else if (sessionContext.awaitingReturnConfirmation) {
+    } else if (sessionContext.awaitingReturnConfirmation || sessionContext.currentStep === 'return_confirmation') {
+      console.log('Handling return confirmation...');
       response = await this.handleReturnConfirmation(sessionId, message);
     } else if (sessionContext.awaitingReturnInfo) {
+      console.log('Handling return process...');
       response = await this.handleReturnProcess(sessionId, message, sessionContext);
     } else if (sessionContext.awaitingEmail) {
+      console.log('Handling email collection...');
       response = await this.handleEmailCollection(sessionId, message);
     } else {
+      console.log('Handling general inquiry...');
       response = await this.handleGeneralInquiry(sessionId, message);
     }
 
-    // Store the context for next message
+    // Update session context based on response
     if (response.nextStep) {
       this.sessions[sessionId].context = {
+        currentStep: response.nextStep,
         awaitingOrderNumber: response.nextStep === 'order_tracking',
         awaitingReturnConfirmation: response.nextStep === 'return_confirmation',
         awaitingReturnInfo: response.nextStep === 'return_process',
         awaitingEmail: response.nextStep === 'human_escalation'
       };
+      console.log('Updated context:', this.sessions[sessionId].context);
+    } else {
+      // Clear context if no next step
+      this.sessions[sessionId].context = {};
     }
 
     return response;
@@ -143,15 +155,16 @@ export class ChatbotService {
       };
     }
 
-    // Check if message seems complex or frustrated
-    const complexPatterns = [
-      'speak to human', 'representative', 'agent', 'manager', 'complaint',
-      'frustrated', 'angry', 'terrible', 'awful', 'disappointed'
+    // Check if message requests human agent/escalation
+    const humanPatterns = [
+      'speak to human', 'human agent', 'representative', 'agent', 'manager', 
+      'complaint', 'frustrated', 'angry', 'terrible', 'awful', 'disappointed',
+      'escalate', 'supervisor', 'person', 'real person'
     ];
 
-    if (complexPatterns.some(pattern => lowerMessage.includes(pattern))) {
+    if (humanPatterns.some(pattern => lowerMessage.includes(pattern))) {
       return {
-        message: "I understand you'd like to speak with a human agent. I'll connect you right away! Please provide your email address so our team can follow up:",
+        message: "I understand you'd like to speak with a human agent. I'll connect you right away! Please provide your email address so our team can follow up with you within 2 hours:",
         requiresInput: true,
         inputType: 'email',
         escalateToHuman: true,
