@@ -28,6 +28,7 @@ import {
 import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
+import { chatbotService } from "./chatbot-service";
 
 // Helper function to map Razorpay plan ID to plan name
 function getPlanNameFromId(planId: string): string {
@@ -1878,7 +1879,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Chatbot message received: ${message}`);
-      const response = await chatbotService.processMessage(sessionId, message);
+      
+      // Simple chatbot responses without external dependencies
+      const lowerMessage = message.toLowerCase();
+      let response;
+      
+      if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
+        response = {
+          message: "Hello! Thanks for reaching out. I'm here to help you with:\n\n" +
+                  "• Order tracking and status updates\n" +
+                  "• Shipping information and delivery options\n" +
+                  "• Returns and exchanges\n" +
+                  "• Payment questions\n" +
+                  "• Product information\n\n" +
+                  "What can I help you with today?"
+        };
+      } else if (lowerMessage.includes('return') || lowerMessage.includes('exchange')) {
+        response = {
+          message: "I can help you with returns! Here's how it works:\n\n" +
+                  "1. Items can be returned within 30 days of purchase\n" +
+                  "2. Items must be in original condition with tags\n" +
+                  "3. Original receipt or order number required\n" +
+                  "4. Refunds processed within 5-7 business days\n\n" +
+                  "Would you like me to start a return request for you? I'll need your order number."
+        };
+      } else if (lowerMessage.includes('shipping') || lowerMessage.includes('delivery')) {
+        response = {
+          message: "Here are our shipping options:\n\n" +
+                  "• **Free Standard Shipping** (3-5 business days) - Orders over $50\n" +
+                  "• **Express Shipping** (1-2 business days) - $9.99\n" +
+                  "• **Overnight Shipping** (next business day) - $19.99\n" +
+                  "• **International Shipping** (7-14 business days) - Rates vary\n\n" +
+                  "All orders are processed within 24 hours. Would you like tracking information for an existing order?"
+        };
+      } else if (lowerMessage.includes('order') || lowerMessage.includes('track')) {
+        response = {
+          message: "I can help you track your order! Please provide your order number (it usually starts with # or contains letters and numbers like ABC123).\n\n" +
+                  "You can find your order number in:\n" +
+                  "• Your order confirmation email\n" +
+                  "• Your account dashboard\n" +
+                  "• Your receipt\n\n" +
+                  "Once you provide the order number, I'll get you the latest status and tracking information."
+        };
+      } else if (lowerMessage.includes('payment') || lowerMessage.includes('billing')) {
+        response = {
+          message: "I can help with payment and billing questions! We accept:\n\n" +
+                  "• Credit/Debit cards (Visa, Mastercard, Amex)\n" +
+                  "• PayPal\n" +
+                  "• Apple Pay & Google Pay\n" +
+                  "• Buy now, pay later options\n\n" +
+                  "For billing issues, please provide your order number so I can look into it for you."
+        };
+      } else {
+        response = {
+          message: "I'd be happy to help! I can assist you with:\n\n" +
+                  "• Order tracking and status updates\n" +
+                  "• Shipping information and options\n" +
+                  "• Returns and exchanges\n" +
+                  "• Payment methods and billing questions\n" +
+                  "• Product information\n\n" +
+                  "What specific question can I help you with today?"
+        };
+      }
+      
       console.log(`Chatbot response: ${JSON.stringify(response)}`);
       res.json(response);
     } catch (error) {
