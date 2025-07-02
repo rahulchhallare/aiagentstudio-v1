@@ -1,8 +1,7 @@
 import OpenAI from "openai";
-import { storage } from "./storage";
 import { generateReturnAuthNumber } from "./utils";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 export interface ChatbotResponse {
   message: string;
