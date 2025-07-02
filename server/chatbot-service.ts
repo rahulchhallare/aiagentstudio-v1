@@ -12,6 +12,8 @@ export interface ChatbotResponse {
 }
 
 export class ChatbotService {
+  private sessions: { [sessionId: string]: { messages: any[], context: any } } = {};
+  
   private faqs = {
     shipping: {
       keywords: ['shipping', 'delivery', 'ship', 'deliver', 'when will', 'how long'],
