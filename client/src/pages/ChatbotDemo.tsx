@@ -195,14 +195,26 @@ export default function ChatbotDemo() {
 
         {/* CTA */}
         <div className="text-center">
-          <Button 
-            onClick={() => setIsChatbotOpen(true)}
-            size="lg"
-            className="mb-4"
-          >
-            Open Chatbot Demo
-          </Button>
-          <p className="text-gray-600">
+          <div className="space-y-4">
+            <Button 
+              onClick={() => setIsChatbotOpen(true)}
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              Open Chatbot Demo
+            </Button>
+            
+            <Button 
+              onClick={() => window.open('/test-embed', '_blank')}
+              variant="secondary" 
+              size="lg"
+              className="w-full sm:w-auto ml-0 sm:ml-4"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Test Website Embed
+            </Button>
+          </div>
+          <p className="text-gray-600 mt-4">
             Experience our AI-powered customer service in action
           </p>
         </div>
