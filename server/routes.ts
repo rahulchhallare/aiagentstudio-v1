@@ -1969,6 +1969,205 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve the chatbot test/demo page
+  app.get("/test-embed", (req: Request, res: Response) => {
+    const testPageHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Embed Test - AI Agent Studio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+        .content {
+            line-height: 1.6;
+            color: #555;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+        .highlight h3 {
+            margin-top: 0;
+            color: white;
+        }
+        .test-scenarios {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 5px solid #667eea;
+        }
+        .scenario {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .scenario strong {
+            color: #667eea;
+        }
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 9999;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        ul li, ol li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="status">Chatbot: Active</div>
+    
+    <div class="container">
+        <h1>E-commerce Chatbot Demo</h1>
+        <p class="subtitle">AI-Powered Customer Support for Shopify & E-commerce</p>
+        
+        <div class="content">
+            <p>Welcome to our AI Agent Studio chatbot demonstration! This shows how our intelligent customer service bot integrates seamlessly into any e-commerce website.</p>
+            
+            <div class="highlight">
+                <h3>Features Available</h3>
+                <ul>
+                    <li><strong>Order Tracking:</strong> Real-time order status and shipping updates</li>
+                    <li><strong>Returns & Exchanges:</strong> Guided return process with order lookup</li>
+                    <li><strong>Product Support:</strong> Instant answers to product questions</li>
+                    <li><strong>Payment Help:</strong> Billing and payment method assistance</li>
+                    <li><strong>Human Escalation:</strong> Seamless handoff to live agents when needed</li>
+                    <li><strong>GDPR Compliant:</strong> Privacy-first data handling</li>
+                </ul>
+            </div>
+            
+            <div class="instructions">
+                <strong>Look for the chat button in the bottom-right corner!</strong>
+                <br>Click it to start a conversation with our AI customer service agent.
+            </div>
+            
+            <div class="test-scenarios">
+                <h3>Test Conversation Flows</h3>
+                <p>Try these realistic customer service scenarios:</p>
+                
+                <div class="scenario">
+                    <strong>1. Order Tracking</strong><br>
+                    Say: "Can you track my order?"<br>
+                    Then provide: "ABC123" when asked for order number
+                </div>
+                
+                <div class="scenario">
+                    <strong>2. Return Request</strong><br>
+                    Say: "I want to return something"<br>
+                    Follow the guided return process
+                </div>
+                
+                <div class="scenario">
+                    <strong>3. Human Agent</strong><br>
+                    Say: "I need to speak to a human agent"<br>
+                    See the escalation process in action
+                </div>
+                
+                <div class="scenario">
+                    <strong>4. Shipping Information</strong><br>
+                    Ask: "What are your shipping options?"<br>
+                    Get detailed shipping policy information
+                </div>
+                
+                <div class="scenario">
+                    <strong>5. Payment Support</strong><br>
+                    Ask: "What payment methods do you accept?"<br>
+                    Learn about available payment options
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h3>Ready for Your E-commerce Store?</h3>
+                <p>This chatbot can be embedded in any website with just 2 lines of code!</p>
+                <p><strong>Perfect for Shopify, WooCommerce, Magento, and custom stores.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Integration Script -->
+    <script>
+      console.log('Loading chatbot with URL:', window.location.origin);
+      window.chatbotConfig = {
+        apiUrl: window.location.origin,
+        theme: 'light',
+        position: 'bottom-right'
+      };
+    </script>
+    <script src="/chatbot-embed.js"></script>
+    
+    <script>
+      // Add some debugging
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (!window.EcommerceChatbot) {
+            console.error('Chatbot failed to load. Check console for errors.');
+          } else {
+            console.log('Chatbot loaded successfully!');
+          }
+        }, 2000);
+      });
+    </script>
+</body>
+</html>`;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(testPageHTML);
+  });
+
+  // Also serve chatbot-embed.js with proper headers  
+  app.get("/chatbot-embed.js", (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
