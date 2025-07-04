@@ -89,6 +89,12 @@ export class WebsiteAnalyzer {
         if (error.message.includes('DNS') || error.message.includes('ENOTFOUND')) {
           throw new Error('Website not found. Please check the URL and try again.');
         }
+        if (error.message.includes('exceeded your current quota') || error.message.includes('insufficient_quota')) {
+          throw new Error('AI analysis service is currently unavailable due to quota limits. Please try again later or contact support.');
+        }
+        if (error.message.includes('429') || error.message.includes('rate limit')) {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
         throw new Error(error.message);
       }
       
