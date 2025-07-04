@@ -37,6 +37,7 @@ import ApiReference from "@/pages/ApiReference";
 import ChatbotDemo from "@/pages/ChatbotDemo";
 import Analytics from "@/pages/Analytics";
 import BusinessAnalyzer from "@/pages/BusinessAnalyzer";
+import AgentDeployment from "@/pages/AgentDeployment";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/tutorials" component={Tutorials} />
       <Route path="/api-reference" component={ApiReference} />
       <Route path="/business-analyzer" component={BusinessAnalyzer} />
+      <Route path="/agent-deployment" component={AgentDeployment} />
       <Route component={NotFound} />
     </Switch>
   );

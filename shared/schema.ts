@@ -80,6 +80,82 @@ export const contact_submissions = pgTable("contact_submissions", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+// Business Analysis tables
+export const business_analyses = pgTable("business_analyses", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id),
+  website_url: text("website_url").notNull(),
+  business_name: text("business_name").notNull(),
+  business_type: text("business_type").notNull(),
+  industry: text("industry").notNull(),
+  pain_points: jsonb("pain_points").notNull(),
+  workflows: jsonb("workflows").notNull(),
+  content_summary: text("content_summary").notNull(),
+  key_features: jsonb("key_features").notNull(),
+  target_audience: text("target_audience").notNull(),
+  current_tech: jsonb("current_tech").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const ai_recommendations = pgTable("ai_recommendations", {
+  id: serial("id").primaryKey(),
+  analysis_id: integer("analysis_id").notNull().references(() => business_analyses.id),
+  solution_type: text("solution_type").notNull(),
+  solution_name: text("solution_name").notNull(),
+  description: text("description").notNull(),
+  estimated_cost_savings: integer("estimated_cost_savings").notNull(),
+  estimated_time_savings: text("estimated_time_savings").notNull(),
+  implementation_difficulty: text("implementation_difficulty").notNull(),
+  roi_percentage: integer("roi_percentage").notNull(),
+  industry_benchmark: text("industry_benchmark").notNull(),
+  priority_score: integer("priority_score").notNull(),
+  template_id: text("template_id").notNull(),
+  customization_data: jsonb("customization_data").notNull(),
+  reasoning: text("reasoning").notNull(),
+  rag_evidence: jsonb("rag_evidence"),
+  case_studies: jsonb("case_studies"),
+  ethical_considerations: text("ethical_considerations"),
+  compliance_requirements: jsonb("compliance_requirements"),
+  monitoring_metrics: jsonb("monitoring_metrics"),
+  implementation_timeline: text("implementation_timeline"),
+  expected_revenue: integer("expected_revenue"),
+  risk_factors: jsonb("risk_factors"),
+  status: text("status").default("pending"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+// AI Agent Templates for deployable solutions
+export const aiAgentTemplates = pgTable("ai_agent_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  solution_type: text("solution_type").notNull(), // "customer_support", "predictive_analytics", etc.
+  industry: text("industry").notNull(),
+  template_config: jsonb("template_config").notNull(), // Agent flow configuration
+  capabilities: jsonb("capabilities").notNull(), // List of agent capabilities
+  integration_requirements: jsonb("integration_requirements").notNull(),
+  pricing_model: text("pricing_model").notNull(),
+  is_active: boolean("is_active").default(true),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Deployed AI Solutions from recommendations
+export const deployedSolutions = pgTable("deployed_solutions", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").notNull().references(() => users.id),
+  analysis_id: integer("analysis_id").notNull().references(() => business_analyses.id),
+  template_id: integer("template_id").notNull().references(() => aiAgentTemplates.id),
+  solution_name: text("solution_name").notNull(),
+  deployment_status: text("deployment_status").notNull().default("pending"), // pending, deploying, active, failed
+  deployment_url: text("deployment_url"),
+  deployment_id: text("deployment_id"),
+  configuration: jsonb("configuration").notNull(),
+  performance_metrics: jsonb("performance_metrics"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -126,6 +202,30 @@ export const insertWebhookEventSchema = createInsertSchema(webhook_events).pick(
   razorpay_event_id: true,
   event_type: true,
   processed: true,
+});
+
+export const insertAiAgentTemplateSchema = createInsertSchema(aiAgentTemplates).pick({
+  name: true,
+  description: true,
+  solution_type: true,
+  industry: true,
+  template_config: true,
+  capabilities: true,
+  integration_requirements: true,
+  pricing_model: true,
+  is_active: true,
+});
+
+export const insertDeployedSolutionSchema = createInsertSchema(deployedSolutions).pick({
+  user_id: true,
+  analysis_id: true,
+  template_id: true,
+  solution_name: true,
+  deployment_status: true,
+  deployment_url: true,
+  deployment_id: true,
+  configuration: true,
+  performance_metrics: true,
 });
 
 // Custom flow data schema

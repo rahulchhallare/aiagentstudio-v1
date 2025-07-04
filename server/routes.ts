@@ -2063,6 +2063,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Agent Deployment API Routes
+  
+  // Get deployed solutions for current user
+  app.get("/api/deployed-solutions", async (req: Request, res: Response) => {
+    try {
+      // For demo purposes, return sample deployed solutions
+      // TODO: Implement actual database queries once schema is set up
+      const deployedSolutions = [
+        {
+          id: 1,
+          solution_name: "Customer Support Assistant",
+          deployment_status: "active",
+          deployment_url: "https://customer-support.aiagntstudio.ai",
+          deployment_id: "cs-assistant-001",
+          configuration: { 
+            name: "Customer Support Assistant",
+            description: "24/7 automated customer service"
+          },
+          performance_metrics: {
+            requests_handled: 1247,
+            satisfaction_rate: 94.5,
+            response_time: "1.2s"
+          },
+          created_at: new Date().toISOString(),
+          analysis: {
+            business_name: "TechCorp Solutions",
+            industry: "Technology"
+          },
+          template: {
+            name: "Customer Support Assistant",
+            solution_type: "Customer Support",
+            capabilities: ["Order Tracking", "FAQ Handling", "Human Escalation", "Sentiment Analysis"]
+          }
+        }
+      ];
+
+      res.json(deployedSolutions);
+    } catch (error: any) {
+      console.error('Error fetching deployed solutions:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch deployed solutions",
+        error: error.message 
+      });
+    }
+  });
+
+  // Get available agent templates
+  app.get("/api/agent-templates", async (req: Request, res: Response) => {
+    try {
+      // Return sample agent templates for demo
+      const templates = [
+        {
+          id: 1,
+          name: "Customer Support Assistant",
+          description: "24/7 automated customer service with advanced sentiment analysis",
+          solution_type: "Customer Support",
+          industry: "E-commerce",
+          capabilities: ["Order Tracking", "Returns Processing", "FAQ Handling", "Human Escalation"],
+          integration_requirements: ["Website Integration", "CRM Connection", "Email System"],
+          pricing_model: "Usage-based"
+        },
+        {
+          id: 2,
+          name: "Predictive Analytics Engine",
+          description: "AI-powered business forecasting and trend analysis",
+          solution_type: "Analytics",
+          industry: "Finance",
+          capabilities: ["Sales Forecasting", "Risk Assessment", "Market Analysis", "Custom Reports"],
+          integration_requirements: ["Database Access", "API Integration", "Dashboard Setup"],
+          pricing_model: "Subscription"
+        },
+        {
+          id: 3,
+          name: "Personalization Engine",
+          description: "AI-driven content and product recommendations",
+          solution_type: "Personalization",
+          industry: "Retail",
+          capabilities: ["Product Recommendations", "Content Curation", "User Segmentation", "A/B Testing"],
+          integration_requirements: ["E-commerce Platform", "User Tracking", "Analytics"],
+          pricing_model: "Revenue Share"
+        }
+      ];
+
+      res.json(templates);
+    } catch (error: any) {
+      console.error('Error fetching agent templates:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch agent templates",
+        error: error.message 
+      });
+    }
+  });
+
+  // Deploy new AI agent
+  app.post("/api/deploy-agent", async (req: Request, res: Response) => {
+    try {
+      const { template_id, name, description, configuration } = req.body;
+
+      if (!template_id || !name) {
+        return res.status(400).json({ 
+          message: "Template ID and name are required" 
+        });
+      }
+
+      // For demo purposes, simulate deployment process
+      const deploymentId = `agent-${Date.now()}`;
+      const deploymentUrl = `https://${deploymentId}.aiagntstudio.ai`;
+
+      // TODO: Implement actual agent deployment logic
+      // This would involve:
+      // 1. Creating agent configuration
+      // 2. Deploying to AI agent platform
+      // 3. Setting up monitoring
+      // 4. Storing deployment record in database
+
+      const deployedSolution = {
+        id: Date.now(),
+        template_id,
+        solution_name: name,
+        deployment_status: "deploying",
+        deployment_url: deploymentUrl,
+        deployment_id: deploymentId,
+        configuration: {
+          name,
+          description,
+          ...configuration
+        },
+        created_at: new Date().toISOString()
+      };
+
+      // Simulate deployment delay
+      setTimeout(() => {
+        console.log(`Agent ${deploymentId} deployment completed`);
+      }, 5000);
+
+      res.json({
+        success: true,
+        deployment: deployedSolution,
+        message: "Agent deployment initiated successfully"
+      });
+    } catch (error: any) {
+      console.error('Error deploying agent:', error);
+      res.status(500).json({ 
+        message: "Failed to deploy agent",
+        error: error.message 
+      });
+    }
+  });
+
+  // Update Business Analyzer to include deployment flow integration
+  app.post("/api/recommendations/:id/deploy", async (req: Request, res: Response) => {
+    try {
+      const recommendationId = parseInt(req.params.id);
+      const { configuration } = req.body;
+
+      if (isNaN(recommendationId)) {
+        return res.status(400).json({ message: "Invalid recommendation ID" });
+      }
+
+      // Mark recommendation as selected for deployment
+      await storage.updateRecommendationStatus(recommendationId, 'deploying');
+
+      // TODO: Implement automatic agent deployment from recommendation
+      const deploymentId = `rec-${recommendationId}-${Date.now()}`;
+      const deploymentUrl = `https://${deploymentId}.aiagntstudio.ai`;
+
+      res.json({
+        success: true,
+        deployment_id: deploymentId,
+        deployment_url: deploymentUrl,
+        message: "Recommendation deployment initiated"
+      });
+    } catch (error: any) {
+      console.error('Error deploying recommendation:', error);
+      res.status(500).json({ 
+        message: "Failed to deploy recommendation",
+        error: error.message 
+      });
+    }
+  });
+
   // Serve the chatbot test/demo page
   app.get("/test-embed", (req: Request, res: Response) => {
     const testPageHTML = `<!DOCTYPE html>

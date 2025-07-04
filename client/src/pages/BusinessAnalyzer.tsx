@@ -18,7 +18,8 @@ import {
   AlertCircle,
   ArrowRight,
   BarChart3,
-  Lightbulb
+  Lightbulb,
+  Rocket
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -337,23 +338,35 @@ export default function BusinessAnalyzer() {
                               </Badge>
                             </div>
                           </div>
-                          <Button
-                            onClick={() => handleSelectRecommendation(recommendation.id)}
-                            disabled={selectedRecommendations.has(recommendation.id)}
-                            variant={selectedRecommendations.has(recommendation.id) ? "outline" : "default"}
-                          >
-                            {selectedRecommendations.has(recommendation.id) ? (
-                              <>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Selected
-                              </>
-                            ) : (
-                              <>
-                                Select Solution
-                                <ArrowRight className="w-4 h-4 ml-2" />
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => window.location.href = `/agent-deployment?recommendation=${recommendation.id}&name=${encodeURIComponent(recommendation.solutionName)}`}
+                              variant="default"
+                              size="sm"
+                              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                            >
+                              <Rocket className="w-4 h-4 mr-2" />
+                              Deploy Agent
+                            </Button>
+                            <Button
+                              onClick={() => handleSelectRecommendation(recommendation.id)}
+                              disabled={selectedRecommendations.has(recommendation.id)}
+                              variant={selectedRecommendations.has(recommendation.id) ? "outline" : "secondary"}
+                              size="sm"
+                            >
+                              {selectedRecommendations.has(recommendation.id) ? (
+                                <>
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Selected
+                                </>
+                              ) : (
+                                <>
+                                  Select
+                                  <ArrowRight className="w-4 h-4 ml-2" />
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
