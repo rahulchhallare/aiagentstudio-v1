@@ -2257,11 +2257,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Also serve chatbot-embed.js with proper headers  
   app.get("/chatbot-embed.js", (req: Request, res: Response) => {
-    const fs = require('fs');
-    const path = require('path');
-    res.setHeader('Content-Type', 'application/javascript');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+    import('fs').then(fs => {
+      import('path').then(path => {
+        res.setHeader('Content-Type', 'application/javascript');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+      });
+    });
   });
 
   const httpServer = createServer(app);

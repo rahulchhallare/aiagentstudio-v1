@@ -48,6 +48,15 @@ interface AnalysisResult {
     industryBenchmark: string;
     priorityScore: number;
     reasoning: string;
+    // Enhanced features
+    ragEvidence?: string[];
+    caseStudies?: string[];
+    ethicalConsiderations?: string;
+    complianceRequirements?: string[];
+    monitoringMetrics?: string[];
+    implementationTimeline?: string;
+    expectedRevenue?: number;
+    riskFactors?: string[];
   }>;
 }
 
@@ -381,7 +390,134 @@ export default function BusinessAnalyzer() {
                           <p className="text-sm text-gray-700">{recommendation.reasoning}</p>
                         </div>
 
-                        <div className="text-sm text-gray-600">
+                        {/* Enhanced Features Section */}
+                        <div className="space-y-4">
+                          {/* RAG Evidence */}
+                          {recommendation.ragEvidence && recommendation.ragEvidence.length > 0 && (
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 flex items-center">
+                                <BarChart3 className="w-4 h-4 mr-2 text-blue-600" />
+                                Research Evidence
+                              </h4>
+                              <ul className="text-sm text-gray-700 space-y-1">
+                                {recommendation.ragEvidence.map((evidence, idx) => (
+                                  <li key={idx} className="flex items-start">
+                                    <span className="text-blue-600 mr-2">•</span>
+                                    {evidence}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Case Studies */}
+                          {recommendation.caseStudies && recommendation.caseStudies.length > 0 && (
+                            <div className="bg-green-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 flex items-center">
+                                <Lightbulb className="w-4 h-4 mr-2 text-green-600" />
+                                Success Stories
+                              </h4>
+                              <ul className="text-sm text-gray-700 space-y-1">
+                                {recommendation.caseStudies.map((caseStudy, idx) => (
+                                  <li key={idx} className="flex items-start">
+                                    <span className="text-green-600 mr-2">•</span>
+                                    {caseStudy}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Implementation Details */}
+                          <div className="grid md:grid-cols-2 gap-4">
+                            {recommendation.implementationTimeline && (
+                              <div className="bg-purple-50 p-4 rounded-lg">
+                                <h4 className="font-medium mb-2 flex items-center">
+                                  <Clock className="w-4 h-4 mr-2 text-purple-600" />
+                                  Timeline
+                                </h4>
+                                <p className="text-sm text-gray-700">{recommendation.implementationTimeline}</p>
+                              </div>
+                            )}
+                            
+                            {recommendation.expectedRevenue && (
+                              <div className="bg-orange-50 p-4 rounded-lg">
+                                <h4 className="font-medium mb-2 flex items-center">
+                                  <TrendingUp className="w-4 h-4 mr-2 text-orange-600" />
+                                  Expected Revenue
+                                </h4>
+                                <p className="text-sm font-semibold text-orange-700">
+                                  ${Number(recommendation.expectedRevenue).toLocaleString()}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Compliance & Ethics */}
+                          {recommendation.complianceRequirements && recommendation.complianceRequirements.length > 0 && (
+                            <div className="bg-yellow-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
+                                Compliance Requirements
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {recommendation.complianceRequirements.map((requirement, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-yellow-700 border-yellow-300">
+                                    {requirement}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Ethical Considerations */}
+                          {recommendation.ethicalConsiderations && (
+                            <div className="bg-indigo-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-2 text-indigo-600" />
+                                Ethical Considerations
+                              </h4>
+                              <p className="text-sm text-gray-700">{recommendation.ethicalConsiderations}</p>
+                            </div>
+                          )}
+
+                          {/* Monitoring Metrics */}
+                          {recommendation.monitoringMetrics && recommendation.monitoringMetrics.length > 0 && (
+                            <div className="bg-teal-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 flex items-center">
+                                <BarChart3 className="w-4 h-4 mr-2 text-teal-600" />
+                                Key Performance Metrics
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {recommendation.monitoringMetrics.map((metric, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-teal-700 border-teal-300">
+                                    {metric}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Risk Factors */}
+                          {recommendation.riskFactors && recommendation.riskFactors.length > 0 && (
+                            <div className="bg-red-50 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
+                                Risk Factors
+                              </h4>
+                              <ul className="text-sm text-gray-700 space-y-1">
+                                {recommendation.riskFactors.map((risk, idx) => (
+                                  <li key={idx} className="flex items-start">
+                                    <span className="text-red-600 mr-2">•</span>
+                                    {risk}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-sm text-gray-600 pt-4 border-t">
                           <strong>Industry Benchmark:</strong> {recommendation.industryBenchmark}
                         </div>
                       </CardContent>
