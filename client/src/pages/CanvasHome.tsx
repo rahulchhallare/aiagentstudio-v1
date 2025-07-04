@@ -340,9 +340,9 @@ export default function CanvasHome() {
         {/* Featured Template */}
         <div className="mb-12">
           <FeaturedTemplate
-            title="Conversational AI Assistant"
-            description="Create a versatile chatbot that can answer questions, provide recommendations, and assist users with various tasks using GPT-4o's advanced capabilities."
-            onClick={() => handleTemplateSelect("cc-1")}
+            title="AI Business Analyzer"
+            description="Analyze any business website to identify AI opportunities, get customized solution recommendations with ROI estimates, and discover optimal AI automation strategies."
+            onClick={() => handleTemplateSelect("ba-1")}
           />
         </div>
 
