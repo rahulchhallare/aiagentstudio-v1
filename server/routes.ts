@@ -1969,6 +1969,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Business Analysis API Routes
+  app.post("/api/analyze-website", async (req: Request, res: Response) => {
+    try {
+      const { websiteUrl } = req.body;
+      
+      if (!websiteUrl) {
+        return res.status(400).json({ message: "Website URL is required" });
+      }
+
+      // Import analyzer here to avoid circular dependencies
+      const { websiteAnalyzer } = await import("./website-analyzer");
+      const { recommendationEngine } = await import("./recommendation-engine");
+      
+      // Analyze website
+      const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
+      
+      // Generate AI recommendations
+      const recommendations = await recommendationEngine.generateRecommendations(analysis);
+      
+      // Store analysis in database
+      const userId = req.isAuthenticated && req.isAuthenticated() ? req.user.id : null;
+      const businessAnalysis = await storage.createBusinessAnalysis({
+        user_id: userId,
+        website_url: websiteUrl,
+        business_type: analysis.businessType,
+        business_name: analysis.businessName,
+        industry: analysis.industry,
+        analysis_data: analysis,
+        pain_points: analysis.painPoints,
+        workflows: analysis.workflows,
+        content_summary: analysis.contentSummary,
+        status: 'completed'
+      });
+
+      // Store recommendations
+      const storedRecommendations = await Promise.all(
+        recommendations.map(rec => 
+          storage.createAiRecommendation({
+            analysis_id: businessAnalysis.id,
+            solution_type: rec.solutionType,
+            solution_name: rec.solutionName,
+            description: rec.description,
+            estimated_cost_savings: rec.estimatedCostSavings.toString(),
+            estimated_time_savings: rec.estimatedTimeSavings,
+            implementation_difficulty: rec.implementationDifficulty,
+            roi_percentage: rec.roiPercentage.toString(),
+            industry_benchmark: rec.industryBenchmark,
+            priority_score: rec.priorityScore,
+            template_id: rec.templateId,
+            customization_data: rec.customizationData
+          })
+        )
+      );
+
+      res.json({
+        success: true,
+        analysis: {
+          id: businessAnalysis.id,
+          ...analysis
+        },
+        recommendations: storedRecommendations.map((rec, index) => ({
+          ...rec,
+          reasoning: recommendations[index].reasoning
+        }))
+      });
+    } catch (error: any) {
+      console.error('Error analyzing website:', error);
+      res.status(500).json({ 
+        message: "Failed to analyze website",
+        error: error.message 
+      });
+    }
+  });
+
+  app.get("/api/analysis/:id", async (req: Request, res: Response) => {
+    try {
+      const analysisId = parseInt(req.params.id);
+      
+      if (isNaN(analysisId)) {
+        return res.status(400).json({ message: "Invalid analysis ID" });
+      }
+
+      const analysis = await storage.getBusinessAnalysis(analysisId);
+      if (!analysis) {
+        return res.status(404).json({ message: "Analysis not found" });
+      }
+
+      const recommendations = await storage.getRecommendationsByAnalysisId(analysisId);
+
+      res.json({
+        success: true,
+        analysis,
+        recommendations
+      });
+    } catch (error: any) {
+      console.error('Error fetching analysis:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch analysis",
+        error: error.message 
+      });
+    }
+  });
+
+  app.post("/api/recommendations/:id/select", async (req: Request, res: Response) => {
+    try {
+      const recommendationId = parseInt(req.params.id);
+      
+      if (isNaN(recommendationId)) {
+        return res.status(400).json({ message: "Invalid recommendation ID" });
+      }
+
+      await storage.updateRecommendationStatus(recommendationId, 'selected');
+
+      res.json({
+        success: true,
+        message: "Recommendation selected for implementation"
+      });
+    } catch (error: any) {
+      console.error('Error selecting recommendation:', error);
+      res.status(500).json({ 
+        message: "Failed to select recommendation",
+        error: error.message 
+      });
+    }
+  });
+
   // Serve the chatbot test/demo page
   app.get("/test-embed", (req: Request, res: Response) => {
     const testPageHTML = `<!DOCTYPE html>
@@ -2163,6 +2289,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Also serve chatbot-embed.js with proper headers  
   app.get("/chatbot-embed.js", (req: Request, res: Response) => {
+    const fs = require('fs');
+    const path = require('path');
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));

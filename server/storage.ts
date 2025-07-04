@@ -20,6 +20,15 @@ export interface IStorage {
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
+  
+  // Business Analysis methods
+  createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any>;
+  getBusinessAnalysis(id: number): Promise<any>;
+  createAiRecommendation(insertAiRecommendation: any): Promise<any>;
+  getRecommendationsByAnalysisId(analysisId: number): Promise<any[]>;
+  updateRecommendationStatus(id: number, status: string): Promise<void>;
+  getAiSolutionTemplate(templateId: string): Promise<any>;
+  createDeployedSolution(insertDeployedSolution: any): Promise<any>;
 
   // Chatbot operations
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
