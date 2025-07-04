@@ -18,27 +18,81 @@ export interface WebsiteAnalysisResult {
 export class WebsiteAnalyzer {
   async analyzeWebsite(url: string): Promise<WebsiteAnalysisResult> {
     try {
-      // Fetch website content
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      // Normalize URL - add https:// if no protocol is provided
+      let normalizedUrl = url.trim();
+      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+        normalizedUrl = 'https://' + normalizedUrl;
+      }
+      
+      let response;
+      let finalUrl = normalizedUrl;
+      
+      try {
+        // First try with HTTPS
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        response = await fetch(normalizedUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+      } catch (httpsError) {
+        // If HTTPS fails, try HTTP
+        if (normalizedUrl.startsWith('https://')) {
+          finalUrl = normalizedUrl.replace('https://', 'http://');
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            response = await fetch(finalUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+              },
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+          } catch (httpError) {
+            throw new Error(`Unable to access website. Please check if the URL is correct and the website is online.`);
+          }
+        } else {
+          throw new Error(`Unable to access website. Please check if the URL is correct and the website is online.`);
         }
-      });
+      }
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch website: ${response.status}`);
+        throw new Error(`Website returned an error (${response.status}). Please check if the URL is correct.`);
       }
 
       const html = await response.text();
       const extractedContent = this.extractContent(html);
       
       // Use AI to analyze the content
-      const analysis = await this.analyzeContentWithAI(extractedContent, url);
+      const analysis = await this.analyzeContentWithAI(extractedContent, finalUrl);
       
       return analysis;
     } catch (error) {
       console.error('Error analyzing website:', error);
-      throw new Error(`Failed to analyze website: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Provide user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid URL') || error.message.includes('Failed to parse URL')) {
+          throw new Error('Please enter a valid website URL (e.g., www.example.com or https://example.com)');
+        }
+        if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
+          throw new Error('Website took too long to respond. Please try again or check if the website is online.');
+        }
+        if (error.message.includes('DNS') || error.message.includes('ENOTFOUND')) {
+          throw new Error('Website not found. Please check the URL and try again.');
+        }
+        throw new Error(error.message);
+      }
+      
+      throw new Error('Failed to analyze website. Please check the URL and try again.');
     }
   }
 
