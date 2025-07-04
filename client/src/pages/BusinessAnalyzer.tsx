@@ -498,23 +498,7 @@ export default function BusinessAnalyzer() {
                             </div>
                           )}
 
-                          {/* Risk Factors */}
-                          {recommendation.riskFactors && recommendation.riskFactors.length > 0 && (
-                            <div className="bg-red-50 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
-                                <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
-                                Risk Factors
-                              </h4>
-                              <ul className="text-sm text-gray-700 space-y-1">
-                                {recommendation.riskFactors.map((risk, idx) => (
-                                  <li key={idx} className="flex items-start">
-                                    <span className="text-red-600 mr-2">•</span>
-                                    {risk}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+
                         </div>
 
                         <div className="text-sm text-gray-600 pt-4 border-t">
