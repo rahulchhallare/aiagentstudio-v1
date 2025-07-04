@@ -98,6 +98,56 @@ export default function LandingPage() {
             </div>
           </section>
 
+          {/* AI Business Analyzer Section */}
+          <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  AI Business Analyzer
+                </h2>
+                <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-8">
+                  Our flagship AI tool analyzes your website to identify optimal automation opportunities, 
+                  calculates precise ROI estimates, and recommends tailored AI solutions for your business.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8 mb-12">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Brain className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Website Analysis</h3>
+                  <p className="text-gray-600">AI analyzes your website content to understand your business model and workflows</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">ROI Calculation</h3>
+                  <p className="text-gray-600">Get precise cost savings and efficiency estimates based on industry benchmarks</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Target className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">AI Recommendations</h3>
+                  <p className="text-gray-600">Receive tailored AI solution recommendations with deployment roadmaps</p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Button
+                  onClick={() => navigate("/business-analyzer")}
+                  className="h-auto px-8 py-4 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="lg"
+                >
+                  Start Free Analysis →
+                </Button>
+                <p className="text-sm text-gray-500 mt-4">No signup required • Results in under 60 seconds</p>
+              </div>
+            </div>
+          </section>
+
           {/* Social Proof Section */}
           <section className="py-10 bg-white">
             <div className="container mx-auto px-4">
