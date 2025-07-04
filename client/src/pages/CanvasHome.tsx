@@ -30,7 +30,7 @@ interface TemplateCardProps {
   id: string;
   title: string;
   description: string;
-  category: "content" | "customer-support" | "data-processing";
+  category: "content" | "customer-support" | "data-processing" | "business-analysis";
   popular?: boolean;
   new?: boolean;
   onClick: () => void;
@@ -49,18 +49,21 @@ const TemplateCard = ({
     content: "bg-gradient-to-r from-brand-blue to-brand-green",
     "customer-support": "bg-gradient-to-r from-brand-blue to-primary-600",
     "data-processing": "bg-gradient-to-r from-brand-green to-secondary-600",
+    "business-analysis": "bg-gradient-to-r from-purple-600 to-blue-600",
   }[category];
 
   const categoryName = {
     content: "Content Creation",
     "customer-support": "Customer Support",
     "data-processing": "Data Processing",
+    "business-analysis": "Business Analysis",
   }[category];
 
   const categoryIcon = {
     content: <Copy className="h-5 w-5 mr-1" />,
     "customer-support": <Users className="h-5 w-5 mr-1" />,
     "data-processing": <Layout className="h-5 w-5 mr-1" />,
+    "business-analysis": <TrendingUp className="h-5 w-5 mr-1" />,
   }[category];
 
   return (
@@ -161,12 +164,21 @@ export default function CanvasHome() {
     id: string;
     title: string;
     description: string;
-    category: "content" | "customer-support" | "data-processing";
+    category: "content" | "customer-support" | "data-processing" | "business-analysis";
     popular?: boolean;
     new?: boolean;
   }
 
   const templates: Template[] = [
+    {
+      id: "ba-1",
+      title: "Business Analyzer",
+      description:
+        "Analyze any business website to discover optimal AI solutions with ROI estimates",
+      category: "business-analysis",
+      popular: true,
+      new: true,
+    },
     {
       id: "cc-1",
       title: "Blog Writer",
@@ -227,6 +239,12 @@ export default function CanvasHome() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
+    // Special handling for business analyzer
+    if (templateId === "ba-1") {
+      navigate("/business-analyzer");
+      return;
+    }
+    
     // Special handling for chatbot demo
     if (templateId === "chatbot-1") {
       navigate("/chatbot");
