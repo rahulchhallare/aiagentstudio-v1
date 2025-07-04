@@ -62,6 +62,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
+            <Link href="/business-analyzer" className="text-blue-600 hover:text-blue-700 font-semibold">AI Analyzer</Link>
             <Link href="#features" className="text-gray-600 hover:text-brand-blue font-medium">Features</Link>
             <Link href="#pricing" className="text-gray-600 hover:text-brand-blue font-medium">Pricing</Link>
             <Link href="/templates" className="text-gray-600 hover:text-brand-blue font-medium">Templates</Link>

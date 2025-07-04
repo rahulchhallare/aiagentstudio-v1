@@ -21,6 +21,9 @@ import {
   Folder,
   BarChartIcon,
   UsersIcon,
+  Brain,
+  TrendingUp,
+  Target
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -45,22 +48,20 @@ export default function LandingPage() {
               <div className="flex flex-col md:flex-row items-center">
                 <div className="md:w-1/2 md:pr-12 mb-10 md:mb-0">
                   <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                    Build AI Agents{" "}
-                    <span className="text-brand-blue">Without Code</span>
+                    Discover Perfect AI Solutions for{" "}
+                    <span className="text-brand-blue">Your Business</span>
                   </h1>
                   <p className="text-xl text-gray-600 mb-8">
-                    Create, deploy, and manage custom AI agents with a simple
-                    drag-and-drop interface. No technical expertise required.
+                    Analyze your website with AI to identify optimal automation opportunities, 
+                    get ROI estimates, and deploy tailored AI agents that scale your business.
                   </p>
                   <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                     <Button
-                      onClick={() =>
-                        document.getElementById("signup-button")?.click()
-                      }
+                      onClick={() => navigate("/business-analyzer")}
                       className="h-auto px-6 py-3 bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700 text-white"
                       size="lg"
                     >
-                      Start Building for Free
+                      Analyze Your Business
                     </Button>
                     <Button
                       variant="outline"
@@ -137,7 +138,26 @@ export default function LandingPage() {
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Feature 1 */}
+                {/* Feature 1 - AI Business Analyzer */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-6 border border-blue-200 hover:shadow-md transition duration-200">
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+                    <Brain className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    AI Business Analyzer
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Analyze any business website to discover optimal AI solutions with ROI estimates and implementation roadmaps.
+                  </p>
+                  <Button
+                    onClick={() => navigate("/business-analyzer")}
+                    className="text-blue-600 hover:text-blue-700 font-medium p-0 h-auto bg-transparent hover:bg-transparent"
+                  >
+                    Start Analysis →
+                  </Button>
+                </div>
+
+                {/* Feature 2 */}
                 <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                   <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-lg flex items-center justify-center mb-4">
                     <Grip className="h-6 w-6" />
@@ -151,7 +171,35 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                {/* Feature 2 */}
+                {/* Feature 3 */}
+                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+                  <div className="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-4">
+                    <TrendingUp className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    ROI Estimates
+                  </h3>
+                  <p className="text-gray-600">
+                    Get precise cost savings and time efficiency calculations 
+                    based on industry benchmarks and your business analysis.
+                  </p>
+                </div>
+
+                {/* Feature 4 */}
+                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+                  <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
+                    <Target className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Tailored Solutions
+                  </h3>
+                  <p className="text-gray-600">
+                    Deploy AI solutions specifically designed for your business type, 
+                    from e-commerce chatbots to HR automation systems.
+                  </p>
+                </div>
+
+                {/* Feature 5 */}
                 <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                   <div className="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-4">
                     <BrainIcon className="h-6 w-6" />
@@ -165,7 +213,7 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                {/* Feature 3 */}
+                {/* Feature 6 */}
                 <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
                   <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
                     <RocketIcon className="h-6 w-6" />
@@ -176,34 +224,6 @@ export default function LandingPage() {
                   <p className="text-gray-600">
                     Deploy your agents to production with a single click and
                     make them available to your users.
-                  </p>
-                </div>
-
-                {/* Feature 4 */}
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
-                  <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4">
-                    <Folder className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Templates Library
-                  </h3>
-                  <p className="text-gray-600">
-                    Start from pre-built templates for common use cases and
-                    customize them to your needs.
-                  </p>
-                </div>
-
-                {/* Feature 5 */}
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
-                  <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4">
-                    <BarChartIcon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Performance Analytics
-                  </h3>
-                  <p className="text-gray-600">
-                    Track how your agents are performing with comprehensive
-                    analytics and metrics.
                   </p>
                 </div>
 
