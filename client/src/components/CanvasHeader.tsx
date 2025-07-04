@@ -39,9 +39,6 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
           <Link href="/business-analyzer" className={`text-sm font-medium ${location === '/business-analyzer' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
             AI Analyzer
           </Link>
-          <Link href="/agent-deployment" className={`text-sm font-medium ${location === '/agent-deployment' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-            Deploy Agents
-          </Link>
           <Link href="/templates" className={`text-sm font-medium ${location === '/templates' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
             Templates
           </Link>
@@ -139,9 +136,6 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
           <div className="container py-4 space-y-4">
             <Link href="/business-analyzer" className="block py-2 text-sm font-medium">
               AI Analyzer
-            </Link>
-            <Link href="/agent-deployment" className="block py-2 text-sm font-medium">
-              Deploy Agents
             </Link>
             <Link href="/templates" className="block py-2 text-sm font-medium">
               Templates

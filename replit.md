@@ -102,7 +102,7 @@ AI-powered business analysis platform that helps business owners identify optima
 - Created AgentDeployment page with tabbed interface showing deployed agents, available templates, and deployment configuration
 - Added "Deploy Agent" buttons to each AI recommendation in Business Analyzer for seamless transition
 - Implemented backend API endpoints for agent templates, deployed solutions, and deployment management
-- Added Agent Deployment navigation link prominently in header for easy access
+- Agent Deployment accessible via "Deploy Agent" buttons within AI recommendations (removed from main navigation per user preference)
 - System demonstrates how AI business analysis recommendations can become real, functional AI agents
 - Platform now provides complete workflow: Analyze Business → Get AI Recommendations → Deploy as Live Agents
 
