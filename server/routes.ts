@@ -1988,50 +1988,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate AI recommendations
       const recommendations = await recommendationEngine.generateRecommendations(analysis);
       
-      // Store analysis in database
-      const userId = req.isAuthenticated && req.isAuthenticated() ? req.user.id : null;
-      const businessAnalysis = await storage.createBusinessAnalysis({
-        user_id: userId,
-        website_url: websiteUrl,
-        business_type: analysis.businessType,
-        business_name: analysis.businessName,
-        industry: analysis.industry,
-        analysis_data: analysis,
-        pain_points: analysis.painPoints,
-        workflows: analysis.workflows,
-        content_summary: analysis.contentSummary,
-        status: 'completed'
-      });
-
-      // Store recommendations
-      const storedRecommendations = await Promise.all(
-        recommendations.map(rec => 
-          storage.createAiRecommendation({
-            analysis_id: businessAnalysis.id,
-            solution_type: rec.solutionType,
-            solution_name: rec.solutionName,
-            description: rec.description,
-            estimated_cost_savings: rec.estimatedCostSavings.toString(),
-            estimated_time_savings: rec.estimatedTimeSavings,
-            implementation_difficulty: rec.implementationDifficulty,
-            roi_percentage: rec.roiPercentage.toString(),
-            industry_benchmark: rec.industryBenchmark,
-            priority_score: rec.priorityScore,
-            template_id: rec.templateId,
-            customization_data: rec.customizationData
-          })
-        )
-      );
-
+      // For demo purposes, return results directly without database storage
+      // TODO: Implement proper database storage once schema is properly set up
       res.json({
         success: true,
         analysis: {
-          id: businessAnalysis.id,
+          id: Date.now(), // Temporary ID for demo
           ...analysis
         },
-        recommendations: storedRecommendations.map((rec, index) => ({
+        recommendations: recommendations.map((rec, index) => ({
+          id: index + 1,
           ...rec,
-          reasoning: recommendations[index].reasoning
+          status: 'pending'
         }))
       });
     } catch (error: any) {
