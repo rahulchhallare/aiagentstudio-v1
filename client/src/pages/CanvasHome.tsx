@@ -188,6 +188,13 @@ export default function CanvasHome() {
       popular: true,
     },
     {
+      id: "cc-3",
+      title: "Conversational AI Assistant",
+      description: "Create a versatile chatbot that can answer questions, provide recommendations, and assist users with various tasks using GPT-4o's advanced capabilities",
+      category: "content",
+      popular: true,
+    },
+    {
       id: "cc-2",
       title: "Social Media Assistant",
       description: "Create platform-specific content for your social channels",
