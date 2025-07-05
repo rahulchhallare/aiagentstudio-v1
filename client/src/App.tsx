@@ -39,7 +39,9 @@ import Analytics from "@/pages/Analytics";
 import BusinessAnalyzer from "@/pages/BusinessAnalyzer";
 import AgentDeployment from "@/pages/AgentDeployment";
 import CanvasHeader from "@/components/CanvasHeader";
+import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
+import CanvasHeader from "@/components/CanvasHeader";
 import SignupModal from "@/components/SignupModal";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";
@@ -77,6 +79,7 @@ function Router() {
       <Route path="/terms-of-service" component={TermsOfService} />
       <Route path="/security" component={Security} />
       <Route path="/refund-policy" component={RefundPolicy} />
+      <Route path="/shipping" component={Shipping} />
       <Route path="/use-cases" component={UseCases} />
       <Route path="/tutorials" component={Tutorials} />
       <Route path="/api-reference" component={ApiReference} />
