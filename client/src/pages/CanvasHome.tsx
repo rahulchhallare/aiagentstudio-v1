@@ -30,7 +30,7 @@ interface TemplateCardProps {
   id: string;
   title: string;
   description: string;
-  category: "content" | "customer-support" | "data-processing";
+  category: "content" | "customer-support" | "data-processing" | "business-analysis";
   popular?: boolean;
   new?: boolean;
   onClick: () => void;
@@ -49,18 +49,21 @@ const TemplateCard = ({
     content: "bg-gradient-to-r from-brand-blue to-brand-green",
     "customer-support": "bg-gradient-to-r from-brand-blue to-primary-600",
     "data-processing": "bg-gradient-to-r from-brand-green to-secondary-600",
+    "business-analysis": "bg-gradient-to-r from-purple-600 to-blue-600",
   }[category];
 
   const categoryName = {
     content: "Content Creation",
     "customer-support": "Customer Support",
     "data-processing": "Data Processing",
+    "business-analysis": "Business Analysis",
   }[category];
 
   const categoryIcon = {
     content: <Copy className="h-5 w-5 mr-1" />,
     "customer-support": <Users className="h-5 w-5 mr-1" />,
     "data-processing": <Layout className="h-5 w-5 mr-1" />,
+    "business-analysis": <TrendingUp className="h-5 w-5 mr-1" />,
   }[category];
 
   return (
@@ -161,17 +164,33 @@ export default function CanvasHome() {
     id: string;
     title: string;
     description: string;
-    category: "content" | "customer-support" | "data-processing";
+    category: "content" | "customer-support" | "data-processing" | "business-analysis";
     popular?: boolean;
     new?: boolean;
   }
 
   const templates: Template[] = [
     {
+      id: "ba-1",
+      title: "Business Analyzer",
+      description:
+        "Analyze any business website to discover optimal AI solutions with ROI estimates",
+      category: "business-analysis",
+      popular: true,
+      new: true,
+    },
+    {
       id: "cc-1",
       title: "Blog Writer",
       description:
         "Generate engaging blog posts on any topic with AI assistance",
+      category: "content",
+      popular: true,
+    },
+    {
+      id: "cc-3",
+      title: "Conversational AI Assistant",
+      description: "Create a versatile chatbot that can answer questions, provide recommendations, and assist users with various tasks using GPT-4o's advanced capabilities",
       category: "content",
       popular: true,
     },
@@ -209,6 +228,14 @@ export default function CanvasHome() {
       category: "customer-support",
       new: true,
     },
+    {
+      id: "chatbot-1",
+      title: "E-commerce Customer Service Bot",
+      description:
+        "24/7 AI-powered customer support with order tracking, returns, and human escalation",
+      category: "customer-support",
+      popular: true,
+    },
   ];
 
   const filteredTemplates = templates.filter(
@@ -219,6 +246,18 @@ export default function CanvasHome() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
+    // Special handling for business analyzer
+    if (templateId === "ba-1") {
+      navigate("/business-analyzer");
+      return;
+    }
+    
+    // Special handling for chatbot demo
+    if (templateId === "chatbot-1") {
+      navigate("/chatbot");
+      return;
+    }
+    
     // Store template ID for after login/signup
     localStorage.setItem("selectedTemplate", templateId);
 
@@ -308,9 +347,9 @@ export default function CanvasHome() {
         {/* Featured Template */}
         <div className="mb-12">
           <FeaturedTemplate
-            title="Conversational AI Assistant"
-            description="Create a versatile chatbot that can answer questions, provide recommendations, and assist users with various tasks using GPT-4o's advanced capabilities."
-            onClick={() => handleTemplateSelect("cc-1")}
+            title="AI Business Analyzer"
+            description="Analyze any business website to identify AI opportunities, get customized solution recommendations with ROI estimates, and discover optimal AI automation strategies."
+            onClick={() => handleTemplateSelect("ba-1")}
           />
         </div>
 
@@ -529,6 +568,15 @@ export default function CanvasHome() {
         </div>
       </div>
       <Footer />
+      
+      {/* Customer Service Chatbot */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <div className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg cursor-pointer transition-colors" onClick={() => window.open('/chatbot', '_blank')}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.279 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.279-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Embed Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content {
+            line-height: 1.6;
+            color: #666;
+        }
+        .highlight {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>E-commerce Website Demo</h1>
+        <div class="content">
+            <p>Welcome to our online store! This is a demo website to test the embedded chatbot functionality.</p>
+            
+            <div class="highlight">
+                <h3>Customer Support</h3>
+                <p>Need help? Our AI-powered chatbot is available 24/7 to assist you with:</p>
+                <ul>
+                    <li>Order tracking and status updates</li>
+                    <li>Returns and exchanges</li>
+                    <li>Shipping information</li>
+                    <li>Product questions</li>
+                    <li>Payment support</li>
+                </ul>
+                <p><strong>Look for the chat button in the bottom-right corner!</strong></p>
+            </div>
+            
+            <h3>Test Scenarios</h3>
+            <p>Try these conversation flows with the chatbot:</p>
+            <ol>
+                <li><strong>Order Tracking:</strong> Say "track my order" then provide order number "ABC123"</li>
+                <li><strong>Returns:</strong> Say "I want to return something" then follow the prompts</li>
+                <li><strong>Human Agent:</strong> Say "I need to speak to a human agent"</li>
+                <li><strong>Shipping Info:</strong> Ask "What are your shipping options?"</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Chatbot Integration -->
+    <script>
+      window.chatbotConfig = {
+        apiUrl: 'http://localhost:5000',
+        theme: 'light',
+        position: 'bottom-right'
+      };
+    </script>
+    <script src="http://localhost:5000/chatbot-embed.js"></script>
+</body>
+</html>

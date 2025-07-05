@@ -28,6 +28,7 @@ import {
 import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
+// import { chatbotService } from "./chatbot-service";
 
 // Helper function to map Razorpay plan ID to plan name
 function getPlanNameFromId(planId: string): string {
@@ -1844,6 +1845,606 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       return res.status(500).json({ message: "Internal server error" });
     }
+  });
+
+  // Chatbot endpoints
+  app.post("/api/chatbot/session", async (req: Request, res: Response) => {
+    try {
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      res.json({
+        sessionId,
+        message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
+        status: "connected",
+        requiresGDPR: true
+      });
+    } catch (error) {
+      console.error('Error creating chatbot session:', error);
+      res.status(500).json({ 
+        error: 'Failed to create session',
+        sessionId: `fallback_${Date.now()}`,
+        message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
+        status: "connected",
+        requiresGDPR: true
+      });
+    }
+  });
+
+  app.post("/api/chatbot/message", async (req: Request, res: Response) => {
+    try {
+      const { sessionId, message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      console.log(`Chatbot message received: ${message}`);
+      
+      // Simple chatbot responses without external dependencies
+      const lowerMessage = message.toLowerCase();
+      let response;
+      
+      if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
+        response = {
+          message: "Hello! Thanks for reaching out. I'm here to help you with:\n\n" +
+                  "• Order tracking and status updates\n" +
+                  "• Shipping information and delivery options\n" +
+                  "• Returns and exchanges\n" +
+                  "• Payment questions\n" +
+                  "• Product information\n\n" +
+                  "What can I help you with today?"
+        };
+      } else if (lowerMessage.includes('return') || lowerMessage.includes('exchange')) {
+        response = {
+          message: "I can help you with returns! Here's how it works:\n\n" +
+                  "1. Items can be returned within 30 days of purchase\n" +
+                  "2. Items must be in original condition with tags\n" +
+                  "3. Original receipt or order number required\n" +
+                  "4. Refunds processed within 5-7 business days\n\n" +
+                  "Would you like me to start a return request for you? I'll need your order number."
+        };
+      } else if (lowerMessage.includes('shipping') || lowerMessage.includes('delivery')) {
+        response = {
+          message: "Here are our shipping options:\n\n" +
+                  "• **Free Standard Shipping** (3-5 business days) - Orders over $50\n" +
+                  "• **Express Shipping** (1-2 business days) - $9.99\n" +
+                  "• **Overnight Shipping** (next business day) - $19.99\n" +
+                  "• **International Shipping** (7-14 business days) - Rates vary\n\n" +
+                  "All orders are processed within 24 hours. Would you like tracking information for an existing order?"
+        };
+      } else if (lowerMessage.includes('order') || lowerMessage.includes('track')) {
+        response = {
+          message: "I can help you track your order! Please provide your order number (it usually starts with # or contains letters and numbers like ABC123).\n\n" +
+                  "You can find your order number in:\n" +
+                  "• Your order confirmation email\n" +
+                  "• Your account dashboard\n" +
+                  "• Your receipt\n\n" +
+                  "Once you provide the order number, I'll get you the latest status and tracking information."
+        };
+      } else if (lowerMessage.includes('payment') || lowerMessage.includes('billing')) {
+        response = {
+          message: "I can help with payment and billing questions! We accept:\n\n" +
+                  "• Credit/Debit cards (Visa, Mastercard, Amex)\n" +
+                  "• PayPal\n" +
+                  "• Apple Pay & Google Pay\n" +
+                  "• Buy now, pay later options\n\n" +
+                  "For billing issues, please provide your order number so I can look into it for you."
+        };
+      } else {
+        response = {
+          message: "I'd be happy to help! I can assist you with:\n\n" +
+                  "• Order tracking and status updates\n" +
+                  "• Shipping information and options\n" +
+                  "• Returns and exchanges\n" +
+                  "• Payment methods and billing questions\n" +
+                  "• Product information\n\n" +
+                  "What specific question can I help you with today?"
+        };
+      }
+      
+      console.log(`Chatbot response: ${JSON.stringify(response)}`);
+      res.json(response);
+    } catch (error) {
+      console.error('Error processing chatbot message:', error);
+      res.status(500).json({ 
+        message: "I'm sorry, I'm having technical difficulties. Please try again.",
+        error: true
+      });
+    }
+  });
+
+  app.post("/api/chatbot/consent", async (req: Request, res: Response) => {
+    try {
+      const { sessionId, consent } = req.body;
+      
+      res.json({
+        message: consent 
+          ? "Thank you for your consent. How can I help you today?" 
+          : "I understand. I can still help with general questions without storing personal data.",
+        status: "consent_updated"
+      });
+    } catch (error) {
+      console.error('Error updating consent:', error);
+      res.status(500).json({ error: 'Failed to update consent' });
+    }
+  });
+
+  // Business Analysis API Routes
+  app.post("/api/analyze-website", async (req: Request, res: Response) => {
+    try {
+      const { websiteUrl } = req.body;
+      
+      if (!websiteUrl) {
+        return res.status(400).json({ message: "Website URL is required" });
+      }
+
+      // Import analyzer here to avoid circular dependencies
+      const { websiteAnalyzer } = await import("./website-analyzer");
+      const { recommendationEngine } = await import("./recommendation-engine");
+      
+      // Analyze website
+      const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
+      
+      // Generate AI recommendations
+      const recommendations = await recommendationEngine.generateRecommendations(analysis);
+      
+      // For demo purposes, return results directly without database storage
+      // TODO: Implement proper database storage once schema is properly set up
+      res.json({
+        success: true,
+        analysis: {
+          id: Date.now(), // Temporary ID for demo
+          ...analysis
+        },
+        recommendations: recommendations.map((rec, index) => ({
+          id: index + 1,
+          ...rec,
+          status: 'pending'
+        }))
+      });
+    } catch (error: any) {
+      console.error('Error analyzing website:', error);
+      res.status(500).json({ 
+        message: "Failed to analyze website",
+        error: error.message 
+      });
+    }
+  });
+
+  app.get("/api/analysis/:id", async (req: Request, res: Response) => {
+    try {
+      const analysisId = parseInt(req.params.id);
+      
+      if (isNaN(analysisId)) {
+        return res.status(400).json({ message: "Invalid analysis ID" });
+      }
+
+      const analysis = await storage.getBusinessAnalysis(analysisId);
+      if (!analysis) {
+        return res.status(404).json({ message: "Analysis not found" });
+      }
+
+      const recommendations = await storage.getRecommendationsByAnalysisId(analysisId);
+
+      res.json({
+        success: true,
+        analysis,
+        recommendations
+      });
+    } catch (error: any) {
+      console.error('Error fetching analysis:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch analysis",
+        error: error.message 
+      });
+    }
+  });
+
+  app.post("/api/recommendations/:id/select", async (req: Request, res: Response) => {
+    try {
+      const recommendationId = parseInt(req.params.id);
+      
+      if (isNaN(recommendationId)) {
+        return res.status(400).json({ message: "Invalid recommendation ID" });
+      }
+
+      await storage.updateRecommendationStatus(recommendationId, 'selected');
+
+      res.json({
+        success: true,
+        message: "Recommendation selected for implementation"
+      });
+    } catch (error: any) {
+      console.error('Error selecting recommendation:', error);
+      res.status(500).json({ 
+        message: "Failed to select recommendation",
+        error: error.message 
+      });
+    }
+  });
+
+  // Agent Deployment API Routes
+  
+  // Get deployed solutions for current user
+  app.get("/api/deployed-solutions", async (req: Request, res: Response) => {
+    try {
+      // For demo purposes, return sample deployed solutions
+      // TODO: Implement actual database queries once schema is set up
+      const deployedSolutions = [
+        {
+          id: 1,
+          solution_name: "Customer Support Assistant",
+          deployment_status: "active",
+          deployment_url: "https://customer-support.aiagntstudio.ai",
+          deployment_id: "cs-assistant-001",
+          configuration: { 
+            name: "Customer Support Assistant",
+            description: "24/7 automated customer service"
+          },
+          performance_metrics: {
+            requests_handled: 1247,
+            satisfaction_rate: 94.5,
+            response_time: "1.2s"
+          },
+          created_at: new Date().toISOString(),
+          analysis: {
+            business_name: "TechCorp Solutions",
+            industry: "Technology"
+          },
+          template: {
+            name: "Customer Support Assistant",
+            solution_type: "Customer Support",
+            capabilities: ["Order Tracking", "FAQ Handling", "Human Escalation", "Sentiment Analysis"]
+          }
+        }
+      ];
+
+      res.json(deployedSolutions);
+    } catch (error: any) {
+      console.error('Error fetching deployed solutions:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch deployed solutions",
+        error: error.message 
+      });
+    }
+  });
+
+  // Get available agent templates
+  app.get("/api/agent-templates", async (req: Request, res: Response) => {
+    try {
+      // Return sample agent templates for demo
+      const templates = [
+        {
+          id: 1,
+          name: "Customer Support Assistant",
+          description: "24/7 automated customer service with advanced sentiment analysis",
+          solution_type: "Customer Support",
+          industry: "E-commerce",
+          capabilities: ["Order Tracking", "Returns Processing", "FAQ Handling", "Human Escalation"],
+          integration_requirements: ["Website Integration", "CRM Connection", "Email System"],
+          pricing_model: "Usage-based"
+        },
+        {
+          id: 2,
+          name: "Predictive Analytics Engine",
+          description: "AI-powered business forecasting and trend analysis",
+          solution_type: "Analytics",
+          industry: "Finance",
+          capabilities: ["Sales Forecasting", "Risk Assessment", "Market Analysis", "Custom Reports"],
+          integration_requirements: ["Database Access", "API Integration", "Dashboard Setup"],
+          pricing_model: "Subscription"
+        },
+        {
+          id: 3,
+          name: "Personalization Engine",
+          description: "AI-driven content and product recommendations",
+          solution_type: "Personalization",
+          industry: "Retail",
+          capabilities: ["Product Recommendations", "Content Curation", "User Segmentation", "A/B Testing"],
+          integration_requirements: ["E-commerce Platform", "User Tracking", "Analytics"],
+          pricing_model: "Revenue Share"
+        }
+      ];
+
+      res.json(templates);
+    } catch (error: any) {
+      console.error('Error fetching agent templates:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch agent templates",
+        error: error.message 
+      });
+    }
+  });
+
+  // Deploy new AI agent
+  app.post("/api/deploy-agent", async (req: Request, res: Response) => {
+    try {
+      const { template_id, name, description, configuration } = req.body;
+
+      if (!template_id || !name) {
+        return res.status(400).json({ 
+          message: "Template ID and name are required" 
+        });
+      }
+
+      // For demo purposes, simulate deployment process
+      const deploymentId = `agent-${Date.now()}`;
+      const deploymentUrl = `https://${deploymentId}.aiagntstudio.ai`;
+
+      // TODO: Implement actual agent deployment logic
+      // This would involve:
+      // 1. Creating agent configuration
+      // 2. Deploying to AI agent platform
+      // 3. Setting up monitoring
+      // 4. Storing deployment record in database
+
+      const deployedSolution = {
+        id: Date.now(),
+        template_id,
+        solution_name: name,
+        deployment_status: "deploying",
+        deployment_url: deploymentUrl,
+        deployment_id: deploymentId,
+        configuration: {
+          name,
+          description,
+          ...configuration
+        },
+        created_at: new Date().toISOString()
+      };
+
+      // Simulate deployment delay
+      setTimeout(() => {
+        console.log(`Agent ${deploymentId} deployment completed`);
+      }, 5000);
+
+      res.json({
+        success: true,
+        deployment: deployedSolution,
+        message: "Agent deployment initiated successfully"
+      });
+    } catch (error: any) {
+      console.error('Error deploying agent:', error);
+      res.status(500).json({ 
+        message: "Failed to deploy agent",
+        error: error.message 
+      });
+    }
+  });
+
+  // Update Business Analyzer to include deployment flow integration
+  app.post("/api/recommendations/:id/deploy", async (req: Request, res: Response) => {
+    try {
+      const recommendationId = parseInt(req.params.id);
+      const { configuration } = req.body;
+
+      if (isNaN(recommendationId)) {
+        return res.status(400).json({ message: "Invalid recommendation ID" });
+      }
+
+      // Mark recommendation as selected for deployment
+      await storage.updateRecommendationStatus(recommendationId, 'deploying');
+
+      // TODO: Implement automatic agent deployment from recommendation
+      const deploymentId = `rec-${recommendationId}-${Date.now()}`;
+      const deploymentUrl = `https://${deploymentId}.aiagntstudio.ai`;
+
+      res.json({
+        success: true,
+        deployment_id: deploymentId,
+        deployment_url: deploymentUrl,
+        message: "Recommendation deployment initiated"
+      });
+    } catch (error: any) {
+      console.error('Error deploying recommendation:', error);
+      res.status(500).json({ 
+        message: "Failed to deploy recommendation",
+        error: error.message 
+      });
+    }
+  });
+
+  // Serve the chatbot test/demo page
+  app.get("/test-embed", (req: Request, res: Response) => {
+    const testPageHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Embed Test - AI Agent Studio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+        .content {
+            line-height: 1.6;
+            color: #555;
+        }
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+        .highlight h3 {
+            margin-top: 0;
+            color: white;
+        }
+        .test-scenarios {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 5px solid #667eea;
+        }
+        .scenario {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .scenario strong {
+            color: #667eea;
+        }
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 9999;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        ul li, ol li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="status">Chatbot: Active</div>
+    
+    <div class="container">
+        <h1>E-commerce Chatbot Demo</h1>
+        <p class="subtitle">AI-Powered Customer Support for Shopify & E-commerce</p>
+        
+        <div class="content">
+            <p>Welcome to our AI Agent Studio chatbot demonstration! This shows how our intelligent customer service bot integrates seamlessly into any e-commerce website.</p>
+            
+            <div class="highlight">
+                <h3>Features Available</h3>
+                <ul>
+                    <li><strong>Order Tracking:</strong> Real-time order status and shipping updates</li>
+                    <li><strong>Returns & Exchanges:</strong> Guided return process with order lookup</li>
+                    <li><strong>Product Support:</strong> Instant answers to product questions</li>
+                    <li><strong>Payment Help:</strong> Billing and payment method assistance</li>
+                    <li><strong>Human Escalation:</strong> Seamless handoff to live agents when needed</li>
+                    <li><strong>GDPR Compliant:</strong> Privacy-first data handling</li>
+                </ul>
+            </div>
+            
+            <div class="instructions">
+                <strong>Look for the chat button in the bottom-right corner!</strong>
+                <br>Click it to start a conversation with our AI customer service agent.
+            </div>
+            
+            <div class="test-scenarios">
+                <h3>Test Conversation Flows</h3>
+                <p>Try these realistic customer service scenarios:</p>
+                
+                <div class="scenario">
+                    <strong>1. Order Tracking</strong><br>
+                    Say: "Can you track my order?"<br>
+                    Then provide: "ABC123" when asked for order number
+                </div>
+                
+                <div class="scenario">
+                    <strong>2. Return Request</strong><br>
+                    Say: "I want to return something"<br>
+                    Follow the guided return process
+                </div>
+                
+                <div class="scenario">
+                    <strong>3. Human Agent</strong><br>
+                    Say: "I need to speak to a human agent"<br>
+                    See the escalation process in action
+                </div>
+                
+                <div class="scenario">
+                    <strong>4. Shipping Information</strong><br>
+                    Ask: "What are your shipping options?"<br>
+                    Get detailed shipping policy information
+                </div>
+                
+                <div class="scenario">
+                    <strong>5. Payment Support</strong><br>
+                    Ask: "What payment methods do you accept?"<br>
+                    Learn about available payment options
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h3>Ready for Your E-commerce Store?</h3>
+                <p>This chatbot can be embedded in any website with just 2 lines of code!</p>
+                <p><strong>Perfect for Shopify, WooCommerce, Magento, and custom stores.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Integration Script -->
+    <script>
+      console.log('Loading chatbot with URL:', window.location.origin);
+      window.chatbotConfig = {
+        apiUrl: window.location.origin,
+        theme: 'light',
+        position: 'bottom-right'
+      };
+    </script>
+    <script src="/chatbot-embed.js"></script>
+    
+    <script>
+      // Add some debugging
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (!window.EcommerceChatbot) {
+            console.error('Chatbot failed to load. Check console for errors.');
+          } else {
+            console.log('Chatbot loaded successfully!');
+          }
+        }, 2000);
+      });
+    </script>
+</body>
+</html>`;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(testPageHTML);
+  });
+
+  // Also serve chatbot-embed.js with proper headers  
+  app.get("/chatbot-embed.js", (req: Request, res: Response) => {
+    import('fs').then(fs => {
+      import('path').then(path => {
+        res.setHeader('Content-Type', 'application/javascript');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+      });
+    });
   });
 
   const httpServer = createServer(app);

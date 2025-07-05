@@ -20,6 +20,26 @@ export interface IStorage {
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
+  
+  // Business Analysis methods
+  createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any>;
+  getBusinessAnalysis(id: number): Promise<any>;
+  createAiRecommendation(insertAiRecommendation: any): Promise<any>;
+  getRecommendationsByAnalysisId(analysisId: number): Promise<any[]>;
+  updateRecommendationStatus(id: number, status: string): Promise<void>;
+  getAiSolutionTemplate(templateId: string): Promise<any>;
+  createDeployedSolution(insertDeployedSolution: any): Promise<any>;
+
+  // Chatbot operations
+  createChatSession(session: InsertChatSession): Promise<ChatSession>;
+  getChatSession(sessionId: string): Promise<ChatSession | undefined>;
+  updateChatSession(sessionId: string, updates: Partial<InsertChatSession>): Promise<ChatSession | undefined>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getChatMessages(sessionId: string): Promise<ChatMessage[]>;
+  createReturnRequest(returnRequest: InsertReturnRequest): Promise<ReturnRequest>;
+  getReturnRequest(authNumber: string): Promise<ReturnRequest | undefined>;
+  createAnalyticsEvent(analytics: InsertChatbotAnalytics): Promise<ChatbotAnalytics>;
+  getChatbotAnalytics(startDate?: Date, endDate?: Date): Promise<ChatbotAnalytics[]>;
 
   // Contact Form
   createContactSubmission(data: {

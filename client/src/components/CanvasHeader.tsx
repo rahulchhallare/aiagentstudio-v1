@@ -36,6 +36,9 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
 
         {/* Navigation - Desktop */}
         <nav className="hidden space-x-6 md:flex">
+          <Link href="/business-analyzer" className={`text-sm font-medium ${location === '/business-analyzer' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            AI Analyzer
+          </Link>
           <Link href="/templates" className={`text-sm font-medium ${location === '/templates' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
             Templates
           </Link>
@@ -131,6 +134,9 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
       {isMenuOpen && (
         <div className="md:hidden border-t">
           <div className="container py-4 space-y-4">
+            <Link href="/business-analyzer" className="block py-2 text-sm font-medium">
+              AI Analyzer
+            </Link>
             <Link href="/templates" className="block py-2 text-sm font-medium">
               Templates
             </Link>
