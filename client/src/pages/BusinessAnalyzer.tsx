@@ -141,6 +141,16 @@ export default function BusinessAnalyzer() {
     return 'bg-blue-100 text-blue-800';
   };
 
+  const handleDeployAgent = (recommendation: any) => {
+    // Navigate to deployment customization flow
+    window.location.href = `/agent-customization?recommendation=${recommendation.id}&name=${encodeURIComponent(recommendation.solutionName)}&action=deploy`;
+  };
+
+  const handlePreviewAgent = (recommendation: any) => {
+    // Navigate to preview flow
+    window.location.href = `/agent-customization?recommendation=${recommendation.id}&name=${encodeURIComponent(recommendation.solutionName)}&action=preview`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
@@ -371,6 +381,50 @@ export default function BusinessAnalyzer() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <p className="text-gray-700">{recommendation.description}</p>
+
+                        {/* Pricing Section */}
+                        <div className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="font-semibold text-lg">AI Agent Pricing</h4>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              Ready to Deploy
+                            </Badge>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4 mb-4">
+                            <div className="text-center p-3 bg-white rounded-lg border">
+                              <div className="text-2xl font-bold text-green-600">
+                                ${recommendation.solutionType === 'Customer Support' ? '49' : 
+                                  recommendation.solutionType === 'Analytics' ? '99' : 
+                                  recommendation.solutionType === 'Personalization' ? '79' : '59'}
+                              </div>
+                              <div className="text-sm text-gray-600">One-time Setup</div>
+                            </div>
+                            <div className="text-center p-3 bg-white rounded-lg border">
+                              <div className="text-2xl font-bold text-blue-600">
+                                ${recommendation.solutionType === 'Customer Support' ? '19' : 
+                                  recommendation.solutionType === 'Analytics' ? '39' : 
+                                  recommendation.solutionType === 'Personalization' ? '29' : '24'}/mo
+                              </div>
+                              <div className="text-sm text-gray-600">Monthly Subscription</div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleDeployAgent(recommendation)}
+                              className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                            >
+                              <Rocket className="w-4 h-4 mr-2" />
+                              Buy & Deploy Agent
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => handlePreviewAgent(recommendation)}
+                              className="flex-1"
+                            >
+                              Preview Agent
+                            </Button>
+                          </div>
+                        </div>
                         
                         <div className="grid md:grid-cols-3 gap-4">
                           <div className="text-center p-4 bg-green-50 rounded-lg">

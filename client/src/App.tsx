@@ -38,6 +38,8 @@ import ChatbotDemo from "@/pages/ChatbotDemo";
 import Analytics from "@/pages/Analytics";
 import BusinessAnalyzer from "@/pages/BusinessAnalyzer";
 import AgentDeployment from "@/pages/AgentDeployment";
+import AgentCustomization from "@/pages/AgentCustomization";
+import AgentDashboard from "@/pages/AgentDashboard";
 import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
@@ -85,6 +87,8 @@ function Router() {
       <Route path="/api-reference" component={ApiReference} />
       <Route path="/business-analyzer" component={BusinessAnalyzer} />
       <Route path="/agent-deployment" component={AgentDeployment} />
+      <Route path="/agent-customization" component={AgentCustomization} />
+      <Route path="/agent-dashboard" component={AgentDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
