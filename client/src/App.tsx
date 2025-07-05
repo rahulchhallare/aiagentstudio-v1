@@ -34,6 +34,11 @@ import UseCases from "@/pages/UseCases";
 import RefundPolicy from "@/pages/RefundPolicy";
 import Tutorials from "@/pages/Tutorials";
 import ApiReference from "@/pages/ApiReference";
+import ChatbotDemo from "@/pages/ChatbotDemo";
+import Analytics from "@/pages/Analytics";
+import BusinessAnalyzer from "@/pages/BusinessAnalyzer";
+import AgentDeployment from "@/pages/AgentDeployment";
+import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
 import CanvasHeader from "@/components/CanvasHeader";
@@ -60,6 +65,8 @@ function Router() {
       <Route path="/features" component={Features} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/documentation" component={Documentation} />
+      <Route path="/chatbot" component={ChatbotDemo} />
+      <Route path="/analytics" component={Analytics} />
       <Route path="/agent/:deployId" component={DeployedAgent} />
       <Route path="/agent-tester" component={AgentTester} />
       <Route path="/simple-test" component={SimpleTest} />
@@ -76,6 +83,8 @@ function Router() {
       <Route path="/use-cases" component={UseCases} />
       <Route path="/tutorials" component={Tutorials} />
       <Route path="/api-reference" component={ApiReference} />
+      <Route path="/business-analyzer" component={BusinessAnalyzer} />
+      <Route path="/agent-deployment" component={AgentDeployment} />
       <Route component={NotFound} />
     </Switch>
   );
