@@ -1,0 +1,29 @@
+Raw response: {
+  "businessName": "Book My Helicopter",
+  "businessType": "Air Charter Booking Service",
+  "contentSummary": "Book My Helicopter is an online service for booking private helicopters and jets in India. They offer charters for various purposes including intercity travel, city tours, weddings, and aerial shooting, with pricing available per hour or for specific pre-packaged routes.",
+  "currentTech": [
+    "Website with a JavaScript-based enquiry form",
+    "WhatsApp for Business for customer communication",
+    "Likely a Content Management System (CMS) like WordPress"
+  ],
+  "industry": "Private Aviation & Air Charter Services",
+  "keyFeatures": [
+    "Helicopter & Private Jet Charters",
+    "Services for various occasions (Travel, Tours, Weddings, Shooting)",
+    "Pre-packaged routes (e.g., Mumbai-Shirdi, Bagdogra-Gangtok)",
+    "Per-hour and per-passenger pricing models",
+    "Online enquiry and booking form"
+  ],
+  "painPoints": [
+    "Manual and slow quotation process for custom inquiries, leading to potential delays in customer response.",
+    "Complex real-time scheduling and managing aircraft availability from multiple partners.",
+    "High volume of manual communication required for each booking via phone, email, and WhatsApp.",
+    "Inefficient lead qualification to distinguish serious customers from casual inquiries.",
+    "Difficulty in managing dynamic pricing based on fluctuating fuel costs, landing fees, and demand."
+  ],
+  "targetAudience": "High-net-worth individuals, corporate clients, religious pilgrims, tourists, and event planners seeking private air travel for convenience, luxury, or specific events.",
+  "workflows": [
+    "Lead Generation & Enquiry Management: Capturing customer requirements through a detailed web form and initiating contact.",
+    "Quotation & Booking Confirmation: Manually checking aircraft availability, calculating costs, sending quotes, and processing payments to confirm bookings.",
+    "Customer Support: Answering inquiries about services

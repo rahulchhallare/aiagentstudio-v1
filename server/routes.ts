@@ -1982,10 +1982,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { websiteAnalyzer } = await import("./website-analyzer");
       const { recommendationEngine } = await import("./recommendation-engine");
       
-      // Analyze website
+      // Comprehensive AI-powered website analysis
       const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
       
-      // Generate AI recommendations
+      // Generate AI-powered recommendations
       const recommendations = await recommendationEngine.generateRecommendations(analysis);
       
       // For demo purposes, return results directly without database storage
@@ -2075,7 +2075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: 1,
           solution_name: "Customer Support Assistant",
           deployment_status: "active",
-          deployment_url: "https://customer-support.aiagntstudio.ai",
+          deployment_url: "/chatbot",
           deployment_id: "cs-assistant-001",
           configuration: { 
             name: "Customer Support Assistant",
@@ -2440,11 +2440,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/chatbot-embed.js", (req: Request, res: Response) => {
     import('fs').then(fs => {
       import('path').then(path => {
-        res.setHeader('Content-Type', 'application/javascript');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+        import('url').then(url => {
+          res.setHeader('Content-Type', 'application/javascript');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+          res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+        });
       });
     });
+  });
+
+  // Auto-deploy missing AI agents
+  app.post("/api/deploy-missing-agents", async (req: Request, res: Response) => {
+    try {
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const userId = req.body.userId || 1; // Default to system user
+      
+      await agentAutoDeployer.deployAllMissingAgents(userId);
+      const status = await agentAutoDeployer.getDeploymentStatus();
+      
+      res.json({
+        success: true,
+        message: "Missing agents deployed successfully",
+        status
+      });
+    } catch (error) {
+      console.error("Error deploying missing agents:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to deploy agents"
+      });
+    }
+  });
+
+  // Get comprehensive agent templates
+  app.get("/api/comprehensive-agent-templates", async (req: Request, res: Response) => {
+    try {
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const templates = agentAutoDeployer.getAvailableTemplates();
+      const categorized = agentAutoDeployer.getTemplatesByCategory();
+      
+      res.json({
+        success: true,
+        templates,
+        categorized,
+        total: templates.length
+      });
+    } catch (error) {
+      console.error("Error getting comprehensive agent templates:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get templates"
+      });
+    }
+  });
+
+  // Deploy specific agent by template ID
+  app.post("/api/deploy-agent-template/:templateId", async (req: Request, res: Response) => {
+    try {
+      const { templateId } = req.params;
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const userId = req.body.userId || 1;
+      
+      const deployedAgent = await agentAutoDeployer.deploySpecificAgent(templateId, userId);
+      
+      res.json({
+        success: true,
+        message: "Agent deployed successfully",
+        agent: deployedAgent
+      });
+    } catch (error) {
+      console.error("Error deploying specific agent:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to deploy agent"
+      });
+    }
   });
 
   const httpServer = createServer(app);
