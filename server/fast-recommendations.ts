@@ -43,8 +43,39 @@ export class FastRecommendationEngine {
       availabilityStatus: "Available"
     });
 
-    // Business-type specific recommendations
-    if (businessType.includes('ecommerce') || businessType.includes('store') || businessType.includes('retail')) {
+    // Business-type specific recommendations based on actual business analysis
+    if (businessType.includes('Construction') || businessType.includes('Engineering') || businessType.includes('construction')) {
+      recommendations.push(
+        {
+          solutionType: "Project Management Agent",
+          solutionName: "Construction Project Optimizer",
+          description: "Automated project tracking, resource allocation, timeline management, and client communication for construction projects.",
+          estimatedCostSavings: 95000,
+          estimatedTimeSavings: "35 hours/week", 
+          implementationDifficulty: "medium",
+          roiPercentage: 420,
+          industryBenchmark: "Construction average: 380% ROI",
+          priorityScore: 10,
+          templateId: "construction-project-agent",
+          reasoning: "Construction businesses benefit significantly from automated project management and client communication.",
+          availabilityStatus: "Available"
+        },
+        {
+          solutionType: "Resource Management Agent", 
+          solutionName: "Construction Resource Optimizer",
+          description: "AI-powered resource allocation, equipment tracking, material ordering, and workforce scheduling optimization.",
+          estimatedCostSavings: 72000,
+          estimatedTimeSavings: "28 hours/week",
+          implementationDifficulty: "medium", 
+          roiPercentage: 390,
+          industryBenchmark: "Engineering average: 350% ROI",
+          priorityScore: 9,
+          templateId: "resource-management-agent",
+          reasoning: "Efficient resource management is critical for construction project profitability and timelines.",
+          availabilityStatus: "Available"
+        }
+      );
+    } else if (businessType.includes('ecommerce') || businessType.includes('store') || businessType.includes('retail')) {
       recommendations.push(
         {
           solutionType: "Sales Automation Agent",

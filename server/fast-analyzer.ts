@@ -12,9 +12,11 @@ export class FastAnalyzer {
       // Quick content extraction with shorter timeout
       const content = await this.extractQuickContent(url);
       
+
       // Generate analysis based on URL pattern and basic content
       return this.generateSmartAnalysis(url, content);
     } catch (error) {
+      console.log('FastAnalyzer: Content extraction failed:', error.message);
       console.log('FastAnalyzer: Falling back to URL-based analysis');
       return this.generateURLBasedAnalysis(url);
     }
@@ -69,24 +71,34 @@ export class FastAnalyzer {
 
   private extractBusinessKeywords(html: string): string[] {
     const keywords: string[] = [];
-    const businessTerms = [
-      'shop', 'store', 'buy', 'sell', 'ecommerce', 'e-commerce',
-      'service', 'consulting', 'agency', 'company', 'business',
-      'restaurant', 'food', 'hotel', 'booking', 'reservation',
-      'software', 'app', 'platform', 'technology', 'tech',
-      'healthcare', 'medical', 'legal', 'finance', 'insurance',
-      'education', 'learning', 'course', 'training', 'school'
-    ];
-    
     const lowerHtml = html.toLowerCase();
     
-    businessTerms.forEach(term => {
-      if (lowerHtml.includes(term)) {
-        keywords.push(term);
-      }
-    });
+    // Enhanced business type detection patterns
+    const businessPatterns = {
+      'construction': ['construction', 'building', 'contractor', 'civil', 'infrastructure', 'engineering', 'concrete', 'steel', 'architecture', 'industrial'],
+      'ecommerce': ['shop', 'store', 'buy', 'sell', 'cart', 'checkout', 'product', 'price', 'order', 'shipping'],
+      'consulting': ['consulting', 'advisory', 'strategy', 'expertise', 'solutions', 'professional'],
+      'restaurant': ['restaurant', 'food', 'menu', 'dining', 'cuisine', 'chef', 'delivery', 'takeout'],
+      'healthcare': ['medical', 'health', 'doctor', 'clinic', 'hospital', 'treatment', 'patient', 'healthcare'],
+      'technology': ['software', 'app', 'platform', 'technology', 'tech', 'digital', 'system', 'development'],
+      'education': ['education', 'learning', 'course', 'training', 'school', 'university', 'student', 'academic'],
+      'finance': ['finance', 'banking', 'investment', 'loan', 'insurance', 'financial', 'money', 'credit'],
+      'real-estate': ['real estate', 'property', 'homes', 'houses', 'apartment', 'rental', 'buying', 'selling'],
+      'manufacturing': ['manufacturing', 'factory', 'production', 'industrial', 'machinery', 'equipment', 'assembly'],
+      'automotive': ['automotive', 'car', 'vehicle', 'auto', 'repair', 'service', 'parts', 'garage'],
+      'legal': ['legal', 'lawyer', 'attorney', 'law', 'court', 'litigation', 'counsel', 'legal services']
+    };
     
-    return keywords.slice(0, 5); // Return top 5 keywords
+    // Find matching business patterns
+    for (const [category, terms] of Object.entries(businessPatterns)) {
+      const matches = terms.filter(term => lowerHtml.includes(term));
+      if (matches.length > 0) {
+        keywords.push(category);
+        keywords.push(...matches.slice(0, 2)); // Add top 2 matching terms
+      }
+    }
+    
+    return keywords.slice(0, 8); // Return top 8 keywords for better analysis
   }
 
   private generateSmartAnalysis(url: string, content: any): WebsiteAnalysisResult {
@@ -100,25 +112,51 @@ export class FastAnalyzer {
     const title = content.title || domain;
     const keywords = content.businessKeywords || [];
     
-    // Smart business type detection
+    // Also check title for business keywords if content keywords are limited
+    const titleKeywords = this.extractBusinessKeywords(title);
+    const allKeywords = [...new Set([...keywords, ...titleKeywords])]; // Combine and dedupe
+    
+    // Enhanced smart business type detection
     let businessType = 'General Business';
     let industry = 'Technology';
     
-    if (keywords.includes('shop') || keywords.includes('store') || keywords.includes('ecommerce')) {
+    // Priority-based business type detection using combined keywords
+    if (allKeywords.includes('construction') || allKeywords.includes('civil') || allKeywords.includes('building') || allKeywords.includes('contractor')) {
+      businessType = 'Construction & Engineering';
+      industry = 'Construction';
+    } else if (allKeywords.includes('ecommerce') || allKeywords.includes('shop') || allKeywords.includes('store')) {
       businessType = 'E-commerce Store';
       industry = 'Retail';
-    } else if (keywords.includes('restaurant') || keywords.includes('food')) {
+    } else if (allKeywords.includes('restaurant') || allKeywords.includes('food')) {
       businessType = 'Restaurant';
       industry = 'Food Service';
-    } else if (keywords.includes('hotel') || keywords.includes('booking')) {
-      businessType = 'Hospitality Business';
-      industry = 'Travel & Hospitality';
-    } else if (keywords.includes('consulting') || keywords.includes('agency')) {
-      businessType = 'Professional Services';
-      industry = 'Consulting';
-    } else if (keywords.includes('software') || keywords.includes('app') || keywords.includes('platform')) {
+    } else if (allKeywords.includes('healthcare') || allKeywords.includes('medical')) {
+      businessType = 'Healthcare Provider';
+      industry = 'Healthcare';
+    } else if (allKeywords.includes('technology') || allKeywords.includes('software') || allKeywords.includes('app')) {
       businessType = 'Software Company';
       industry = 'Technology';
+    } else if (allKeywords.includes('consulting') || allKeywords.includes('professional')) {
+      businessType = 'Consulting Firm';
+      industry = 'Professional Services';
+    } else if (allKeywords.includes('manufacturing') || allKeywords.includes('industrial')) {
+      businessType = 'Manufacturing Company';
+      industry = 'Manufacturing';
+    } else if (allKeywords.includes('real-estate') || allKeywords.includes('property')) {
+      businessType = 'Real Estate';
+      industry = 'Real Estate';
+    } else if (allKeywords.includes('automotive') || allKeywords.includes('car')) {
+      businessType = 'Automotive Services';
+      industry = 'Automotive';
+    } else if (allKeywords.includes('legal') || allKeywords.includes('lawyer')) {
+      businessType = 'Legal Services';
+      industry = 'Legal';
+    } else if (allKeywords.includes('finance') || allKeywords.includes('banking')) {
+      businessType = 'Financial Services';
+      industry = 'Finance';
+    } else if (allKeywords.includes('education') || allKeywords.includes('learning')) {
+      businessType = 'Educational Institution';
+      industry = 'Education';
     }
     
     return {
@@ -181,6 +219,12 @@ export class FastAnalyzer {
 
   private generatePainPoints(businessType: string): string[] {
     const painPointsMap: Record<string, string[]> = {
+      'Construction & Engineering': [
+        'Project management complexity',
+        'Resource allocation inefficiency',
+        'Client communication delays',
+        'Quality control monitoring'
+      ],
       'E-commerce Store': [
         'Abandoned cart recovery',
         'Customer support volume',
@@ -193,11 +237,59 @@ export class FastAnalyzer {
         'Customer feedback handling',
         'Staff scheduling optimization'
       ],
+      'Healthcare Provider': [
+        'Patient appointment scheduling',
+        'Medical record management',
+        'Insurance claim processing',
+        'Patient communication efficiency'
+      ],
       'Software Company': [
         'Customer onboarding complexity',
         'Technical support scalability',
         'Feature request management',
         'User engagement tracking'
+      ],
+      'Consulting Firm': [
+        'Lead qualification process',
+        'Client communication efficiency',
+        'Project management overhead',
+        'Proposal generation time'
+      ],
+      'Manufacturing Company': [
+        'Production scheduling complexity',
+        'Quality control monitoring',
+        'Supply chain coordination',
+        'Equipment maintenance tracking'
+      ],
+      'Real Estate': [
+        'Lead qualification inefficiency',
+        'Property showing coordination',
+        'Document management complexity',
+        'Client follow-up automation'
+      ],
+      'Automotive Services': [
+        'Service appointment scheduling',
+        'Parts inventory management',
+        'Customer communication delays',
+        'Service quality tracking'
+      ],
+      'Legal Services': [
+        'Case management complexity',
+        'Document review efficiency',
+        'Client billing automation',
+        'Court schedule coordination'
+      ],
+      'Financial Services': [
+        'Risk assessment automation',
+        'Customer onboarding complexity',
+        'Compliance monitoring',
+        'Portfolio management efficiency'
+      ],
+      'Educational Institution': [
+        'Student enrollment management',
+        'Course scheduling complexity',
+        'Learning progress tracking',
+        'Parent communication efficiency'
       ],
       'Professional Services': [
         'Lead qualification process',
