@@ -12,6 +12,12 @@ AI-powered business analysis platform that helps business owners identify optima
 - **Chatbot**: Full customer service system with GDPR compliance, order tracking, returns workflow
 
 ## Recent Changes
+- 2025-01-06: DUAL AI PROVIDER SYSTEM - OpenAI Primary, DeepSeek Backup
+- Configured OpenAI GPT-4o as primary AI provider for superior website analysis capabilities
+- DeepSeek serves as backup provider when OpenAI quota is exceeded or unavailable
+- Both website analysis and recommendation engine use this dual-provider system
+- System gracefully falls back to demo data when both providers are unavailable
+- Ensures continuous operation even during quota limitations or API outages
 - 2025-01-22: Migrated from Replit Agent to standard Replit environment
 - Fixed port configuration to use environment variable
 - Added proper error handling for port conflicts

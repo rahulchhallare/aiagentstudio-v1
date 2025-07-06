@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import type { WebsiteAnalysisResult } from "./website-analyzer";
 import type { IndustryBenchmark, AiSolutionTemplate } from "../shared/schema";
+import { getDeepSeekService } from './deepseek-service';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -82,7 +83,11 @@ export class RecommendationEngine {
   }
 
   private async getAIRecommendations(analysis: WebsiteAnalysisResult): Promise<any[]> {
-    const prompt = `Based on this business analysis, recommend 3-5 specific AI solutions that would provide the most value:
+    try {
+      // Try OpenAI first as primary AI provider (best for complex analysis)
+      if (process.env.OPENAI_API_KEY) {
+        console.log('Using OpenAI GPT-4o for recommendations...');
+        const prompt = `Based on this business analysis, recommend 3-5 specific AI solutions that would provide the most value:
 
 Business Type: ${analysis.businessType}
 Industry: ${analysis.industry}
@@ -121,30 +126,48 @@ For each recommendation, provide:
 
 Focus on solutions that directly address the identified pain points and workflows. Be specific about the business value and implementation for this particular company.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: "You are an AI business consultant expert at matching AI solutions to specific business needs. Provide actionable, realistic recommendations with concrete value estimates."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.4,
-      max_tokens: 2000
-    });
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            {
+              role: "system",
+              content: "You are an AI business consultant expert at matching AI solutions to specific business needs. Provide actionable, realistic recommendations with concrete value estimates."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.4,
+          max_tokens: 2000
+        });
 
-    const responseText = response.choices[0].message.content;
-    if (!responseText) {
-      throw new Error('Failed to get recommendations from AI');
+        const responseText = response.choices[0].message.content;
+        if (!responseText) {
+          throw new Error('Failed to get recommendations from AI');
+        }
+
+        const parsed = JSON.parse(responseText);
+        return parsed.recommendations || [];
+      }
+    } catch (openaiError) {
+      console.error('OpenAI failed, trying DeepSeek as backup:', openaiError);
     }
 
-    const parsed = JSON.parse(responseText);
-    return parsed.recommendations || [];
+    try {
+      // Fallback to DeepSeek if OpenAI fails
+      if (process.env.DEEPSEEK_API_KEY) {
+        console.log('Using DeepSeek AI as backup for recommendations...');
+        const deepSeek = getDeepSeekService();
+        return await deepSeek.generateRecommendations(analysis);
+      }
+    } catch (deepSeekError) {
+      console.error('DeepSeek also failed, falling back to demo recommendations:', deepSeekError);
+    }
+
+    // If both fail, throw error to trigger demo fallback
+    throw new Error('Both OpenAI and DeepSeek unavailable');
   }
 
   private enrichRecommendation(recommendation: any, analysis: WebsiteAnalysisResult): RecommendationResult {

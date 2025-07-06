@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { load } from "cheerio";
+import { getDeepSeekService } from './deepseek-service';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -193,7 +194,11 @@ export class WebsiteAnalyzer {
   }
 
   private async analyzeContentWithAI(content: any, url: string): Promise<WebsiteAnalysisResult> {
-    const prompt = `Analyze this website content and provide a structured analysis:
+    try {
+      // Try OpenAI first as primary AI provider (best for complex analysis)
+      if (process.env.OPENAI_API_KEY) {
+        console.log('Using OpenAI GPT-4o for website analysis...');
+        const prompt = `Analyze this website content and provide a structured analysis:
 
 Website URL: ${url}
 Title: ${content.title}
@@ -220,47 +225,75 @@ Based on this content, analyze and provide the following information in JSON for
 
 Focus on being specific and actionable. Identify real business challenges that AI could help solve.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: "You are a business analyst expert at identifying business types, workflows, and potential areas for AI automation. Provide detailed, actionable analysis in the requested JSON format."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3,
-      max_tokens: 1500
-    });
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            {
+              role: "system",
+              content: "You are a business analyst expert at identifying business types, workflows, and potential areas for AI automation. Provide detailed, actionable analysis in the requested JSON format."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.3,
+          max_tokens: 1500
+        });
 
-    const analysisText = response.choices[0].message.content;
-    if (!analysisText) {
-      throw new Error('Failed to get analysis from AI');
+        const analysisText = response.choices[0].message.content;
+        if (!analysisText) {
+          throw new Error('Failed to get analysis from AI');
+        }
+
+        try {
+          const analysis = JSON.parse(analysisText);
+          
+          // Validate and clean the response
+          return {
+            businessType: analysis.businessType || 'Unknown',
+            businessName: analysis.businessName || 'Unknown',
+            industry: analysis.industry || 'Unknown',
+            painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
+            workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
+            contentSummary: analysis.contentSummary || '',
+            keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
+            targetAudience: analysis.targetAudience || '',
+            currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
+          };
+        } catch (error) {
+          console.error('Failed to parse AI analysis response:', error);
+          throw new Error('Failed to parse analysis results');
+        }
+      }
+    } catch (openaiError) {
+      console.error('OpenAI failed, trying DeepSeek as backup:', openaiError);
     }
 
     try {
-      const analysis = JSON.parse(analysisText);
-      
-      // Validate and clean the response
-      return {
-        businessType: analysis.businessType || 'Unknown',
-        businessName: analysis.businessName || 'Unknown',
-        industry: analysis.industry || 'Unknown',
-        painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
-        workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
-        contentSummary: analysis.contentSummary || '',
-        keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
-        targetAudience: analysis.targetAudience || '',
-        currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
-      };
-    } catch (error) {
-      console.error('Failed to parse AI analysis response:', error);
-      throw new Error('Failed to parse analysis results');
+      // Fallback to DeepSeek if OpenAI fails
+      if (process.env.DEEPSEEK_API_KEY) {
+        console.log('Using DeepSeek AI as backup for website analysis...');
+        const deepSeek = getDeepSeekService();
+        const websiteContent = `
+Website URL: ${url}
+Title: ${content.title}
+Meta Description: ${content.metaDescription}
+Headings: ${content.headings.join(', ')}
+Navigation: ${content.navigationItems.join(', ')}
+Main Content: ${content.mainContent}
+Image Alt Texts: ${content.images.join(', ')}
+Key Links: ${content.links.join(', ')}`;
+
+        return await deepSeek.analyzeWebsite(websiteContent, url);
+      }
+    } catch (deepSeekError) {
+      console.error('DeepSeek also failed, falling back to demo analysis:', deepSeekError);
     }
+
+    // If both fail, throw error to trigger demo fallback
+    throw new Error('Both OpenAI and DeepSeek unavailable');
   }
 
   private generateDemoAnalysis(url: string, extractedContent: any): WebsiteAnalysisResult {
