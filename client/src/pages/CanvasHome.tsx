@@ -164,26 +164,135 @@ export default function CanvasHome() {
     id: string;
     title: string;
     description: string;
-    category: "content" | "customer-support" | "data-processing" | "business-analysis";
+    category: "content" | "customer-support" | "data-processing" | "business-analysis" | "sales-marketing" | "analytics" | "operations" | "industry-specific";
     popular?: boolean;
     new?: boolean;
   }
 
   const templates: Template[] = [
+    // Business Analysis
     {
       id: "ba-1",
       title: "Business Analyzer",
-      description:
-        "Analyze any business website to discover optimal AI solutions with ROI estimates",
+      description: "Analyze any business website to discover optimal AI solutions with ROI estimates",
       category: "business-analysis",
       popular: true,
       new: true,
     },
+    
+    // Customer Support & Service Agents
+    {
+      id: "customer-support-assistant",
+      title: "AI-Powered Customer Support Assistant",
+      description: "24/7 automated customer service with advanced sentiment analysis, order tracking, and human escalation",
+      category: "customer-support",
+      popular: true,
+      new: true,
+    },
+    {
+      id: "cs-1",
+      title: "FAQ Responder",
+      description: "Answer customer questions using your knowledge base",
+      category: "customer-support",
+      popular: true,
+    },
+    {
+      id: "tc-1",
+      title: "Ticket Classifier",
+      description: "Automatically categorize support tickets by priority and type",
+      category: "customer-support",
+      new: true,
+    },
+    {
+      id: "chatbot-1",
+      title: "E-commerce Customer Service Bot",
+      description: "24/7 AI-powered customer support with order tracking, returns, and human escalation",
+      category: "customer-support",
+      popular: true,
+    },
+
+    // Sales & Marketing Agents
+    {
+      id: "lead-generation-assistant",
+      title: "AI Lead Generation & Qualification Assistant",
+      description: "Automatically qualify leads, schedule appointments, and nurture prospects through personalized interactions",
+      category: "sales-marketing",
+      new: true,
+      popular: true,
+    },
+    {
+      id: "personalization-engine",
+      title: "AI-Powered Personalization & Recommendation System",
+      description: "Deliver personalized content, product recommendations, and user experiences to increase engagement and drive sales",
+      category: "sales-marketing",
+      popular: true,
+      new: true,
+    },
+
+    // Analytics & Intelligence Agents
+    {
+      id: "sentiment-intelligence-platform",
+      title: "AI-Driven Sentiment Intelligence Platform",
+      description: "Transform customer feedback into actionable insights with real-time sentiment analysis and trend detection",
+      category: "analytics",
+      new: true,
+      popular: true,
+    },
+    {
+      id: "business-intelligence-platform",
+      title: "Business Intelligence & Forecasting Platform",
+      description: "AI-powered predictive analytics to forecast sales trends, customer behavior, and market opportunities",
+      category: "analytics",
+      popular: true,
+      new: true,
+    },
+    {
+      id: "dp-1",
+      title: "Data Summarizer",
+      description: "Extract key insights from complex data and documents",
+      category: "data-processing",
+    },
+    {
+      id: "dp-2",
+      title: "Research Assistant",
+      description: "Compile research findings and generate reports",
+      category: "data-processing",
+      new: true,
+    },
+
+    // Operations & Automation Agents
+    {
+      id: "ai-monitoring-dashboard",
+      title: "Continuous AI Evaluation & Monitoring Dashboard",
+      description: "Real-time monitoring of all AI solutions' performance, ROI tracking, bias detection, and continuous improvement recommendations",
+      category: "operations",
+      new: true,
+      popular: true,
+    },
+
+    // Industry-Specific Agents
+    {
+      id: "inventory-optimization-agent",
+      title: "AI Inventory Optimization with Sustainability Tracking",
+      description: "Predict demand patterns, optimize inventory levels, and track sustainability metrics to reduce costs and minimize environmental impact",
+      category: "industry-specific",
+      new: true,
+      popular: true,
+    },
+    {
+      id: "financial-ai-governance",
+      title: "Financial AI Compliance & Ethics Framework",
+      description: "Comprehensive AI governance system ensuring regulatory compliance, bias prevention, and ethical decision-making in financial services",
+      category: "industry-specific",
+      popular: true,
+      new: true,
+    },
+
+    // Content Creation
     {
       id: "cc-1",
       title: "Blog Writer",
-      description:
-        "Generate engaging blog posts on any topic with AI assistance",
+      description: "Generate engaging blog posts on any topic with AI assistance",
       category: "content",
       popular: true,
     },
@@ -199,42 +308,6 @@ export default function CanvasHome() {
       title: "Social Media Assistant",
       description: "Create platform-specific content for your social channels",
       category: "content",
-    },
-    {
-      id: "cs-1",
-      title: "FAQ Responder",
-      description: "Answer customer questions using your knowledge base",
-      category: "customer-support",
-      popular: true,
-    },
-    {
-      id: "dp-1",
-      title: "Data Summarizer",
-      description: "Extract key insights from complex data and documents",
-      category: "data-processing",
-    },
-    {
-      id: "dp-2",
-      title: "Research Assistant",
-      description: "Compile research findings and generate reports",
-      category: "data-processing",
-      new: true,
-    },
-    {
-      id: "tc-1",
-      title: "Ticket Classifier",
-      description:
-        "Automatically categorize support tickets by priority and type",
-      category: "customer-support",
-      new: true,
-    },
-    {
-      id: "chatbot-1",
-      title: "E-commerce Customer Service Bot",
-      description:
-        "24/7 AI-powered customer support with order tracking, returns, and human escalation",
-      category: "customer-support",
-      popular: true,
     },
   ];
 
@@ -407,10 +480,14 @@ export default function CanvasHome() {
         <Tabs defaultValue="all" className="mb-12">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">AI Agent Templates</h2>
-            <TabsList>
+            <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full">
               <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="customer-support">Support</TabsTrigger>
+              <TabsTrigger value="sales-marketing">Sales</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="operations">Operations</TabsTrigger>
+              <TabsTrigger value="industry-specific">Industry</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="data-processing">Data</TabsTrigger>
             </TabsList>
           </div>
@@ -474,6 +551,82 @@ export default function CanvasHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
                 .filter((template) => template.category === "data-processing")
+                .map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    id={template.id}
+                    title={template.title}
+                    description={template.description}
+                    category={template.category}
+                    popular={template.popular}
+                    new={template.new}
+                    onClick={() => handleTemplateSelect(template.id)}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sales-marketing" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates
+                .filter((template) => template.category === "sales-marketing")
+                .map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    id={template.id}
+                    title={template.title}
+                    description={template.description}
+                    category={template.category}
+                    popular={template.popular}
+                    new={template.new}
+                    onClick={() => handleTemplateSelect(template.id)}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates
+                .filter((template) => template.category === "analytics")
+                .map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    id={template.id}
+                    title={template.title}
+                    description={template.description}
+                    category={template.category}
+                    popular={template.popular}
+                    new={template.new}
+                    onClick={() => handleTemplateSelect(template.id)}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="operations" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates
+                .filter((template) => template.category === "operations")
+                .map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    id={template.id}
+                    title={template.title}
+                    description={template.description}
+                    category={template.category}
+                    popular={template.popular}
+                    new={template.new}
+                    onClick={() => handleTemplateSelect(template.id)}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="industry-specific" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates
+                .filter((template) => template.category === "industry-specific")
                 .map((template) => (
                   <TemplateCard
                     key={template.id}
