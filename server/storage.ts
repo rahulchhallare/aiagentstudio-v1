@@ -1,4 +1,13 @@
-import { users, agents, waitlist, type User, type InsertUser, type Agent, type InsertAgent, type Waitlist, type InsertWaitlist } from "@shared/schema";
+import { 
+  users, agents, waitlist, business_analyses, ai_recommendations,
+  type User, type InsertUser, 
+  type Agent, type InsertAgent, 
+  type Waitlist, type InsertWaitlist,
+  type BusinessAnalysis, type InsertBusinessAnalysis,
+  type AiRecommendation, type InsertAiRecommendation
+} from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -22,13 +31,11 @@ export interface IStorage {
   getWaitlistEntries(): Promise<Waitlist[]>;
   
   // Business Analysis methods
-  createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any>;
-  getBusinessAnalysis(id: number): Promise<any>;
-  createAiRecommendation(insertAiRecommendation: any): Promise<any>;
-  getRecommendationsByAnalysisId(analysisId: number): Promise<any[]>;
+  createBusinessAnalysis(insertBusinessAnalysis: InsertBusinessAnalysis): Promise<BusinessAnalysis>;
+  getBusinessAnalysis(id: number): Promise<BusinessAnalysis | undefined>;
+  createAiRecommendation(insertAiRecommendation: InsertAiRecommendation): Promise<AiRecommendation>;
+  getRecommendationsByAnalysisId(analysisId: number): Promise<AiRecommendation[]>;
   updateRecommendationStatus(id: number, status: string): Promise<void>;
-  getAiSolutionTemplate(templateId: string): Promise<any>;
-  createDeployedSolution(insertDeployedSolution: any): Promise<any>;
 
   // Chatbot operations
   createChatSession(session: InsertChatSession): Promise<ChatSession>;

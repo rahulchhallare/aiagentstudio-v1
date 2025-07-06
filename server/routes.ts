@@ -1981,26 +1981,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import analyzer here to avoid circular dependencies
       const { websiteAnalyzer } = await import("./website-analyzer");
       const { recommendationEngine } = await import("./recommendation-engine");
+      const { databaseStorage } = await import("./database-storage");
       
       // Comprehensive AI-powered website analysis
       const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
       
+      // Save business analysis to database
+      const savedAnalysis = await databaseStorage.createBusinessAnalysis({
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        business_type: analysis.businessType,
+        industry: analysis.industry,
+        pain_points: analysis.painPoints,
+        workflows: analysis.workflows,
+        content_summary: analysis.contentSummary,
+        key_features: analysis.keyFeatures,
+        target_audience: analysis.targetAudience,
+        current_tech: analysis.currentTech
+      });
+      
       // Generate AI-powered recommendations
       const recommendations = await recommendationEngine.generateRecommendations(analysis);
       
-      // For demo purposes, return results directly without database storage
-      // TODO: Implement proper database storage once schema is properly set up
+      // Save recommendations to database
+      const savedRecommendations = [];
+      for (const rec of recommendations) {
+        const savedRec = await databaseStorage.createAiRecommendation({
+          analysis_id: savedAnalysis.id,
+          solution_type: rec.solutionType,
+          solution_name: rec.solutionName,
+          description: rec.description,
+          estimated_cost_savings: rec.estimatedCostSavings,
+          estimated_time_savings: rec.estimatedTimeSavings,
+          implementation_difficulty: rec.implementationDifficulty,
+          roi_percentage: rec.roiPercentage,
+          industry_benchmark: rec.industryBenchmark,
+          priority_score: rec.priorityScore,
+          template_id: rec.templateId,
+          customization_data: rec.customizationData,
+          reasoning: rec.reasoning,
+          rag_evidence: rec.ragEvidence || [],
+          case_studies: rec.caseStudies || [],
+          ethical_considerations: rec.ethicalConsiderations || '',
+          compliance_requirements: rec.complianceRequirements || [],
+          monitoring_metrics: rec.monitoringMetrics || [],
+          implementation_timeline: rec.implementationTimeline || '',
+          expected_revenue: rec.expectedRevenue || 0,
+          risk_factors: rec.riskFactors || []
+        });
+        savedRecommendations.push(savedRec);
+      }
+      
       res.json({
         success: true,
-        analysis: {
-          id: Date.now(), // Temporary ID for demo
-          ...analysis
-        },
-        recommendations: recommendations.map((rec, index) => ({
-          id: index + 1,
-          ...rec,
-          status: 'pending'
-        }))
+        analysis: savedAnalysis,
+        recommendations: savedRecommendations
       });
     } catch (error: any) {
       console.error('Error analyzing website:', error);

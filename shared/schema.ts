@@ -228,6 +228,44 @@ export const insertDeployedSolutionSchema = createInsertSchema(deployedSolutions
   performance_metrics: true,
 });
 
+export const insertBusinessAnalysisSchema = createInsertSchema(business_analyses).pick({
+  user_id: true,
+  website_url: true,
+  business_name: true,
+  business_type: true,
+  industry: true,
+  pain_points: true,
+  workflows: true,
+  content_summary: true,
+  key_features: true,
+  target_audience: true,
+  current_tech: true,
+});
+
+export const insertAiRecommendationSchema = createInsertSchema(ai_recommendations).pick({
+  analysis_id: true,
+  solution_type: true,
+  solution_name: true,
+  description: true,
+  estimated_cost_savings: true,
+  estimated_time_savings: true,
+  implementation_difficulty: true,
+  roi_percentage: true,
+  industry_benchmark: true,
+  priority_score: true,
+  template_id: true,
+  customization_data: true,
+  reasoning: true,
+  rag_evidence: true,
+  case_studies: true,
+  ethical_considerations: true,
+  compliance_requirements: true,
+  monitoring_metrics: true,
+  implementation_timeline: true,
+  expected_revenue: true,
+  risk_factors: true,
+});
+
 // Custom flow data schema
 export const flowDataSchema = z.object({
   nodes: z.array(
@@ -276,8 +314,11 @@ export type PaymentHistory = typeof payment_history.$inferSelect;
 export type InsertWebhookEvent = typeof webhook_events.$inferInsert;
 export type WebhookEvent = typeof webhook_events.$inferSelect;
 
-export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
-export type ChatSession = typeof chat_sessions.$inferSelect;
+export type InsertBusinessAnalysis = z.infer<typeof insertBusinessAnalysisSchema>;
+export type BusinessAnalysis = typeof business_analyses.$inferSelect;
+
+export type InsertAiRecommendation = z.infer<typeof insertAiRecommendationSchema>;
+export type AiRecommendation = typeof ai_recommendations.$inferSelect;
 
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chat_messages.$inferSelect;
