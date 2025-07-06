@@ -11,6 +11,8 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
+    "@google/genai": "^1.8.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
@@ -48,6 +50,7 @@
     "@types/cheerio": "^0.22.35",
     "@types/memoizee": "^0.4.12",
     "@types/nodemailer": "^6.4.17",
+    "axios": "^1.10.0",
     "cheerio": "^1.1.0",
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",

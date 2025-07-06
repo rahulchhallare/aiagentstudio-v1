@@ -58,6 +58,16 @@ interface AnalysisResult {
     implementationTimeline?: string;
     expectedRevenue?: number;
     riskFactors?: string[];
+    // New comprehensive analysis features
+    availabilityStatus: 'Available' | 'Missing';
+    creationPrompt?: {
+      agentName: string;
+      purpose: string;
+      keyWorkflows: string[];
+      requiredIntegrations: string[];
+      customizationOptions: string[];
+      performanceMetrics: string[];
+    };
   }>;
 }
 
@@ -314,6 +324,65 @@ export default function BusinessAnalyzer() {
                   </AlertDescription>
                 </Alert>
 
+                {/* Summary Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AI Solutions Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Solution</th>
+                            <th className="text-left p-2">Type</th>
+                            <th className="text-left p-2">Availability</th>
+                            <th className="text-left p-2">Annual Savings</th>
+                            <th className="text-left p-2">Priority</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analysisResult.recommendations
+                            .sort((a, b) => b.priorityScore - a.priorityScore)
+                            .map((rec, index) => (
+                            <tr key={rec.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                              <td className="p-2 font-medium">{rec.solutionName}</td>
+                              <td className="p-2">{rec.solutionType}</td>
+                              <td className="p-2">
+                                <Badge 
+                                  className={rec.availabilityStatus === 'Available' 
+                                    ? 'bg-green-100 text-green-800 border-green-300' 
+                                    : 'bg-orange-100 text-orange-800 border-orange-300'}
+                                >
+                                  {rec.availabilityStatus === 'Available' ? (
+                                    <>
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      Available
+                                    </>
+                                  ) : (
+                                    <>
+                                      <AlertCircle className="w-3 h-3 mr-1" />
+                                      Missing
+                                    </>
+                                  )}
+                                </Badge>
+                              </td>
+                              <td className="p-2 font-medium text-green-600">
+                                ${Number(rec.estimatedCostSavings).toLocaleString()}
+                              </td>
+                              <td className="p-2">
+                                <Badge className={getPriorityColor(rec.priorityScore)}>
+                                  {rec.priorityScore}/10
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="space-y-4">
                   {analysisResult.recommendations
                     .sort((a, b) => b.priorityScore - a.priorityScore)
@@ -335,6 +404,23 @@ export default function BusinessAnalyzer() {
                                 className={getDifficultyColor(recommendation.implementationDifficulty)}
                               >
                                 {recommendation.implementationDifficulty}
+                              </Badge>
+                              <Badge 
+                                className={recommendation.availabilityStatus === 'Available' 
+                                  ? 'bg-green-100 text-green-800 border-green-300' 
+                                  : 'bg-orange-100 text-orange-800 border-orange-300'}
+                              >
+                                {recommendation.availabilityStatus === 'Available' ? (
+                                  <>
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Available
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="w-3 h-3 mr-1" />
+                                    Missing
+                                  </>
+                                )}
                               </Badge>
                             </div>
                           </div>
@@ -511,6 +597,65 @@ export default function BusinessAnalyzer() {
                             </div>
                           )}
 
+                          {/* Creation Prompt for Missing Agents */}
+                          {recommendation.availabilityStatus === 'Missing' && recommendation.creationPrompt && (
+                            <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
+                              <h4 className="font-medium mb-3 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                                Agent Creation Prompt
+                              </h4>
+                              <div className="space-y-3">
+                                <div>
+                                  <p className="text-sm font-medium text-orange-800">Agent Name:</p>
+                                  <p className="text-sm text-gray-700">{recommendation.creationPrompt.agentName}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-orange-800">Purpose:</p>
+                                  <p className="text-sm text-gray-700">{recommendation.creationPrompt.purpose}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-orange-800">Key Workflows:</p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {recommendation.creationPrompt.keyWorkflows.map((workflow, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
+                                        {workflow}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-orange-800">Required Integrations:</p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {recommendation.creationPrompt.requiredIntegrations.map((integration, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
+                                        {integration}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-orange-800">Customization Options:</p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {recommendation.creationPrompt.customizationOptions.map((option, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
+                                        {option}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-orange-800">Performance Metrics:</p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {recommendation.creationPrompt.performanceMetrics.map((metric, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
+                                        {metric}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
                         </div>
 

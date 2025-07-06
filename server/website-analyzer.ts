@@ -1,5 +1,8 @@
 import OpenAI from "openai";
 import { load } from "cheerio";
+import { getDeepSeekService } from './deepseek-service';
+import { getGeminiService } from './gemini-service';
+import { getAIMLService } from './aiml-service';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -193,7 +196,32 @@ export class WebsiteAnalyzer {
   }
 
   private async analyzeContentWithAI(content: any, url: string): Promise<WebsiteAnalysisResult> {
-    const prompt = `Analyze this website content and provide a structured analysis:
+    try {
+      // Try Gemini first as it has unlimited free access
+      if (process.env.GEMINI_API_KEY) {
+        console.log('Using Google Gemini for website analysis (unlimited access)...');
+        const gemini = getGeminiService();
+        const websiteContent = `
+Website URL: ${url}
+Title: ${content.title}
+Meta Description: ${content.metaDescription}
+Headings: ${content.headings.join(', ')}
+Navigation: ${content.navigationItems.join(', ')}
+Main Content: ${content.mainContent}
+Image Alt Texts: ${content.images.join(', ')}
+Key Links: ${content.links.join(', ')}`;
+
+        return await gemini.analyzeWebsite(websiteContent, url);
+      }
+    } catch (geminiError) {
+      console.error('Gemini failed, trying OpenAI as backup:', geminiError);
+    }
+
+    try {
+      // Try OpenAI as second option (high quality but has quotas)
+      if (process.env.OPENAI_API_KEY) {
+        console.log('Using OpenAI GPT-4o as backup for website analysis...');
+        const prompt = `Analyze this website content and provide a structured analysis:
 
 Website URL: ${url}
 Title: ${content.title}
@@ -220,47 +248,97 @@ Based on this content, analyze and provide the following information in JSON for
 
 Focus on being specific and actionable. Identify real business challenges that AI could help solve.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: "You are a business analyst expert at identifying business types, workflows, and potential areas for AI automation. Provide detailed, actionable analysis in the requested JSON format."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3,
-      max_tokens: 1500
-    });
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            {
+              role: "system",
+              content: "You are a business analyst expert at identifying business types, workflows, and potential areas for AI automation. Provide detailed, actionable analysis in the requested JSON format."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.3,
+          max_tokens: 1500
+        });
 
-    const analysisText = response.choices[0].message.content;
-    if (!analysisText) {
-      throw new Error('Failed to get analysis from AI');
+        const analysisText = response.choices[0].message.content;
+        if (!analysisText) {
+          throw new Error('Failed to get analysis from AI');
+        }
+
+        try {
+          const analysis = JSON.parse(analysisText);
+          
+          // Validate and clean the response
+          return {
+            businessType: analysis.businessType || 'Unknown',
+            businessName: analysis.businessName || 'Unknown',
+            industry: analysis.industry || 'Unknown',
+            painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
+            workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
+            contentSummary: analysis.contentSummary || '',
+            keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
+            targetAudience: analysis.targetAudience || '',
+            currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
+          };
+        } catch (error) {
+          console.error('Failed to parse AI analysis response:', error);
+          throw new Error('Failed to parse analysis results');
+        }
+      }
+    } catch (openaiError) {
+      console.error('OpenAI failed, trying DeepSeek as third backup:', openaiError);
     }
 
     try {
-      const analysis = JSON.parse(analysisText);
-      
-      // Validate and clean the response
-      return {
-        businessType: analysis.businessType || 'Unknown',
-        businessName: analysis.businessName || 'Unknown',
-        industry: analysis.industry || 'Unknown',
-        painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
-        workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
-        contentSummary: analysis.contentSummary || '',
-        keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
-        targetAudience: analysis.targetAudience || '',
-        currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
-      };
-    } catch (error) {
-      console.error('Failed to parse AI analysis response:', error);
-      throw new Error('Failed to parse analysis results');
+      // Third backup: DeepSeek if both Gemini and OpenAI fail
+      if (process.env.DEEPSEEK_API_KEY) {
+        console.log('Using DeepSeek AI as third backup for website analysis...');
+        const deepSeek = getDeepSeekService();
+        const websiteContent = `
+Website URL: ${url}
+Title: ${content.title}
+Meta Description: ${content.metaDescription}
+Headings: ${content.headings.join(', ')}
+Navigation: ${content.navigationItems.join(', ')}
+Main Content: ${content.mainContent}
+Image Alt Texts: ${content.images.join(', ')}
+Key Links: ${content.links.join(', ')}`;
+
+        return await deepSeek.analyzeWebsite(websiteContent, url);
+      }
+    } catch (deepSeekError) {
+      console.error('DeepSeek also failed, trying AI/ML API as final backup:', deepSeekError);
     }
+
+    try {
+      // Fourth backup: AI/ML API (200+ models) if Gemini, OpenAI and DeepSeek all fail
+      if (process.env.AIML_API_KEY) {
+        console.log('Using AI/ML API as ultimate backup for website analysis...');
+        const aiml = getAIMLService();
+        const websiteContent = `
+Website URL: ${url}
+Title: ${content.title}
+Meta Description: ${content.metaDescription}
+Headings: ${content.headings.join(', ')}
+Navigation: ${content.navigationItems.join(', ')}
+Main Content: ${content.mainContent}
+Image Alt Texts: ${content.images.join(', ')}
+Key Links: ${content.links.join(', ')}`;
+
+        return await aiml.analyzeWebsite(websiteContent, url);
+      }
+    } catch (aimlError) {
+      console.error('All AI providers exhausted, falling back to demo analysis:', aimlError);
+    }
+
+    // If all providers fail, use demo analysis as final fallback
+    console.log('All AI providers exhausted, using demo analysis as final fallback');
+    return this.generateDemoAnalysis(url, content);
   }
 
   private generateDemoAnalysis(url: string, extractedContent: any): WebsiteAnalysisResult {
