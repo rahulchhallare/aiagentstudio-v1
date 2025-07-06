@@ -197,9 +197,30 @@ export class WebsiteAnalyzer {
 
   private async analyzeContentWithAI(content: any, url: string): Promise<WebsiteAnalysisResult> {
     try {
-      // Try OpenAI first as primary AI provider (best for complex analysis)
+      // Try Gemini first as it has unlimited free access
+      if (process.env.GEMINI_API_KEY) {
+        console.log('Using Google Gemini for website analysis (unlimited access)...');
+        const gemini = getGeminiService();
+        const websiteContent = `
+Website URL: ${url}
+Title: ${content.title}
+Meta Description: ${content.metaDescription}
+Headings: ${content.headings.join(', ')}
+Navigation: ${content.navigationItems.join(', ')}
+Main Content: ${content.mainContent}
+Image Alt Texts: ${content.images.join(', ')}
+Key Links: ${content.links.join(', ')}`;
+
+        return await gemini.analyzeWebsite(websiteContent, url);
+      }
+    } catch (geminiError) {
+      console.error('Gemini failed, trying OpenAI as backup:', geminiError);
+    }
+
+    try {
+      // Try OpenAI as second option (high quality but has quotas)
       if (process.env.OPENAI_API_KEY) {
-        console.log('Using OpenAI GPT-4o for website analysis...');
+        console.log('Using OpenAI GPT-4o as backup for website analysis...');
         const prompt = `Analyze this website content and provide a structured analysis:
 
 Website URL: ${url}
@@ -270,13 +291,13 @@ Focus on being specific and actionable. Identify real business challenges that A
         }
       }
     } catch (openaiError) {
-      console.error('OpenAI failed, trying DeepSeek as backup:', openaiError);
+      console.error('OpenAI failed, trying DeepSeek as third backup:', openaiError);
     }
 
     try {
-      // Second backup: DeepSeek if OpenAI fails
+      // Third backup: DeepSeek if both Gemini and OpenAI fail
       if (process.env.DEEPSEEK_API_KEY) {
-        console.log('Using DeepSeek AI as second backup for website analysis...');
+        console.log('Using DeepSeek AI as third backup for website analysis...');
         const deepSeek = getDeepSeekService();
         const websiteContent = `
 Website URL: ${url}
@@ -291,32 +312,11 @@ Key Links: ${content.links.join(', ')}`;
         return await deepSeek.analyzeWebsite(websiteContent, url);
       }
     } catch (deepSeekError) {
-      console.error('DeepSeek also failed, trying Gemini as final backup:', deepSeekError);
+      console.error('DeepSeek also failed, trying AI/ML API as final backup:', deepSeekError);
     }
 
     try {
-      // Third backup: Gemini (free unlimited) if both OpenAI and DeepSeek fail
-      if (process.env.GEMINI_API_KEY) {
-        console.log('Using Google Gemini as unlimited backup for website analysis...');
-        const gemini = getGeminiService();
-        const websiteContent = `
-Website URL: ${url}
-Title: ${content.title}
-Meta Description: ${content.metaDescription}
-Headings: ${content.headings.join(', ')}
-Navigation: ${content.navigationItems.join(', ')}
-Main Content: ${content.mainContent}
-Image Alt Texts: ${content.images.join(', ')}
-Key Links: ${content.links.join(', ')}`;
-
-        return await gemini.analyzeWebsite(websiteContent, url);
-      }
-    } catch (geminiError) {
-      console.error('Gemini also failed, trying AI/ML API as ultimate backup:', geminiError);
-    }
-
-    try {
-      // Fourth backup: AI/ML API (200+ models) if all others fail
+      // Fourth backup: AI/ML API (200+ models) if Gemini, OpenAI and DeepSeek all fail
       if (process.env.AIML_API_KEY) {
         console.log('Using AI/ML API as ultimate backup for website analysis...');
         const aiml = getAIMLService();

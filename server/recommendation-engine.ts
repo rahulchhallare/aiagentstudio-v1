@@ -88,9 +88,20 @@ export class RecommendationEngine {
 
   private async getAIRecommendations(analysis: WebsiteAnalysisResult): Promise<any[]> {
     try {
-      // Try OpenAI first as primary AI provider (best for complex analysis)
+      // Try Gemini first as it has unlimited free access
+      if (process.env.GEMINI_API_KEY) {
+        console.log('Using Google Gemini for recommendations (unlimited access)...');
+        const gemini = getGeminiService();
+        return await gemini.generateRecommendations(analysis);
+      }
+    } catch (geminiError) {
+      console.error('Gemini failed, trying OpenAI as backup:', geminiError);
+    }
+
+    try {
+      // Try OpenAI as second option (high quality but has quotas)
       if (process.env.OPENAI_API_KEY) {
-        console.log('Using OpenAI GPT-4o for recommendations...');
+        console.log('Using OpenAI GPT-4o as backup for recommendations...');
         const prompt = `Based on this business analysis, recommend 3-5 specific AI solutions that would provide the most value:
 
 Business Type: ${analysis.businessType}
@@ -156,29 +167,18 @@ Focus on solutions that directly address the identified pain points and workflow
         return parsed.recommendations || [];
       }
     } catch (openaiError) {
-      console.error('OpenAI failed, trying DeepSeek as backup:', openaiError);
+      console.error('OpenAI failed, trying DeepSeek as third backup:', openaiError);
     }
 
     try {
-      // Second backup: DeepSeek if OpenAI fails
+      // Third backup: DeepSeek if both Gemini and OpenAI fail
       if (process.env.DEEPSEEK_API_KEY) {
-        console.log('Using DeepSeek AI as second backup for recommendations...');
+        console.log('Using DeepSeek AI as third backup for recommendations...');
         const deepSeek = getDeepSeekService();
         return await deepSeek.generateRecommendations(analysis);
       }
     } catch (deepSeekError) {
-      console.error('DeepSeek also failed, trying Gemini as final backup:', deepSeekError);
-    }
-
-    try {
-      // Third backup: Gemini (free unlimited) if both OpenAI and DeepSeek fail
-      if (process.env.GEMINI_API_KEY) {
-        console.log('Using Google Gemini as unlimited backup for recommendations...');
-        const gemini = getGeminiService();
-        return await gemini.generateRecommendations(analysis);
-      }
-    } catch (geminiError) {
-      console.error('Gemini also failed, trying AI/ML API as ultimate backup:', geminiError);
+      console.error('DeepSeek also failed, trying AI/ML API as final backup:', deepSeekError);
     }
 
     try {
