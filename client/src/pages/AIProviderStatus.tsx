@@ -33,6 +33,22 @@ export default function AIProviderStatus() {
       lastTested: new Date().toISOString(),
       error: 'Insufficient Balance',
       isPrimary: false
+    },
+    {
+      name: 'Google Gemini',
+      status: 'offline',
+      responseTime: 0,
+      lastTested: new Date().toISOString(),
+      error: 'API key not configured',
+      isPrimary: false
+    },
+    {
+      name: 'AI/ML API',
+      status: 'offline',
+      responseTime: 0,
+      lastTested: new Date().toISOString(),
+      error: 'API key not configured',
+      isPrimary: false
     }
   ]);
 
@@ -274,22 +290,30 @@ export default function AIProviderStatus() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-semibold mb-2">Primary-Backup System</h3>
+                    <h3 className="font-semibold mb-2">Multi-Provider Failover System</h3>
                     <p className="text-sm text-gray-700 mb-3">
-                      The system uses a primary-backup configuration to ensure high availability:
+                      The system uses a 4-tier failover configuration to ensure maximum availability:
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <strong>Primary:</strong> OpenAI GPT-4o (Best analysis quality)
+                        <strong>1. Primary:</strong> OpenAI GPT-4o (Superior analysis quality)
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        <strong>Backup:</strong> DeepSeek (Cost-effective alternative)
+                        <strong>2. Second:</strong> DeepSeek (Cost-effective alternative)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                        <strong>3. Third:</strong> Google Gemini (Free unlimited access)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full" />
+                        <strong>4. Ultimate:</strong> AI/ML API (200+ models)
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-gray-500 rounded-full" />
-                        <strong>Fallback:</strong> Demo data (When all providers fail)
+                        <strong>5. Fallback:</strong> Demo data (When all providers fail)
                       </li>
                     </ul>
                   </div>

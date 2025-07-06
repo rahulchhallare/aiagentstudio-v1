@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import type { WebsiteAnalysisResult } from "./website-analyzer";
 import type { IndustryBenchmark, AiSolutionTemplate } from "../shared/schema";
 import { getDeepSeekService } from './deepseek-service';
+import { getGeminiService } from './gemini-service';
+import { getAIMLService } from './aiml-service';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -156,18 +158,40 @@ Focus on solutions that directly address the identified pain points and workflow
     }
 
     try {
-      // Fallback to DeepSeek if OpenAI fails
+      // Second backup: DeepSeek if OpenAI fails
       if (process.env.DEEPSEEK_API_KEY) {
-        console.log('Using DeepSeek AI as backup for recommendations...');
+        console.log('Using DeepSeek AI as second backup for recommendations...');
         const deepSeek = getDeepSeekService();
         return await deepSeek.generateRecommendations(analysis);
       }
     } catch (deepSeekError) {
-      console.error('DeepSeek also failed, falling back to demo recommendations:', deepSeekError);
+      console.error('DeepSeek also failed, trying Gemini as final backup:', deepSeekError);
     }
 
-    // If both fail, throw error to trigger demo fallback
-    throw new Error('Both OpenAI and DeepSeek unavailable');
+    try {
+      // Third backup: Gemini (free unlimited) if both OpenAI and DeepSeek fail
+      if (process.env.GEMINI_API_KEY) {
+        console.log('Using Google Gemini as unlimited backup for recommendations...');
+        const gemini = getGeminiService();
+        return await gemini.generateRecommendations(analysis);
+      }
+    } catch (geminiError) {
+      console.error('Gemini also failed, trying AI/ML API as ultimate backup:', geminiError);
+    }
+
+    try {
+      // Fourth backup: AI/ML API (200+ models) if all others fail
+      if (process.env.AIML_API_KEY) {
+        console.log('Using AI/ML API as ultimate backup for recommendations...');
+        const aiml = getAIMLService();
+        return await aiml.generateRecommendations(analysis);
+      }
+    } catch (aimlError) {
+      console.error('All AI providers exhausted, falling back to demo recommendations:', aimlError);
+    }
+
+    // If all providers fail, throw error to trigger demo fallback
+    throw new Error('All AI providers exhausted (OpenAI, DeepSeek, Gemini, AI/ML API)');
   }
 
   private enrichRecommendation(recommendation: any, analysis: WebsiteAnalysisResult): RecommendationResult {
