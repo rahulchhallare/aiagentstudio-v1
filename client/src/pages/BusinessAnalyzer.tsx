@@ -491,6 +491,13 @@ export default function BusinessAnalyzer() {
 
                         {/* Enhanced Features Section */}
                         <div className="space-y-4">
+                          {/* Debug logs */}
+                          {console.log('Recommendation object:', recommendation)}
+                          {console.log('RAG Evidence:', recommendation.ragEvidence)}
+                          {console.log('Case Studies:', recommendation.caseStudies)}
+                          {console.log('RAG Evidence length:', recommendation.ragEvidence?.length)}
+                          {console.log('Case Studies length:', recommendation.caseStudies?.length)}
+                          
                           {/* RAG Evidence */}
                           {recommendation.ragEvidence && recommendation.ragEvidence.length > 0 && (
                             <div className="bg-blue-50 p-4 rounded-lg">
