@@ -279,11 +279,6 @@ Ensure every recommendation has ALL required fields including ragEvidence array,
         throw new Error('Gemini returned no recommendations');
       }
       
-      // Debug: Log what fields we're getting
-      console.log('Gemini recommendation fields:', Object.keys(recommendations[0] || {}));
-      console.log('First recommendation has ragEvidence:', !!recommendations[0]?.ragEvidence);
-      console.log('First recommendation has caseStudies:', !!recommendations[0]?.caseStudies);
-      
       return recommendations;
     } catch (error: any) {
       console.error('Error parsing Gemini recommendations response:', error);

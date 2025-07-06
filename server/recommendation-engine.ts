@@ -232,7 +232,17 @@ Focus on solutions that directly address the identified pain points and workflow
         painPoints: analysis.painPoints,
         customizationNeeds: recommendation.customizationNeeds
       },
-      reasoning: recommendation.reasoning || ''
+      reasoning: recommendation.reasoning || '',
+      // Enhanced features from AI providers
+      ragEvidence: recommendation.ragEvidence || [],
+      caseStudies: recommendation.caseStudies || [],
+      ethicalConsiderations: recommendation.ethicalConsiderations || '',
+      complianceRequirements: recommendation.complianceRequirements || [],
+      monitoringMetrics: recommendation.monitoringMetrics || [],
+      implementationTimeline: recommendation.implementationTimeline || '',
+      expectedRevenue: Number(recommendation.expectedRevenue) || 0,
+      riskFactors: recommendation.riskFactors || [],
+      availabilityStatus: 'Missing' as const
     };
   }
 
