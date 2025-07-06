@@ -2440,9 +2440,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/chatbot-embed.js", (req: Request, res: Response) => {
     import('fs').then(fs => {
       import('path').then(path => {
-        res.setHeader('Content-Type', 'application/javascript');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+        import('url').then(url => {
+          res.setHeader('Content-Type', 'application/javascript');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+          res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
+        });
       });
     });
   });
