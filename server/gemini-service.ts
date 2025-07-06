@@ -230,7 +230,22 @@ Respond with JSON only:
       "roiPercentage": 300,
       "priorityScore": 8,
       "reasoning": "why this solution fits this business",
-      "customizationNeeds": "specific customizations needed"
+      "customizationNeeds": "specific customizations needed",
+      "ragEvidence": [
+        "Research study with specific statistics",
+        "Industry report with concrete metrics",
+        "Expert prediction with timeframe"
+      ],
+      "caseStudies": [
+        "Company name: specific result achieved",
+        "Brand example: measurable improvement",
+        "Real implementation: quantified success"
+      ],
+      "ethicalConsiderations": "Important ethical aspects to consider",
+      "complianceRequirements": ["Regulation 1", "Standard 2"],
+      "monitoringMetrics": ["Metric 1", "Metric 2", "Metric 3"],
+      "implementationTimeline": "X-Y weeks",
+      "expectedRevenue": 35000
     }
   ]
 }`;

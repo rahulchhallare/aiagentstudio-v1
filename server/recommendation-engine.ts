@@ -491,6 +491,74 @@ Focus on solutions that directly address the identified pain points and workflow
         implementationTimeline: "8-12 weeks",
         expectedRevenue: 85000,
         riskFactors: ["Data quality dependencies", "Model complexity management", "Change management challenges"]
+      },
+      {
+        solutionType: "Sales Automation Agent",
+        solutionName: "AI-Powered Sales Assistant & Lead Management",
+        description: "Automate lead qualification, follow-up sequences, appointment scheduling, and sales pipeline management to increase conversion rates and reduce manual effort",
+        estimatedCostSavings: 30000,
+        estimatedTimeSavings: "25 hours/week",
+        implementationDifficulty: "medium" as const,
+        roiPercentage: 280,
+        industryBenchmark: `${analysis.industry} sales teams see 25-40% increase in qualified leads`,
+        priorityScore: 9,
+        templateId: "sales-automation-template-1",
+        customizationData: {
+          businessType: analysis.businessType,
+          industry: analysis.industry,
+          workflows: analysis.workflows
+        },
+        reasoning: "Streamlines sales processes, improves lead quality, and enables sales teams to focus on high-value activities and closing deals.",
+        ragEvidence: [
+          "HubSpot study: Sales automation increases lead conversion by 30%",
+          "Salesforce research: 67% of sales leaders report improved productivity with AI",
+          "McKinsey analysis: Sales automation can boost revenue by 10-15% within 6 months"
+        ],
+        caseStudies: [
+          "Outreach.io helped Zoom increase sales productivity by 40% and reduce response time to 5 minutes",
+          "Salesforce Einstein increased lead scoring accuracy by 35% for Dell Technologies",
+          "Pipedrive's automation features helped Veeam increase close rates by 28%"
+        ],
+        ethicalConsiderations: "Maintain transparency in automated communications, respect customer preferences, and ensure fair lead scoring without bias",
+        complianceRequirements: ["CAN-SPAM compliance", "GDPR consent management", "Industry-specific communication rules"],
+        monitoringMetrics: ["Lead conversion rates", "Response time improvements", "Pipeline velocity", "Sales team efficiency"],
+        implementationTimeline: "4-6 weeks",
+        expectedRevenue: 75000,
+        riskFactors: ["Initial learning curve", "CRM integration complexity", "Customer acceptance of automation"]
+      },
+      {
+        solutionType: "Content Generation Agent",
+        solutionName: "AI Content Creator & Marketing Assistant",
+        description: "Generate high-quality blog posts, product descriptions, social media content, and marketing copy tailored to your brand voice and target audience",
+        estimatedCostSavings: 15000,
+        estimatedTimeSavings: "20 hours/week",
+        implementationDifficulty: "easy" as const,
+        roiPercentage: 220,
+        industryBenchmark: `${analysis.industry} businesses see 40-60% reduction in content creation time`,
+        priorityScore: 8,
+        templateId: "content-generation-template-1",
+        customizationData: {
+          businessType: analysis.businessType,
+          targetAudience: analysis.targetAudience,
+          keyFeatures: analysis.keyFeatures
+        },
+        reasoning: "Automates content creation while maintaining brand consistency, enabling faster marketing campaigns and improved SEO performance.",
+        ragEvidence: [
+          "Content Marketing Institute: 70% of marketers invest in content creation automation",
+          "HubSpot research: AI-generated content improves productivity by 40%",
+          "SEMrush study: Consistent content publishing increases organic traffic by 55%"
+        ],
+        caseStudies: [
+          "Associated Press generates 4,400 earnings reports annually using AI content automation",
+          "Jasper AI helped Copy.ai increase content output by 300% while reducing costs by 50%",
+          "Washington Post's Heliograf wrote 850 articles in first year, freeing journalists for investigative work"
+        ],
+        ethicalConsiderations: "Ensure content authenticity, maintain editorial oversight, and disclose AI assistance when required",
+        complianceRequirements: ["Copyright compliance", "FTC disclosure requirements", "Platform-specific content policies"],
+        monitoringMetrics: ["Content engagement rates", "SEO performance improvements", "Brand consistency scores", "Publishing velocity"],
+        implementationTimeline: "2-3 weeks",
+        expectedRevenue: 25000,
+        riskFactors: ["Quality control needs", "Brand voice consistency", "Search engine policy changes"]
       }
     ];
 
