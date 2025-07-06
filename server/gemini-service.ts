@@ -13,11 +13,11 @@ export class GeminiService {
       const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
 
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash", // Free model with generous limits
+        model: "gemini-1.5-flash", // Most reliable free model
         contents: fullPrompt,
         config: {
           temperature: 0.3,
-          maxOutputTokens: 2500, // Increased to reduce truncation
+          maxOutputTokens: 2000, // Reduced to avoid truncation issues
         }
       });
 
@@ -207,47 +207,40 @@ Focus on being specific and actionable. Identify real business challenges that A
   async generateRecommendations(analysis: WebsiteAnalysisResult): Promise<any[]> {
     const systemPrompt = `You are an AI business consultant expert at matching AI solutions to specific business needs. Provide actionable, realistic recommendations with concrete value estimates.`;
 
-    const prompt = `Based on this business analysis, recommend 3-5 specific AI solutions that would provide the most value:
+    const prompt = `Analyze this business and recommend 3-4 AI solutions in JSON format:
 
-Business Type: ${analysis.businessType}
-Industry: ${analysis.industry}
+Business: ${analysis.businessType} (${analysis.industry})
 Pain Points: ${analysis.painPoints.join(', ')}
-Current Workflows: ${analysis.workflows.join(', ')}
-Business Summary: ${analysis.contentSummary}
-Target Audience: ${analysis.targetAudience}
+Workflows: ${analysis.workflows.join(', ')}
 
-Available AI Solution Types:
-1. Customer Support Chatbot - Automates customer inquiries, order tracking, returns
-2. Sales Automation Agent - Lead qualification, follow-ups, appointment scheduling  
-3. HR Screening Assistant - Resume screening, initial interviews, candidate ranking
-4. Content Generation Agent - Blog posts, product descriptions, social media
-5. Data Analysis Agent - Report generation, trend analysis, insights
-6. Inventory Management Agent - Stock optimization, reorder alerts, demand forecasting
-7. Email Marketing Agent - Personalized campaigns, segmentation, A/B testing
-8. Price Optimization Agent - Dynamic pricing, competitor analysis, profit maximization
+AI Solutions Available:
+1. Customer Support Chatbot 2. Sales Automation Agent 3. Content Generation Agent 
+4. Data Analysis Agent 5. Inventory Management Agent 6. Email Marketing Agent
 
-For each recommendation, provide:
+Respond with JSON only:
 {
   "recommendations": [
     {
-      "solutionType": "specific solution type from the list above",
-      "solutionName": "descriptive name for this specific implementation",
-      "description": "detailed explanation of how this would work for this business",
-      "estimatedCostSavings": "annual cost savings in USD (number only)",
-      "estimatedTimeSavings": "time saved per week (e.g., '20 hours/week')",
-      "implementationDifficulty": "easy/medium/hard",
-      "roiPercentage": "estimated ROI percentage (number only)",
-      "priorityScore": "1-10 priority ranking for this business",
-      "reasoning": "why this solution is recommended for this specific business",
-      "customizationNeeds": "specific customizations needed for this business"
+      "solutionType": "exact name from list above",
+      "solutionName": "specific name for this business",
+      "description": "how this helps this specific business",
+      "estimatedCostSavings": 25000,
+      "estimatedTimeSavings": "10 hours/week",
+      "implementationDifficulty": "easy",
+      "roiPercentage": 300,
+      "priorityScore": 8,
+      "reasoning": "why this solution fits this business",
+      "customizationNeeds": "specific customizations needed"
     }
   ]
-}
-
-Focus on solutions that directly address the identified pain points and workflows. Be specific about the business value and implementation for this particular company.`;
+}`;
 
     try {
       const responseText = await this.generateCompletion(prompt, systemPrompt);
+      
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('Gemini returned empty response');
+      }
       
       // Clean and parse the JSON response
       let cleanedResponse = responseText.trim();
@@ -263,10 +256,17 @@ Focus on solutions that directly address the identified pain points and workflow
       }
       
       const parsed = JSON.parse(cleanedResponse);
-      return parsed.recommendations || [];
+      const recommendations = parsed.recommendations || [];
+      
+      if (recommendations.length === 0) {
+        throw new Error('Gemini returned no recommendations');
+      }
+      
+      return recommendations;
     } catch (error: any) {
       console.error('Error parsing Gemini recommendations response:', error);
-      console.log('Raw response:', responseText);
+      console.log('Raw response length:', responseText?.length || 0);
+      console.log('Raw response preview:', responseText?.substring(0, 200) || 'N/A');
       throw new Error(`Failed to generate recommendations with Gemini: ${error.message}`);
     }
   }
