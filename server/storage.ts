@@ -1,17 +1,4 @@
-import { 
-  users, agents, waitlist, business_analyses, ai_recommendations,
-  type User, type InsertUser, 
-  type Agent, type InsertAgent, 
-  type Waitlist, type InsertWaitlist,
-  type BusinessAnalysis, type InsertBusinessAnalysis,
-  type AiRecommendation, type InsertAiRecommendation,
-  type InsertChatSession, type ChatSession,
-  type InsertChatMessage, type ChatMessage,
-  type InsertReturnRequest, type ReturnRequest,
-  type InsertChatbotAnalytics, type ChatbotAnalytics
-} from "@shared/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { users, agents, waitlist, type User, type InsertUser, type Agent, type InsertAgent, type Waitlist, type InsertWaitlist } from "@shared/schema";
 
 // Interface for storage operations
 export interface IStorage {
@@ -35,11 +22,13 @@ export interface IStorage {
   getWaitlistEntries(): Promise<Waitlist[]>;
   
   // Business Analysis methods
-  createBusinessAnalysis(insertBusinessAnalysis: InsertBusinessAnalysis): Promise<BusinessAnalysis>;
-  getBusinessAnalysis(id: number): Promise<BusinessAnalysis | undefined>;
-  createAiRecommendation(insertAiRecommendation: InsertAiRecommendation): Promise<AiRecommendation>;
-  getRecommendationsByAnalysisId(analysisId: number): Promise<AiRecommendation[]>;
+  createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any>;
+  getBusinessAnalysis(id: number): Promise<any>;
+  createAiRecommendation(insertAiRecommendation: any): Promise<any>;
+  getRecommendationsByAnalysisId(analysisId: number): Promise<any[]>;
   updateRecommendationStatus(id: number, status: string): Promise<void>;
+  getAiSolutionTemplate(templateId: string): Promise<any>;
+  createDeployedSolution(insertDeployedSolution: any): Promise<any>;
 
   // Chatbot operations
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
@@ -206,24 +195,6 @@ export class MemStorage implements IStorage {
     console.log("Contact submission would be saved:", data);
     return { id: Date.now(), ...data, created_at: new Date() };
   }
-
-  // Business Analysis placeholder methods (not implemented in memory storage)
-  async createBusinessAnalysis(): Promise<any> { throw new Error("Business analysis requires database storage"); }
-  async getBusinessAnalysis(): Promise<any> { throw new Error("Business analysis requires database storage"); }
-  async createAiRecommendation(): Promise<any> { throw new Error("AI recommendations require database storage"); }
-  async getRecommendationsByAnalysisId(): Promise<any> { throw new Error("AI recommendations require database storage"); }
-  async updateRecommendationStatus(): Promise<any> { throw new Error("AI recommendations require database storage"); }
-
-  // Chatbot placeholder methods (not implemented)
-  async createChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async updateChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async createChatMessage(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getChatMessages(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async createReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async createAnalyticsEvent(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getChatbotAnalytics(): Promise<any> { throw new Error("Chatbot features not implemented"); }
 }
 
 import { createClient } from '@supabase/supabase-js';
@@ -608,86 +579,6 @@ export class SupabaseStorage implements IStorage {
     }
     return result;
   }
-
-  // Business Analysis methods
-  async createBusinessAnalysis(insertBusinessAnalysis: InsertBusinessAnalysis): Promise<BusinessAnalysis> {
-    const { data: result, error } = await this.supabase
-      .from('business_analyses')
-      .insert([insertBusinessAnalysis])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase business analysis creation error:', error);
-      throw new Error(error.message);
-    }
-    return result;
-  }
-
-  async getBusinessAnalysis(id: number): Promise<BusinessAnalysis | undefined> {
-    const { data: result, error } = await this.supabase
-      .from('business_analyses')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return undefined; // No rows found
-      console.error('Supabase business analysis retrieval error:', error);
-      throw new Error(error.message);
-    }
-    return result;
-  }
-
-  async createAiRecommendation(insertAiRecommendation: InsertAiRecommendation): Promise<AiRecommendation> {
-    const { data: result, error } = await this.supabase
-      .from('ai_recommendations')
-      .insert([insertAiRecommendation])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase AI recommendation creation error:', error);
-      throw new Error(error.message);
-    }
-    return result;
-  }
-
-  async getRecommendationsByAnalysisId(analysisId: number): Promise<AiRecommendation[]> {
-    const { data: result, error } = await this.supabase
-      .from('ai_recommendations')
-      .select('*')
-      .eq('analysis_id', analysisId);
-
-    if (error) {
-      console.error('Supabase AI recommendations retrieval error:', error);
-      throw new Error(error.message);
-    }
-    return result || [];
-  }
-
-  async updateRecommendationStatus(id: number, status: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('ai_recommendations')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Supabase AI recommendation status update error:', error);
-      throw new Error(error.message);
-    }
-  }
-
-  // Chatbot placeholder methods (not implemented yet)
-  async createChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async updateChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async createChatMessage(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getChatMessages(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async createReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async createAnalyticsEvent(): Promise<any> { throw new Error("Chatbot features not implemented"); }
-  async getChatbotAnalytics(): Promise<any> { throw new Error("Chatbot features not implemented"); }
 }
 
 // Use Supabase storage if credentials are available, otherwise fallback to MemStorage
