@@ -207,48 +207,50 @@ Focus on being specific and actionable. Identify real business challenges that A
   async generateRecommendations(analysis: WebsiteAnalysisResult): Promise<any[]> {
     const systemPrompt = `You are an AI business consultant expert at matching AI solutions to specific business needs. Provide actionable, realistic recommendations with concrete value estimates.`;
 
-    const prompt = `Analyze this business and recommend 3-4 AI solutions in JSON format:
+    const prompt = `Generate AI solution recommendations for this business. Return ONLY valid JSON with the exact structure requested.
 
-Business: ${analysis.businessType} (${analysis.industry})
-Pain Points: ${analysis.painPoints.join(', ')}
-Workflows: ${analysis.workflows.join(', ')}
+Business Analysis:
+- Type: ${analysis.businessType}
+- Industry: ${analysis.industry}
+- Pain Points: ${analysis.painPoints.join(', ')}
+- Workflows: ${analysis.workflows.join(', ')}
 
-AI Solutions Available:
-1. Customer Support Chatbot 2. Sales Automation Agent 3. Content Generation Agent 
-4. Data Analysis Agent 5. Inventory Management Agent 6. Email Marketing Agent
+Generate 3-4 AI solutions from: Customer Support Chatbot, Sales Automation Agent, Content Generation Agent, Data Analysis Agent, Inventory Management Agent, Email Marketing Agent
 
-Respond with JSON only:
+Required JSON structure (include ALL fields):
 {
   "recommendations": [
     {
-      "solutionType": "exact name from list above",
-      "solutionName": "specific name for this business",
-      "description": "how this helps this specific business",
+      "solutionType": "Sales Automation Agent",
+      "solutionName": "LeadGenAI Pro",
+      "description": "Automates lead qualification and follow-up processes",
       "estimatedCostSavings": 25000,
-      "estimatedTimeSavings": "10 hours/week",
-      "implementationDifficulty": "easy",
-      "roiPercentage": 300,
+      "estimatedTimeSavings": "15 hours/week",
+      "implementationDifficulty": "medium",
+      "roiPercentage": 250,
       "priorityScore": 8,
-      "reasoning": "why this solution fits this business",
-      "customizationNeeds": "specific customizations needed",
+      "reasoning": "Addresses sales efficiency challenges",
+      "customizationNeeds": "CRM integration required",
       "ragEvidence": [
-        "Research study with specific statistics",
-        "Industry report with concrete metrics",
-        "Expert prediction with timeframe"
+        "Salesforce study: 67% improvement in lead qualification",
+        "Harvard Business Review: AI reduces sales cycle by 18%",
+        "Gartner: 85% of sales teams use AI by 2025"
       ],
       "caseStudies": [
-        "Company name: specific result achieved",
-        "Brand example: measurable improvement",
-        "Real implementation: quantified success"
+        "Microsoft: 35% increase in qualified leads with AI",
+        "HubSpot: 50% reduction in follow-up time",
+        "Salesforce: 40% improvement in conversion rates"
       ],
-      "ethicalConsiderations": "Important ethical aspects to consider",
-      "complianceRequirements": ["Regulation 1", "Standard 2"],
-      "monitoringMetrics": ["Metric 1", "Metric 2", "Metric 3"],
-      "implementationTimeline": "X-Y weeks",
-      "expectedRevenue": 35000
+      "ethicalConsiderations": "Ensure transparent AI use in sales",
+      "complianceRequirements": ["GDPR compliance", "CAN-SPAM Act"],
+      "monitoringMetrics": ["Lead quality score", "Response time", "Conversion rate"],
+      "implementationTimeline": "4-6 weeks",
+      "expectedRevenue": 40000
     }
   ]
-}`;
+}
+
+Ensure every recommendation has ALL required fields including ragEvidence array, caseStudies array, and other metadata. Return only the JSON, no additional text.`;
 
     try {
       const responseText = await this.generateCompletion(prompt, systemPrompt);
@@ -276,6 +278,11 @@ Respond with JSON only:
       if (recommendations.length === 0) {
         throw new Error('Gemini returned no recommendations');
       }
+      
+      // Debug: Log what fields we're getting
+      console.log('Gemini recommendation fields:', Object.keys(recommendations[0] || {}));
+      console.log('First recommendation has ragEvidence:', !!recommendations[0]?.ragEvidence);
+      console.log('First recommendation has caseStudies:', !!recommendations[0]?.caseStudies);
       
       return recommendations;
     } catch (error: any) {

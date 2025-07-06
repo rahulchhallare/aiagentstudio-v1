@@ -96,8 +96,6 @@ export default function BusinessAnalyzer() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Analysis result:", result);
-        console.log("First recommendation:", result.recommendations[0]);
         setAnalysisResult(result);
         toast({
           title: "Analysis Complete",
