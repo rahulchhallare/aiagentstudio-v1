@@ -196,6 +196,14 @@ export class WebsiteAnalyzer {
   }
 
   private async analyzeContentWithAI(content: any, url: string): Promise<WebsiteAnalysisResult> {
+    console.log('=== AI PROVIDER DEBUG INFO ===');
+    console.log('Environment:', process.env.NODE_ENV || 'development');
+    console.log('Gemini API Key Available:', !!process.env.GEMINI_API_KEY);
+    console.log('OpenAI API Key Available:', !!process.env.OPENAI_API_KEY);
+    console.log('DeepSeek API Key Available:', !!process.env.DEEPSEEK_API_KEY);
+    console.log('AI/ML API Key Available:', !!process.env.AIML_API_KEY);
+    console.log('===============================');
+
     try {
       // Try Gemini first as it has unlimited free access
       if (process.env.GEMINI_API_KEY) {

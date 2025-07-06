@@ -901,6 +901,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint for AI provider status
+  app.get("/api/debug/ai-providers", async (req: Request, res: Response) => {
+    try {
+      const status = {
+        environment: process.env.NODE_ENV || 'development',
+        domain: req.get('host'),
+        timestamp: new Date().toISOString(),
+        providers: {
+          gemini: {
+            available: !!process.env.GEMINI_API_KEY,
+            keyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0
+          },
+          openai: {
+            available: !!process.env.OPENAI_API_KEY,
+            keyLength: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0
+          },
+          deepseek: {
+            available: !!process.env.DEEPSEEK_API_KEY,
+            keyLength: process.env.DEEPSEEK_API_KEY ? process.env.DEEPSEEK_API_KEY.length : 0
+          },
+          aiml: {
+            available: !!process.env.AIML_API_KEY,
+            keyLength: process.env.AIML_API_KEY ? process.env.AIML_API_KEY.length : 0
+          }
+        }
+      };
+      
+      res.json(status);
+    } catch (error) {
+      console.error("Debug endpoint error:", error);
+      res.status(500).json({ error: "Debug check failed" });
+    }
+  });
+
   // Exchange rate endpoint
   app.get("/api/exchange-rate", async (req: Request, res: Response) => {
     try {

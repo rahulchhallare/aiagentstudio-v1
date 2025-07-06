@@ -38,6 +38,7 @@ import ChatbotDemo from "@/pages/ChatbotDemo";
 import Analytics from "@/pages/Analytics";
 import BusinessAnalyzer from "@/pages/BusinessAnalyzer";
 import AgentDeployment from "@/pages/AgentDeployment";
+import AIProviderStatus from "@/pages/AIProviderStatus";
 import AgentLibraryManager from "@/pages/AgentLibraryManager";
 import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/business-analyzer" component={BusinessAnalyzer} />
       <Route path="/agent-deployment" component={AgentDeployment} />
       <Route path="/agent-library-manager" component={AgentLibraryManager} />
+      <Route path="/debug/ai-providers" component={AIProviderStatus} />
       <Route component={NotFound} />
     </Switch>
   );
