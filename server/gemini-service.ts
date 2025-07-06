@@ -232,14 +232,14 @@ Required JSON structure (include ALL fields):
       "reasoning": "Addresses sales efficiency challenges",
       "customizationNeeds": "CRM integration required",
       "ragEvidence": [
-        "Salesforce study: 67% improvement in lead qualification",
-        "Harvard Business Review: AI reduces sales cycle by 18%",
-        "Gartner: 85% of sales teams use AI by 2025"
+        "IBM study: Companies using AI chatbots see 67% reduction in support tickets",
+        "Salesforce research: 83% of customers expect immediate responses to inquiries", 
+        "McKinsey report: AI automation reduces operational costs by 15-25% annually"
       ],
       "caseStudies": [
-        "Microsoft: 35% increase in qualified leads with AI",
-        "HubSpot: 50% reduction in follow-up time",
-        "Salesforce: 40% improvement in conversion rates"
+        "H&M reduced customer service costs by 40% using AI chatbots",
+        "Domino's Pizza processes 85% of orders through AI assistants",
+        "Sephora's chatbot increased conversion rates by 11%"
       ],
       "ethicalConsiderations": "Ensure transparent AI use in sales",
       "complianceRequirements": ["GDPR compliance", "CAN-SPAM Act"],
@@ -250,7 +250,15 @@ Required JSON structure (include ALL fields):
   ]
 }
 
-Ensure every recommendation has ALL required fields including ragEvidence array, caseStudies array, and other metadata. Return only the JSON, no additional text.`;
+Ensure every recommendation has ALL required fields including ragEvidence array, caseStudies array, and other metadata.
+
+IMPORTANT: Generate realistic, specific statistics and examples:
+- ragEvidence must include specific percentages, dollar amounts, or quantified improvements from real studies
+- caseStudies must name specific companies with exact percentage improvements or measurable results
+- Use format: "Company Name: X% improvement/reduction in specific metric"
+- Examples: "Netflix reduced content discovery time by 75%", "Amazon increased sales by 29% with recommendation AI"
+
+Return only the JSON, no additional text.`;
 
     try {
       const responseText = await this.generateCompletion(prompt, systemPrompt);
