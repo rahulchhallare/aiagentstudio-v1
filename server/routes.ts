@@ -2075,7 +2075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: 1,
           solution_name: "Customer Support Assistant",
           deployment_status: "active",
-          deployment_url: "https://customer-support.aiagntstudio.ai",
+          deployment_url: "/chatbot",
           deployment_id: "cs-assistant-001",
           configuration: { 
             name: "Customer Support Assistant",
