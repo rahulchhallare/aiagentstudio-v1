@@ -1979,14 +1979,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import analyzer here to avoid circular dependencies
-      const { fastAnalyzer } = await import("./fast-analyzer");
-      const { fastRecommendationEngine } = await import("./fast-recommendations");
+      const { websiteAnalyzer } = await import("./website-analyzer");
+      const { recommendationEngine } = await import("./recommendation-engine");
       
-      // Quick analyze website for faster response
-      const analysis = await fastAnalyzer.quickAnalyze(websiteUrl);
+      // Comprehensive AI-powered website analysis
+      const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
       
-      // Generate fast recommendations without AI delays
-      const recommendations = fastRecommendationEngine.generateFastRecommendations(analysis);
+      // Generate AI-powered recommendations
+      const recommendations = await recommendationEngine.generateRecommendations(analysis);
       
       // For demo purposes, return results directly without database storage
       // TODO: Implement proper database storage once schema is properly set up
