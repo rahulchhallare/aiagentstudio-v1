@@ -21,11 +21,17 @@ export class FastAnalyzer {
   }
 
   private async extractQuickContent(url: string): Promise<any> {
+    // Normalize URL with protocol if missing
+    let normalizedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      normalizedUrl = `https://${url}`;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
     
     try {
-      const response = await fetch(url, {
+      const response = await fetch(normalizedUrl, {
         signal: controller.signal,
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; BusinessAnalyzer/1.0)',
@@ -84,7 +90,13 @@ export class FastAnalyzer {
   }
 
   private generateSmartAnalysis(url: string, content: any): WebsiteAnalysisResult {
-    const domain = new URL(url).hostname.replace('www.', '');
+    // Normalize URL with protocol if missing
+    let normalizedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      normalizedUrl = `https://${url}`;
+    }
+    
+    const domain = new URL(normalizedUrl).hostname.replace('www.', '');
     const title = content.title || domain;
     const keywords = content.businessKeywords || [];
     
@@ -123,7 +135,22 @@ export class FastAnalyzer {
   }
 
   private generateURLBasedAnalysis(url: string): WebsiteAnalysisResult {
-    const domain = new URL(url).hostname.replace('www.', '');
+    // Normalize URL with protocol if missing
+    let normalizedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      normalizedUrl = `https://${url}`;
+    }
+    
+    console.log('FastAnalyzer: Normalized URL:', normalizedUrl);
+    
+    let domain: string;
+    try {
+      domain = new URL(normalizedUrl).hostname.replace('www.', '');
+    } catch (error) {
+      console.error('FastAnalyzer: URL parsing error:', error);
+      // Fallback to extract domain from URL string
+      domain = normalizedUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    }
     
     return {
       businessType: 'Online Business',
