@@ -26,6 +26,18 @@ export interface RecommendationResult {
   implementationTimeline?: string;
   expectedRevenue?: number;
   riskFactors?: string[];
+  // New comprehensive analysis features
+  availabilityStatus: 'Available' | 'Missing';
+  creationPrompt?: AgentCreationPrompt;
+}
+
+export interface AgentCreationPrompt {
+  agentName: string;
+  purpose: string;
+  keyWorkflows: string[];
+  requiredIntegrations: string[];
+  customizationOptions: string[];
+  performanceMetrics: string[];
 }
 
 export class RecommendationEngine {
@@ -47,8 +59,11 @@ export class RecommendationEngine {
         this.enrichRecommendation(rec, analysis)
       );
 
+      // Check availability and generate prompts for missing agents
+      const finalRecommendations = await this.checkAvailabilityAndGeneratePrompts(enrichedRecommendations);
+
       // Sort by priority score
-      return enrichedRecommendations.sort((a, b) => b.priorityScore - a.priorityScore);
+      return finalRecommendations.sort((a, b) => b.priorityScore - a.priorityScore);
     } catch (error) {
       console.error('Error generating recommendations:', error);
       
@@ -536,6 +551,111 @@ Focus on solutions that directly address the identified pain points and workflow
     }
 
     return baseRecommendations;
+  }
+
+  private async checkAvailabilityAndGeneratePrompts(recommendations: RecommendationResult[]): Promise<RecommendationResult[]> {
+    const availableAgents = await this.getAvailableAgents();
+    
+    return await Promise.all(recommendations.map(async (rec) => {
+      // Check if agent is available in our platform
+      const isAvailable = availableAgents.some(agent => 
+        agent.name.toLowerCase().includes(rec.solutionName.toLowerCase()) ||
+        agent.description.toLowerCase().includes(rec.solutionType.toLowerCase()) ||
+        agent.type.toLowerCase().includes(rec.solutionType.toLowerCase())
+      );
+
+      if (isAvailable) {
+        return {
+          ...rec,
+          availabilityStatus: 'Available' as const
+        };
+      } else {
+        // Generate creation prompt for missing agent
+        const creationPrompt = await this.generateCreationPrompt(rec);
+        return {
+          ...rec,
+          availabilityStatus: 'Missing' as const,
+          creationPrompt
+        };
+      }
+    }));
+  }
+
+  private async getAvailableAgents(): Promise<Array<{name: string, description: string, type: string}>> {
+    // This would typically query your agent database
+    // For now, returning a comprehensive list of available agents
+    return [
+      { name: "Customer Support Chatbot", description: "Handles customer inquiries and support tickets", type: "customer_support" },
+      { name: "Lead Generation Assistant", description: "Qualifies leads and schedules appointments", type: "sales" },
+      { name: "Content Creator", description: "Generates blog posts and marketing content", type: "content" },
+      { name: "Invoice Processing Agent", description: "Automates invoice processing and payment tracking", type: "finance" },
+      { name: "Email Marketing Assistant", description: "Creates and sends personalized email campaigns", type: "marketing" },
+      { name: "Inventory Management Agent", description: "Tracks stock levels and reorder points", type: "inventory" },
+      { name: "Price Monitoring Agent", description: "Monitors competitor pricing and market trends", type: "analytics" },
+      { name: "Social Media Manager", description: "Schedules and manages social media posts", type: "social_media" },
+      { name: "Data Entry Assistant", description: "Automates data entry and validation tasks", type: "data_processing" },
+      { name: "HR Screening Agent", description: "Screens resumes and schedules interviews", type: "hr" },
+      { name: "Personalization Engine", description: "Delivers personalized content and recommendations", type: "personalization" },
+      { name: "Business Intelligence Agent", description: "Provides predictive analytics and forecasting", type: "analytics" },
+      { name: "AI Monitoring Dashboard", description: "Monitors AI performance and compliance", type: "monitoring" }
+    ];
+  }
+
+  private async generateCreationPrompt(recommendation: RecommendationResult): Promise<AgentCreationPrompt> {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are an AI agent creation specialist. Generate a detailed creation prompt for building an AI agent based on the provided solution recommendation. 
+            
+            Respond with JSON in this exact format:
+            {
+              "agentName": "string",
+              "purpose": "string", 
+              "keyWorkflows": ["string", "string"],
+              "requiredIntegrations": ["string", "string"],
+              "customizationOptions": ["string", "string"],
+              "performanceMetrics": ["string", "string"]
+            }`
+          },
+          {
+            role: "user",
+            content: `Create a detailed agent creation prompt for:
+            
+            Solution: ${recommendation.solutionName}
+            Type: ${recommendation.solutionType}
+            Description: ${recommendation.description}
+            Implementation Difficulty: ${recommendation.implementationDifficulty}
+            
+            Focus on practical, actionable details that would help someone build this agent.`
+          }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{}');
+      
+      return {
+        agentName: result.agentName || recommendation.solutionName,
+        purpose: result.purpose || recommendation.description,
+        keyWorkflows: result.keyWorkflows || [],
+        requiredIntegrations: result.requiredIntegrations || [],
+        customizationOptions: result.customizationOptions || [],
+        performanceMetrics: result.performanceMetrics || []
+      };
+    } catch (error) {
+      console.error("Error generating creation prompt:", error);
+      return {
+        agentName: recommendation.solutionName,
+        purpose: recommendation.description,
+        keyWorkflows: ["Process user inputs", "Generate responses", "Handle escalations"],
+        requiredIntegrations: ["Website API", "Database", "Email system"],
+        customizationOptions: ["Response templates", "Escalation rules", "Performance thresholds"],
+        performanceMetrics: ["Response time", "Resolution rate", "Customer satisfaction"]
+      };
+    }
   }
 }
 
