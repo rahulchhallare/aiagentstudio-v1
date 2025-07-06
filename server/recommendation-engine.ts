@@ -609,9 +609,9 @@ Focus on solutions that directly address the identified pain points and workflow
     return await Promise.all(recommendations.map(async (rec) => {
       // Check if agent is available in our platform
       const isAvailable = availableAgents.some(agent => 
-        agent.name.toLowerCase().includes(rec.solutionName.toLowerCase()) ||
-        agent.description.toLowerCase().includes(rec.solutionType.toLowerCase()) ||
-        agent.type.toLowerCase().includes(rec.solutionType.toLowerCase())
+        (agent.name || '').toLowerCase().includes((rec.solutionName || '').toLowerCase()) ||
+        (agent.description || '').toLowerCase().includes((rec.solutionType || '').toLowerCase()) ||
+        (agent.type || '').toLowerCase().includes((rec.solutionType || '').toLowerCase())
       );
 
       if (isAvailable) {
@@ -636,11 +636,12 @@ Focus on solutions that directly address the identified pain points and workflow
       // Query actual deployed agents from database
       const { db } = await import("./db");
       const { agents } = await import("../shared/schema");
+      const { eq } = await import("drizzle-orm");
       
       const deployedAgents = await db.select({
         name: agents.name,
         description: agents.description
-      }).from(agents).where(agents.is_active.eq(true));
+      }).from(agents).where(eq(agents.is_active, true));
 
       // Convert to expected format and add types based on names/descriptions
       const availableAgents = deployedAgents.map(agent => ({

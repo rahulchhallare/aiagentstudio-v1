@@ -143,8 +143,10 @@ AI-powered business analysis platform that helps business owners identify optima
 - Removed FastAnalyzer development per user request
 - Restored original comprehensive AI-powered website analysis system
 - System now uses full 5-tier AI provider system (OpenAI → DeepSeek → Gemini → AI/ML API → Demo fallback)
+- Fixed database query errors in recommendation engine (eq function and null checks)
 - Prioritizes accuracy and detailed analysis over speed optimization
 - Comprehensive content analysis provides superior business intelligence and recommendations
+- System provides 15-30 second analysis with detailed AI-powered insights vs 2-second fast analysis
 
 ## User Preferences
 - Language: English
