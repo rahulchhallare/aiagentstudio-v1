@@ -320,14 +320,15 @@ export type BusinessAnalysis = typeof business_analyses.$inferSelect;
 export type InsertAiRecommendation = z.infer<typeof insertAiRecommendationSchema>;
 export type AiRecommendation = typeof ai_recommendations.$inferSelect;
 
-export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
-export type ChatMessage = typeof chat_messages.$inferSelect;
-
-export type InsertReturnRequest = z.infer<typeof insertReturnRequestSchema>;
-export type ReturnRequest = typeof return_requests.$inferSelect;
-
-export type InsertChatbotAnalytics = z.infer<typeof insertChatbotAnalyticsSchema>;
-export type ChatbotAnalytics = typeof chatbot_analytics.$inferSelect;
+// Placeholder types for chatbot features (not yet implemented)
+export type InsertChatSession = any;
+export type ChatSession = any;
+export type InsertChatMessage = any;
+export type ChatMessage = any;
+export type InsertReturnRequest = any;
+export type ReturnRequest = any;
+export type InsertChatbotAnalytics = any;
+export type ChatbotAnalytics = any;
 
 export type FlowData = z.infer<typeof flowDataSchema>;
 

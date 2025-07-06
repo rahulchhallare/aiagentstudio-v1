@@ -4,7 +4,11 @@ import {
   type Agent, type InsertAgent, 
   type Waitlist, type InsertWaitlist,
   type BusinessAnalysis, type InsertBusinessAnalysis,
-  type AiRecommendation, type InsertAiRecommendation
+  type AiRecommendation, type InsertAiRecommendation,
+  type InsertChatSession, type ChatSession,
+  type InsertChatMessage, type ChatMessage,
+  type InsertReturnRequest, type ReturnRequest,
+  type InsertChatbotAnalytics, type ChatbotAnalytics
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -202,6 +206,24 @@ export class MemStorage implements IStorage {
     console.log("Contact submission would be saved:", data);
     return { id: Date.now(), ...data, created_at: new Date() };
   }
+
+  // Business Analysis placeholder methods (not implemented in memory storage)
+  async createBusinessAnalysis(): Promise<any> { throw new Error("Business analysis requires database storage"); }
+  async getBusinessAnalysis(): Promise<any> { throw new Error("Business analysis requires database storage"); }
+  async createAiRecommendation(): Promise<any> { throw new Error("AI recommendations require database storage"); }
+  async getRecommendationsByAnalysisId(): Promise<any> { throw new Error("AI recommendations require database storage"); }
+  async updateRecommendationStatus(): Promise<any> { throw new Error("AI recommendations require database storage"); }
+
+  // Chatbot placeholder methods (not implemented)
+  async createChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async updateChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async createChatMessage(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getChatMessages(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async createReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async createAnalyticsEvent(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getChatbotAnalytics(): Promise<any> { throw new Error("Chatbot features not implemented"); }
 }
 
 import { createClient } from '@supabase/supabase-js';
@@ -655,6 +677,17 @@ export class SupabaseStorage implements IStorage {
       throw new Error(error.message);
     }
   }
+
+  // Chatbot placeholder methods (not implemented yet)
+  async createChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async updateChatSession(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async createChatMessage(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getChatMessages(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async createReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getReturnRequest(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async createAnalyticsEvent(): Promise<any> { throw new Error("Chatbot features not implemented"); }
+  async getChatbotAnalytics(): Promise<any> { throw new Error("Chatbot features not implemented"); }
 }
 
 // Use Supabase storage if credentials are available, otherwise fallback to MemStorage
