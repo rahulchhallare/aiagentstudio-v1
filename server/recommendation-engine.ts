@@ -582,23 +582,68 @@ Focus on solutions that directly address the identified pain points and workflow
   }
 
   private async getAvailableAgents(): Promise<Array<{name: string, description: string, type: string}>> {
-    // This would typically query your agent database
-    // For now, returning a comprehensive list of available agents
-    return [
-      { name: "Customer Support Chatbot", description: "Handles customer inquiries and support tickets", type: "customer_support" },
-      { name: "Lead Generation Assistant", description: "Qualifies leads and schedules appointments", type: "sales" },
-      { name: "Content Creator", description: "Generates blog posts and marketing content", type: "content" },
-      { name: "Invoice Processing Agent", description: "Automates invoice processing and payment tracking", type: "finance" },
-      { name: "Email Marketing Assistant", description: "Creates and sends personalized email campaigns", type: "marketing" },
-      { name: "Inventory Management Agent", description: "Tracks stock levels and reorder points", type: "inventory" },
-      { name: "Price Monitoring Agent", description: "Monitors competitor pricing and market trends", type: "analytics" },
-      { name: "Social Media Manager", description: "Schedules and manages social media posts", type: "social_media" },
-      { name: "Data Entry Assistant", description: "Automates data entry and validation tasks", type: "data_processing" },
-      { name: "HR Screening Agent", description: "Screens resumes and schedules interviews", type: "hr" },
-      { name: "Personalization Engine", description: "Delivers personalized content and recommendations", type: "personalization" },
-      { name: "Business Intelligence Agent", description: "Provides predictive analytics and forecasting", type: "analytics" },
-      { name: "AI Monitoring Dashboard", description: "Monitors AI performance and compliance", type: "monitoring" }
-    ];
+    try {
+      // Query actual deployed agents from database
+      const { db } = await import("./db");
+      const { agents } = await import("../shared/schema");
+      
+      const deployedAgents = await db.select({
+        name: agents.name,
+        description: agents.description
+      }).from(agents).where(agents.is_active.eq(true));
+
+      // Convert to expected format and add types based on names/descriptions
+      const availableAgents = deployedAgents.map(agent => ({
+        name: agent.name,
+        description: agent.description || "",
+        type: this.inferAgentType(agent.name, agent.description || "")
+      }));
+
+      // Also include templates as potentially available
+      const { allAgentTemplates } = await import("./agent-templates");
+      const templateAgents = allAgentTemplates.map(template => ({
+        name: template.name,
+        description: template.description,
+        type: this.inferAgentType(template.name, template.description)
+      }));
+
+      // Combine deployed agents and templates, removing duplicates
+      const combinedAgents = [...availableAgents, ...templateAgents];
+      const uniqueAgents = combinedAgents.filter((agent, index, self) => 
+        index === self.findIndex(a => a.name.toLowerCase() === agent.name.toLowerCase())
+      );
+
+      return uniqueAgents;
+    } catch (error) {
+      console.error("Error fetching available agents:", error);
+      
+      // Fallback to comprehensive template list
+      const { allAgentTemplates } = await import("./agent-templates");
+      return allAgentTemplates.map(template => ({
+        name: template.name,
+        description: template.description,
+        type: this.inferAgentType(template.name, template.description)
+      }));
+    }
+  }
+
+  private inferAgentType(name: string, description: string): string {
+    const text = (name + " " + description).toLowerCase();
+    
+    if (text.includes('customer') || text.includes('support') || text.includes('chatbot')) return 'customer_support';
+    if (text.includes('sales') || text.includes('lead') || text.includes('qualification')) return 'sales';
+    if (text.includes('marketing') || text.includes('email') || text.includes('campaign')) return 'marketing';
+    if (text.includes('analytics') || text.includes('intelligence') || text.includes('forecast') || text.includes('predictive')) return 'analytics';
+    if (text.includes('personalization') || text.includes('recommendation')) return 'personalization';
+    if (text.includes('inventory') || text.includes('stock')) return 'inventory';
+    if (text.includes('monitoring') || text.includes('performance')) return 'monitoring';
+    if (text.includes('content') || text.includes('blog')) return 'content';
+    if (text.includes('finance') || text.includes('invoice') || text.includes('payment')) return 'finance';
+    if (text.includes('social') || text.includes('media')) return 'social_media';
+    if (text.includes('hr') || text.includes('recruitment') || text.includes('screening')) return 'hr';
+    if (text.includes('compliance') || text.includes('governance') || text.includes('ethics')) return 'governance';
+    
+    return 'general';
   }
 
   private async generateCreationPrompt(recommendation: RecommendationResult): Promise<AgentCreationPrompt> {

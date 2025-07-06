@@ -2447,6 +2447,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Auto-deploy missing AI agents
+  app.post("/api/deploy-missing-agents", async (req: Request, res: Response) => {
+    try {
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const userId = req.body.userId || 1; // Default to system user
+      
+      await agentAutoDeployer.deployAllMissingAgents(userId);
+      const status = await agentAutoDeployer.getDeploymentStatus();
+      
+      res.json({
+        success: true,
+        message: "Missing agents deployed successfully",
+        status
+      });
+    } catch (error) {
+      console.error("Error deploying missing agents:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to deploy agents"
+      });
+    }
+  });
+
+  // Get comprehensive agent templates
+  app.get("/api/comprehensive-agent-templates", async (req: Request, res: Response) => {
+    try {
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const templates = agentAutoDeployer.getAvailableTemplates();
+      const categorized = agentAutoDeployer.getTemplatesByCategory();
+      
+      res.json({
+        success: true,
+        templates,
+        categorized,
+        total: templates.length
+      });
+    } catch (error) {
+      console.error("Error getting comprehensive agent templates:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get templates"
+      });
+    }
+  });
+
+  // Deploy specific agent by template ID
+  app.post("/api/deploy-agent-template/:templateId", async (req: Request, res: Response) => {
+    try {
+      const { templateId } = req.params;
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const userId = req.body.userId || 1;
+      
+      const deployedAgent = await agentAutoDeployer.deploySpecificAgent(templateId, userId);
+      
+      res.json({
+        success: true,
+        message: "Agent deployed successfully",
+        agent: deployedAgent
+      });
+    } catch (error) {
+      console.error("Error deploying specific agent:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to deploy agent"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

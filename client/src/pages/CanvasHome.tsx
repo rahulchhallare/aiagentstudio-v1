@@ -344,6 +344,44 @@ export default function CanvasHome() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 md:px-6 py-12">
+        {/* Quick Deploy Section */}
+        <div className="mb-12 text-center">
+          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Rocket className="w-6 h-6 text-purple-600" />
+                  <h3 className="text-xl font-bold text-purple-800">Comprehensive AI Agent Library</h3>
+                </div>
+                <p className="text-gray-600 max-w-2xl">
+                  Deploy our complete collection of 8+ enterprise-ready AI agents including Customer Support, 
+                  Lead Generation, Personalization Engine, and Business Intelligence solutions.
+                </p>
+                <div className="flex space-x-4">
+                  <Button
+                    onClick={() => navigate("/agent-library-manager")}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    size="lg"
+                  >
+                    <Rocket className="w-4 h-4 mr-2" />
+                    Deploy All AI Agents
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/agent-library-manager")}
+                    size="lg"
+                  >
+                    View Agent Library
+                  </Button>
+                </div>
+                <div className="text-sm text-gray-500">
+                  <span className="font-medium">$400,000+</span> in annual cost savings potential
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Featured Template */}
         <div className="mb-12">
           <FeaturedTemplate
