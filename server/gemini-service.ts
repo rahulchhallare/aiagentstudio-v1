@@ -17,15 +17,16 @@ export class GeminiService {
         contents: fullPrompt,
         config: {
           temperature: 0.3,
-          maxOutputTokens: 1500,
+          maxOutputTokens: 2500, // Increased to reduce truncation
         }
       });
 
-      if (!response.text) {
+      if (!response.text || response.text.trim() === '') {
+        console.error('Empty response from Gemini API');
         throw new Error('No response from Gemini API');
       }
 
-      return response.text;
+      return response.text.trim();
     } catch (error: any) {
       console.error('Gemini API error:', error);
       throw new Error(`Gemini API error: ${error.message}`);
@@ -111,27 +112,96 @@ Focus on being specific and actionable. Identify real business challenges that A
           currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
         };
       } catch (parseError) {
-        // If JSON parsing fails, try to extract partial data or use fallback
         console.error('Gemini JSON parsing failed, attempting fallback parsing:', parseError);
-        console.error('Raw response:', cleanedResponse);
+        console.log('Raw response:', cleanedResponse);
         
-        // Return fallback analysis based on the content
-        return {
-          businessType: 'Unknown',
-          businessName: 'Unknown',
-          industry: 'Unknown',
-          painPoints: ['Customer support optimization', 'Process automation', 'Data analysis'],
-          workflows: ['Customer service', 'Sales process', 'Operations'],
-          contentSummary: 'Business analysis completed with limited data due to parsing issues',
-          keyFeatures: ['Web presence', 'Customer interaction'],
-          targetAudience: 'General customers',
-          currentTech: ['Website']
-        };
+        // Try to fix truncated JSON by attempting to close incomplete structures
+        let fixedResponse = cleanedResponse;
+        
+        // Check if the response is truncated and try to fix it
+        if (parseError.message.includes('Unterminated string')) {
+          // Try to close unterminated strings and arrays
+          fixedResponse = this.fixTruncatedJSON(cleanedResponse);
+          
+          try {
+            const analysis = JSON.parse(fixedResponse);
+            console.log('Successfully parsed fixed JSON response');
+            return {
+              businessType: analysis.businessType || 'Unknown',
+              businessName: analysis.businessName || 'Unknown',
+              industry: analysis.industry || 'Unknown',
+              painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
+              workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
+              contentSummary: analysis.contentSummary || '',
+              keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
+              targetAudience: analysis.targetAudience || '',
+              currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
+            };
+          } catch (fixError) {
+            console.error('Failed to fix JSON, falling back to error:', fixError);
+          }
+        }
+        
+        // If all parsing attempts fail, throw error to trigger fallback
+        throw new Error(`Failed to parse Gemini response: ${parseError.message}`);
       }
     } catch (error: any) {
-      console.error('Error parsing Gemini analysis response:', error);
+      console.error('Error analyzing website with Gemini:', error);
       throw new Error(`Failed to analyze website with Gemini: ${error.message}`);
     }
+  }
+
+  private fixTruncatedJSON(jsonString: string): string {
+    let fixed = jsonString;
+    
+    // Count open braces and brackets to see what needs to be closed
+    let openBraces = 0;
+    let openBrackets = 0;
+    let inString = false;
+    let escapeNext = false;
+    
+    for (let i = 0; i < fixed.length; i++) {
+      const char = fixed[i];
+      
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      
+      if (char === '"' && !escapeNext) {
+        inString = !inString;
+        continue;
+      }
+      
+      if (!inString) {
+        if (char === '{') openBraces++;
+        else if (char === '}') openBraces--;
+        else if (char === '[') openBrackets++;
+        else if (char === ']') openBrackets--;
+      }
+    }
+    
+    // If we ended in a string, close it
+    if (inString) {
+      fixed += '"';
+    }
+    
+    // Close any open arrays first
+    for (let i = 0; i < openBrackets; i++) {
+      fixed += ']';
+    }
+    
+    // Close any open objects
+    for (let i = 0; i < openBraces; i++) {
+      fixed += '}';
+    }
+    
+    return fixed;
   }
 
   async generateRecommendations(analysis: WebsiteAnalysisResult): Promise<any[]> {
@@ -177,60 +247,9 @@ For each recommendation, provide:
 Focus on solutions that directly address the identified pain points and workflows. Be specific about the business value and implementation for this particular company.`;
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        config: {
-          systemInstruction: systemPrompt,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              recommendations: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    solutionType: { type: "string" },
-                    solutionName: { type: "string" },
-                    description: { type: "string" },
-                    estimatedCostSavings: { type: "number" },
-                    estimatedTimeSavings: { type: "string" },
-                    implementationDifficulty: { type: "string" },
-                    roiPercentage: { type: "number" },
-                    priorityScore: { type: "number" },
-                    reasoning: { type: "string" },
-                    customizationNeeds: { type: "string" }
-                  }
-                }
-              }
-            }
-          },
-          temperature: 0.4,
-          maxOutputTokens: 2000,
-        },
-        contents: prompt,
-      });
-
-      if (!response.text) {
-        throw new Error('No recommendations from Gemini');
-      }
-
-      // Clean and parse the JSON response
-      let cleanedResponse = response.text.trim();
-      
-      // Remove any markdown formatting if present
-      if (cleanedResponse.startsWith('```json')) {
-        cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/\n?```$/, '');
-      }
-      
-      try {
-        const parsed = JSON.parse(cleanedResponse);
-        return parsed.recommendations || [];
-      } catch (parseError) {
-        console.error('Gemini recommendations JSON parsing failed:', parseError);
-        console.error('Raw response:', cleanedResponse);
-        return []; // Return empty array on parsing error
-      }
+      const responseText = await this.generateCompletion(prompt, systemPrompt);
+      const parsed = JSON.parse(responseText);
+      return parsed.recommendations || [];
     } catch (error: any) {
       console.error('Error parsing Gemini recommendations response:', error);
       throw new Error(`Failed to generate recommendations with Gemini: ${error.message}`);
@@ -241,7 +260,7 @@ Focus on solutions that directly address the identified pain points and workflow
 export function getGeminiService(): GeminiService {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is required');
+    throw new Error('GEMINI_API_KEY is not configured');
   }
   return new GeminiService(apiKey);
 }
