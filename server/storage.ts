@@ -586,6 +586,75 @@ export class SupabaseStorage implements IStorage {
     }
     return result;
   }
+
+  // Business Analysis methods
+  async createBusinessAnalysis(insertBusinessAnalysis: InsertBusinessAnalysis): Promise<BusinessAnalysis> {
+    const { data: result, error } = await this.supabase
+      .from('business_analyses')
+      .insert([insertBusinessAnalysis])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase business analysis creation error:', error);
+      throw new Error(error.message);
+    }
+    return result;
+  }
+
+  async getBusinessAnalysis(id: number): Promise<BusinessAnalysis | undefined> {
+    const { data: result, error } = await this.supabase
+      .from('business_analyses')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return undefined; // No rows found
+      console.error('Supabase business analysis retrieval error:', error);
+      throw new Error(error.message);
+    }
+    return result;
+  }
+
+  async createAiRecommendation(insertAiRecommendation: InsertAiRecommendation): Promise<AiRecommendation> {
+    const { data: result, error } = await this.supabase
+      .from('ai_recommendations')
+      .insert([insertAiRecommendation])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase AI recommendation creation error:', error);
+      throw new Error(error.message);
+    }
+    return result;
+  }
+
+  async getRecommendationsByAnalysisId(analysisId: number): Promise<AiRecommendation[]> {
+    const { data: result, error } = await this.supabase
+      .from('ai_recommendations')
+      .select('*')
+      .eq('analysis_id', analysisId);
+
+    if (error) {
+      console.error('Supabase AI recommendations retrieval error:', error);
+      throw new Error(error.message);
+    }
+    return result || [];
+  }
+
+  async updateRecommendationStatus(id: number, status: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('ai_recommendations')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase AI recommendation status update error:', error);
+      throw new Error(error.message);
+    }
+  }
 }
 
 // Use Supabase storage if credentials are available, otherwise fallback to MemStorage

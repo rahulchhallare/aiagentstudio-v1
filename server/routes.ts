@@ -1981,13 +1981,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import analyzer here to avoid circular dependencies
       const { websiteAnalyzer } = await import("./website-analyzer");
       const { recommendationEngine } = await import("./recommendation-engine");
-      const { databaseStorage } = await import("./database-storage");
       
       // Comprehensive AI-powered website analysis
       const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
       
       // Save business analysis to database
-      const savedAnalysis = await databaseStorage.createBusinessAnalysis({
+      const savedAnalysis = await storage.createBusinessAnalysis({
         website_url: websiteUrl,
         business_name: analysis.businessName,
         business_type: analysis.businessType,
@@ -2006,7 +2005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save recommendations to database
       const savedRecommendations = [];
       for (const rec of recommendations) {
-        const savedRec = await databaseStorage.createAiRecommendation({
+        const savedRec = await storage.createAiRecommendation({
           analysis_id: savedAnalysis.id,
           solution_type: rec.solutionType,
           solution_name: rec.solutionName,
