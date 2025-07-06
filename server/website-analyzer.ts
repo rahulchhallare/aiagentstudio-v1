@@ -336,8 +336,9 @@ Key Links: ${content.links.join(', ')}`;
       console.error('All AI providers exhausted, falling back to demo analysis:', aimlError);
     }
 
-    // If all providers fail, throw error to trigger demo fallback
-    throw new Error('All AI providers exhausted (OpenAI, DeepSeek, Gemini, AI/ML API)');
+    // If all providers fail, use demo analysis as final fallback
+    console.log('All AI providers exhausted, using demo analysis as final fallback');
+    return this.generateDemoAnalysis(url, content);
   }
 
   private generateDemoAnalysis(url: string, extractedContent: any): WebsiteAnalysisResult {

@@ -80,7 +80,9 @@ export class RecommendationEngine {
         return this.generateDemoRecommendations(analysis);
       }
       
-      throw new Error('Failed to generate recommendations');
+      // All AI providers failed, use demo recommendations as ultimate fallback
+      console.log('All AI providers failed, using demo recommendations as fallback');
+      return this.generateDemoRecommendations(analysis);
     }
   }
 
@@ -190,8 +192,9 @@ Focus on solutions that directly address the identified pain points and workflow
       console.error('All AI providers exhausted, falling back to demo recommendations:', aimlError);
     }
 
-    // If all providers fail, throw error to trigger demo fallback
-    throw new Error('All AI providers exhausted (OpenAI, DeepSeek, Gemini, AI/ML API)');
+    // If all providers fail, use demo recommendations as final fallback
+    console.log('All AI providers exhausted, using demo recommendations as final fallback');
+    return this.generateDemoRecommendations(analysis);
   }
 
   private enrichRecommendation(recommendation: any, analysis: WebsiteAnalysisResult): RecommendationResult {
