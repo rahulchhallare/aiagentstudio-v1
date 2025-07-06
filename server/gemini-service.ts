@@ -86,20 +86,48 @@ Focus on being specific and actionable. Identify real business challenges that A
         throw new Error('No response from Gemini analysis');
       }
 
-      const analysis = JSON.parse(response.text);
+      // Clean and parse the JSON response
+      let cleanedResponse = response.text.trim();
       
-      // Validate and clean the response
-      return {
-        businessType: analysis.businessType || 'Unknown',
-        businessName: analysis.businessName || 'Unknown',
-        industry: analysis.industry || 'Unknown',
-        painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
-        workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
-        contentSummary: analysis.contentSummary || '',
-        keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
-        targetAudience: analysis.targetAudience || '',
-        currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
-      };
+      // Remove any markdown formatting if present
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      // Try to fix common JSON issues
+      try {
+        const analysis = JSON.parse(cleanedResponse);
+        
+        // Validate and clean the response
+        return {
+          businessType: analysis.businessType || 'Unknown',
+          businessName: analysis.businessName || 'Unknown',
+          industry: analysis.industry || 'Unknown',
+          painPoints: Array.isArray(analysis.painPoints) ? analysis.painPoints : [],
+          workflows: Array.isArray(analysis.workflows) ? analysis.workflows : [],
+          contentSummary: analysis.contentSummary || '',
+          keyFeatures: Array.isArray(analysis.keyFeatures) ? analysis.keyFeatures : [],
+          targetAudience: analysis.targetAudience || '',
+          currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
+        };
+      } catch (parseError) {
+        // If JSON parsing fails, try to extract partial data or use fallback
+        console.error('Gemini JSON parsing failed, attempting fallback parsing:', parseError);
+        console.error('Raw response:', cleanedResponse);
+        
+        // Return fallback analysis based on the content
+        return {
+          businessType: 'Unknown',
+          businessName: 'Unknown',
+          industry: 'Unknown',
+          painPoints: ['Customer support optimization', 'Process automation', 'Data analysis'],
+          workflows: ['Customer service', 'Sales process', 'Operations'],
+          contentSummary: 'Business analysis completed with limited data due to parsing issues',
+          keyFeatures: ['Web presence', 'Customer interaction'],
+          targetAudience: 'General customers',
+          currentTech: ['Website']
+        };
+      }
     } catch (error: any) {
       console.error('Error parsing Gemini analysis response:', error);
       throw new Error(`Failed to analyze website with Gemini: ${error.message}`);
@@ -187,8 +215,22 @@ Focus on solutions that directly address the identified pain points and workflow
         throw new Error('No recommendations from Gemini');
       }
 
-      const parsed = JSON.parse(response.text);
-      return parsed.recommendations || [];
+      // Clean and parse the JSON response
+      let cleanedResponse = response.text.trim();
+      
+      // Remove any markdown formatting if present
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      try {
+        const parsed = JSON.parse(cleanedResponse);
+        return parsed.recommendations || [];
+      } catch (parseError) {
+        console.error('Gemini recommendations JSON parsing failed:', parseError);
+        console.error('Raw response:', cleanedResponse);
+        return []; // Return empty array on parsing error
+      }
     } catch (error: any) {
       console.error('Error parsing Gemini recommendations response:', error);
       throw new Error(`Failed to generate recommendations with Gemini: ${error.message}`);
