@@ -705,39 +705,54 @@ Focus on solutions that directly address the identified pain points and workflow
 
   private async generateCreationPrompt(recommendation: RecommendationResult): Promise<AgentCreationPrompt> {
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: `You are an AI agent creation specialist. Generate a detailed creation prompt for building an AI agent based on the provided solution recommendation. 
+      // Use 5-tier AI provider system for creation prompts
+      const systemPrompt = `You are an AI agent creation specialist. Generate a detailed creation prompt for building an AI agent based on the provided solution recommendation. 
             
-            Respond with JSON in this exact format:
-            {
-              "agentName": "string",
-              "purpose": "string", 
-              "keyWorkflows": ["string", "string"],
-              "requiredIntegrations": ["string", "string"],
-              "customizationOptions": ["string", "string"],
-              "performanceMetrics": ["string", "string"]
-            }`
-          },
-          {
-            role: "user",
-            content: `Create a detailed agent creation prompt for:
-            
-            Solution: ${recommendation.solutionName}
-            Type: ${recommendation.solutionType}
-            Description: ${recommendation.description}
-            Implementation Difficulty: ${recommendation.implementationDifficulty}
-            
-            Focus on practical, actionable details that would help someone build this agent.`
-          }
-        ],
-        response_format: { type: "json_object" }
-      });
+      Respond with JSON in this exact format:
+      {
+        "agentName": "string",
+        "purpose": "string", 
+        "keyWorkflows": ["string", "string"],
+        "requiredIntegrations": ["string", "string"],
+        "customizationOptions": ["string", "string"],
+        "performanceMetrics": ["string", "string"]
+      }`;
 
-      const result = JSON.parse(response.choices[0].message.content || '{}');
+      const prompt = `Create a detailed agent creation prompt for:
+            
+      Solution: ${recommendation.solutionName}
+      Type: ${recommendation.solutionType}
+      Description: ${recommendation.description}
+      Implementation Difficulty: ${recommendation.implementationDifficulty}
+      
+      Focus on practical, actionable details that would help someone build this agent.`;
+
+      let result = {};
+      
+      // 1. Primary: Google Gemini (Free unlimited access, no quotas)
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          const gemini = getGeminiService();
+          const responseText = await gemini.generateCompletion(prompt, systemPrompt);
+          
+          // Clean and parse the JSON response
+          let cleanedResponse = responseText.trim();
+          
+          // Remove any markdown formatting if present
+          if (cleanedResponse.startsWith('```json')) {
+            cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/\n?```$/, '');
+          }
+          
+          if (cleanedResponse.startsWith('```')) {
+            cleanedResponse = cleanedResponse.replace(/```\n?/, '').replace(/\n?```$/, '');
+          }
+          
+          result = JSON.parse(cleanedResponse);
+        } catch (geminiError) {
+          console.error('Gemini failed for creation prompt, using fallback:', geminiError);
+          result = {}; // Will use fallback below
+        }
+      }
       
       return {
         agentName: result.agentName || recommendation.solutionName,
