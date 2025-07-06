@@ -87,21 +87,27 @@ export class RecommendationEngine {
   }
 
   private async getAIRecommendations(analysis: WebsiteAnalysisResult): Promise<any[]> {
+    // 5-TIER AI PROVIDER SYSTEM - Unlimited Access Priority
+    
+    // 1. Primary: Google Gemini (Free unlimited access, no quotas)
     try {
-      // Try Gemini first as it has unlimited free access
       if (process.env.GEMINI_API_KEY) {
         console.log('Using Google Gemini for recommendations (unlimited access)...');
         const gemini = getGeminiService();
-        return await gemini.generateRecommendations(analysis);
+        const result = await gemini.generateRecommendations(analysis);
+        if (result && result.length > 0) {
+          return result;
+        }
+        console.log('Gemini returned empty results, trying next provider...');
       }
     } catch (geminiError) {
       console.error('Gemini failed, trying OpenAI as backup:', geminiError);
     }
 
+    // 2. Secondary: OpenAI GPT-4o (Superior analysis quality, best for complex business analysis)
     try {
-      // Try OpenAI as second option (high quality but has quotas)
       if (process.env.OPENAI_API_KEY) {
-        console.log('Using OpenAI GPT-4o as backup for recommendations...');
+        console.log('Using OpenAI GPT-4o as second backup for recommendations...');
         const prompt = `Based on this business analysis, recommend 3-5 specific AI solutions that would provide the most value:
 
 Business Type: ${analysis.businessType}
@@ -170,8 +176,8 @@ Focus on solutions that directly address the identified pain points and workflow
       console.error('OpenAI failed, trying DeepSeek as third backup:', openaiError);
     }
 
+    // 3. Third: DeepSeek (Cost-effective alternative with competitive performance)
     try {
-      // Third backup: DeepSeek if both Gemini and OpenAI fail
       if (process.env.DEEPSEEK_API_KEY) {
         console.log('Using DeepSeek AI as third backup for recommendations...');
         const deepSeek = getDeepSeekService();
@@ -181,8 +187,8 @@ Focus on solutions that directly address the identified pain points and workflow
       console.error('DeepSeek also failed, trying AI/ML API as final backup:', deepSeekError);
     }
 
+    // 4. Fourth: AI/ML API (200+ models, unified access to multiple providers)
     try {
-      // Fourth backup: AI/ML API (200+ models) if all others fail
       if (process.env.AIML_API_KEY) {
         console.log('Using AI/ML API as ultimate backup for recommendations...');
         const aiml = getAIMLService();
@@ -192,7 +198,7 @@ Focus on solutions that directly address the identified pain points and workflow
       console.error('All AI providers exhausted, falling back to demo recommendations:', aimlError);
     }
 
-    // If all providers fail, use demo recommendations as final fallback
+    // 5. Fifth: Demo data (When all 4 providers are unavailable - 100% uptime guarantee)
     console.log('All AI providers exhausted, using demo recommendations as final fallback');
     return this.generateDemoRecommendations(analysis);
   }
