@@ -248,10 +248,25 @@ Focus on solutions that directly address the identified pain points and workflow
 
     try {
       const responseText = await this.generateCompletion(prompt, systemPrompt);
-      const parsed = JSON.parse(responseText);
+      
+      // Clean and parse the JSON response
+      let cleanedResponse = responseText.trim();
+      
+      // Remove any markdown formatting if present
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      // Also handle case where it just starts with ```
+      if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/```\n?/, '').replace(/\n?```$/, '');
+      }
+      
+      const parsed = JSON.parse(cleanedResponse);
       return parsed.recommendations || [];
     } catch (error: any) {
       console.error('Error parsing Gemini recommendations response:', error);
+      console.log('Raw response:', responseText);
       throw new Error(`Failed to generate recommendations with Gemini: ${error.message}`);
     }
   }
