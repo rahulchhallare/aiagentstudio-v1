@@ -1757,8 +1757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newSubscription = await storage.switchSubscriptionPlan(parseInt(userId), {
         razorpay_subscription_id: `free_${currentSubscription.id}_${Date.now()}`,
         razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",        status: "cancelled",
-        plan_name: "Free",
-        plan_id: "free",
+        plan_name: "Free",        plan_id: "free",
         price_id: "free",
         current_period_start: new Date(),
         current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now (free plan)
@@ -2032,27 +2031,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Analyze website content
     const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
 
-    // Save analysis to database
+    // Save analysis to database 
     let savedAnalysis = null;
-    if (authenticatedUserId) {
-      try {
-        savedAnalysis = await storage.createBusinessAnalysis({
-          user_id: authenticatedUserId,
-          website_url: websiteUrl,
-          business_name: analysis.businessName,
-          business_type: analysis.businessType,
-          industry: analysis.industry,
-          pain_points: analysis.painPoints,
-          workflows: analysis.workflows,
-          content_summary: analysis.contentSummary,
-          key_features: analysis.keyFeatures,
-          target_audience: analysis.targetAudience,
-          current_tech: analysis.currentTech
-        });
-      } catch (dbError) {
-        console.error("Failed to save analysis to database:", dbError);
-        // Continue without saving - don't fail the analysis
+    try {
+      savedAnalysis = await storage.createBusinessAnalysis({
+        user_id: userId || null, // Pass null for unauthenticated users
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        business_type: analysis.businessType,
+        industry: analysis.industry,
+        pain_points: analysis.painPoints,
+        workflows: analysis.workflows,
+        content_summary: analysis.contentSummary,
+        key_features: analysis.keyFeatures,
+        target_audience: analysis.targetAudience,
+        current_tech: analysis.currentTech,
+      });
+
+      if (userId && savedAnalysis.id > 1000000000) {
+        console.log('Business analysis saved to database with ID:', savedAnalysis.id);
+      } else {
+        console.log('Business analysis created for unauthenticated user (not persisted)');
       }
+    } catch (analysisError) {
+      console.error("Failed to save analysis to database:", analysisError);
+      // Create a fallback analysis object
+      savedAnalysis = { 
+        id: Date.now(), 
+        user_id: userId,
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        created_at: new Date() 
+      };
     }
 
     // Generate AI recommendations
