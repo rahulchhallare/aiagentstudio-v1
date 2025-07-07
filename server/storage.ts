@@ -691,34 +691,102 @@ export class SupabaseStorage implements IStorage {
     return result;
   }
 
-  // Business Analysis methods - Add these to your database if you plan to use Supabase
+  // Business Analysis methods
   async createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any> {
-    // This would require implementing the business_analyses table in Supabase
-    throw new Error("Business analysis methods not implemented for Supabase storage");
+    const { data, error } = await this.supabase
+      .from('business_analyses')
+      .insert(insertBusinessAnalysis)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async getBusinessAnalysis(id: number): Promise<any> {
-    throw new Error("Business analysis methods not implemented for Supabase storage");
+    const { data, error } = await this.supabase
+      .from('business_analyses')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return null;
+    return data;
   }
 
   async createAiRecommendation(insertAiRecommendation: any): Promise<any> {
-    throw new Error("AI recommendation methods not implemented for Supabase storage");
+    const { data, error } = await this.supabase
+      .from('ai_recommendations')
+      .insert(insertAiRecommendation)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async getRecommendationsByAnalysisId(analysisId: number): Promise<any[]> {
-    throw new Error("AI recommendation methods not implemented for Supabase storage");
+    const { data, error } = await this.supabase
+      .from('ai_recommendations')
+      .select('*')
+      .eq('analysis_id', analysisId)
+      .order('priority_score', { ascending: false });
+
+    if (error) return [];
+    return data || [];
   }
 
   async updateRecommendationStatus(id: number, status: string): Promise<void> {
-    throw new Error("AI recommendation methods not implemented for Supabase storage");
+    const { error } = await this.supabase
+      .from('ai_recommendations')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
   }
 
   async getAiSolutionTemplate(templateId: string): Promise<any> {
-    throw new Error("AI solution template methods not implemented for Supabase storage");
+    const { data, error } = await this.supabase
+      .from('ai_agent_templates')
+      .select('*')
+      .eq('id', templateId)
+      .single();
+
+    if (error) return null;
+    return data;
   }
 
   async createDeployedSolution(insertDeployedSolution: any): Promise<any> {
-    throw new Error("Deployed solution methods not implemented for Supabase storage");
+    const { data, error } = await this.supabase
+      .from('deployed_solutions')
+      .insert(insertDeployedSolution)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getDeployedSolutionsByUserId(userId: number): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('deployed_solutions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) return [];
+    return data || [];
+  }
+
+  async getBusinessAnalysesByUserId(userId: number): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('business_analyses')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) return [];
+    return data || [];
   }
 
   // Chatbot operations - Add these to your database if you plan to use Supabase
