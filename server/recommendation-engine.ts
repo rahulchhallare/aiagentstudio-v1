@@ -691,16 +691,15 @@ Focus on solutions that directly address the identified pain points and workflow
     const availableAgents = await this.getAvailableAgents();
     
     return await Promise.all(recommendations.map(async (rec) => {
-      // Check if agent is available in our platform
-      const isAvailable = availableAgents.some(agent => 
-        (agent.name || '').toLowerCase().includes((rec.solutionName || '').toLowerCase()) ||
-        (agent.description || '').toLowerCase().includes((rec.solutionType || '').toLowerCase()) ||
-        (agent.type || '').toLowerCase().includes((rec.solutionType || '').toLowerCase())
-      );
-
-      if (isAvailable) {
+      // Enhanced matching logic - check for semantic similarity
+      const matchingAgent = this.findMatchingAgent(rec, availableAgents);
+      
+      if (matchingAgent) {
+        // Update the recommendation to use the exact template name and details
         return {
           ...rec,
+          solutionName: matchingAgent.name,
+          templateId: matchingAgent.templateId || `template-${matchingAgent.name.toLowerCase().replace(/\s+/g, '-')}`,
           availabilityStatus: 'Available' as const
         };
       } else {
@@ -715,7 +714,88 @@ Focus on solutions that directly address the identified pain points and workflow
     }));
   }
 
-  private async getAvailableAgents(): Promise<Array<{name: string, description: string, type: string}>> {
+  private findMatchingAgent(recommendation: RecommendationResult, availableAgents: Array<{name: string, description: string, type: string, templateId?: string}>): {name: string, description: string, type: string, templateId?: string} | null {
+    // Define solution type mappings and synonyms
+    const solutionTypeMappings = {
+      'lead generation': ['lead', 'sales', 'qualification', 'prospect'],
+      'sales automation': ['lead', 'sales', 'qualification', 'prospect', 'crm'],
+      'sales assistant': ['lead', 'sales', 'qualification', 'prospect'],
+      'customer support': ['customer', 'support', 'chatbot', 'help', 'service'],
+      'customer service': ['customer', 'support', 'chatbot', 'help', 'service'],
+      'content generation': ['content', 'blog', 'writing', 'copywriting', 'marketing'],
+      'email marketing': ['email', 'marketing', 'campaign', 'newsletter'],
+      'personalization': ['personalization', 'recommendation', 'targeting'],
+      'inventory management': ['inventory', 'stock', 'warehouse', 'supply'],
+      'data analysis': ['analytics', 'data', 'intelligence', 'reporting', 'insights'],
+      'hr screening': ['hr', 'recruitment', 'screening', 'hiring', 'candidate'],
+      'price optimization': ['pricing', 'price', 'optimization', 'dynamic'],
+      'ai monitoring': ['monitoring', 'performance', 'tracking', 'oversight']
+    };
+
+    // Get keywords for the recommendation
+    const recType = recommendation.solutionType.toLowerCase();
+    const recName = recommendation.solutionName.toLowerCase();
+    
+    // Find matching keywords
+    const getMatchingKeywords = (text: string): string[] => {
+      const keywords: string[] = [];
+      Object.entries(solutionTypeMappings).forEach(([key, values]) => {
+        if (text.includes(key) || values.some(v => text.includes(v))) {
+          keywords.push(...values);
+        }
+      });
+      return keywords;
+    };
+
+    const recKeywords = [...getMatchingKeywords(recType), ...getMatchingKeywords(recName)];
+    
+    // Score each available agent based on keyword matches
+    const scoredAgents = availableAgents.map(agent => {
+      const agentText = (agent.name + ' ' + agent.description + ' ' + agent.type).toLowerCase();
+      const agentKeywords = getMatchingKeywords(agentText);
+      
+      // Calculate similarity score
+      const keywordMatches = recKeywords.filter(keyword => 
+        agentKeywords.includes(keyword) || agentText.includes(keyword)
+      ).length;
+      
+      // Bonus for exact solution type matches
+      let exactMatch = 0;
+      if (recType.includes('lead') && agentText.includes('lead')) exactMatch += 3;
+      if (recType.includes('sales') && agentText.includes('sales')) exactMatch += 3;
+      if (recType.includes('customer') && agentText.includes('customer')) exactMatch += 3;
+      if (recType.includes('support') && agentText.includes('support')) exactMatch += 3;
+      if (recType.includes('content') && agentText.includes('content')) exactMatch += 3;
+      if (recType.includes('email') && agentText.includes('email')) exactMatch += 3;
+      if (recType.includes('personalization') && agentText.includes('personalization')) exactMatch += 3;
+      if (recType.includes('inventory') && agentText.includes('inventory')) exactMatch += 3;
+      if (recType.includes('analytics') && agentText.includes('analytics')) exactMatch += 3;
+      if (recType.includes('hr') && agentText.includes('hr')) exactMatch += 3;
+      if (recType.includes('price') && agentText.includes('price')) exactMatch += 3;
+      if (recType.includes('monitoring') && agentText.includes('monitoring')) exactMatch += 3;
+      
+      const totalScore = keywordMatches + exactMatch;
+      
+      return {
+        agent,
+        score: totalScore
+      };
+    });
+
+    // Find the best match (score >= 2 for a reasonable match)
+    const bestMatch = scoredAgents
+      .filter(item => item.score >= 2)
+      .sort((a, b) => b.score - a.score)[0];
+
+    if (bestMatch) {
+      console.log(`Found matching agent for "${recommendation.solutionName}": "${bestMatch.agent.name}" (score: ${bestMatch.score})`);
+      return bestMatch.agent;
+    }
+
+    return null;
+  }
+
+  private async getAvailableAgents(): Promise<Array<{name: string, description: string, type: string, templateId?: string}>> {
     try {
       // Query actual deployed agents from database
       const { db } = await import("./db");
@@ -739,7 +819,8 @@ Focus on solutions that directly address the identified pain points and workflow
       const templateAgents = allAgentTemplates.map(template => ({
         name: template.name,
         description: template.description,
-        type: this.inferAgentType(template.name, template.description)
+        type: this.inferAgentType(template.name, template.description),
+        templateId: template.id
       }));
 
       // Combine deployed agents and templates, removing duplicates
@@ -757,7 +838,8 @@ Focus on solutions that directly address the identified pain points and workflow
       return allAgentTemplates.map(template => ({
         name: template.name,
         description: template.description,
-        type: this.inferAgentType(template.name, template.description)
+        type: this.inferAgentType(template.name, template.description),
+        templateId: template.id
       }));
     }
   }
