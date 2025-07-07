@@ -412,7 +412,8 @@ export default function BusinessAnalyzer() {
                           {analysisResult.recommendations
                             .sort((a, b) => b.priorityScore - a.priorityScore)
                             .map((rec, index) => {
-                              const individualPrice = Math.round(Number(rec.estimatedCostSavings) * 0.15); // 15% of annual savings
+                              const monthlyPrice = 9; // Fixed price: $9/month
+                              const yearlyPrice = monthlyPrice * 12;
                               return (
                                 <div key={rec.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                   <div>
@@ -420,8 +421,8 @@ export default function BusinessAnalyzer() {
                                     <div className="text-sm text-gray-600">{rec.solutionType}</div>
                                   </div>
                                   <div className="text-right">
-                                    <div className="font-bold text-blue-600">${individualPrice.toLocaleString()}/year</div>
-                                    <div className="text-xs text-gray-500">${Math.round(individualPrice/12).toLocaleString()}/month</div>
+                                    <div className="font-bold text-blue-600">${yearlyPrice}/year</div>
+                                    <div className="text-xs text-gray-500">${monthlyPrice}/month</div>
                                   </div>
                                 </div>
                               );
@@ -430,9 +431,7 @@ export default function BusinessAnalyzer() {
                             <div className="flex justify-between items-center font-semibold">
                               <span>Total Individual Cost:</span>
                               <span className="text-blue-600">
-                                ${analysisResult.recommendations
-                                  .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0)
-                                  .toLocaleString()}/year
+                                ${(analysisResult.recommendations.length * 9 * 12).toLocaleString()}/year
                               </span>
                             </div>
                           </div>
@@ -446,30 +445,17 @@ export default function BusinessAnalyzer() {
                           <div className="text-center">
                             <div className="text-sm text-purple-600 font-medium mb-2">RECOMMENDED</div>
                             <div className="text-3xl font-bold text-purple-700 mb-2">
-                              ${Math.round(analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65)
-                                .toLocaleString()}/year
+                              ${Math.round(analysisResult.recommendations.length * 9 * 12 * 0.65).toLocaleString()}/year
                             </div>
                             <div className="text-purple-600 mb-4">
-                              ${Math.round(analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65 / 12)
-                                .toLocaleString()}/month
+                              ${Math.round(analysisResult.recommendations.length * 9 * 0.65).toLocaleString()}/month
                             </div>
                             <div className="text-sm text-gray-600 mb-4">
                               Access to all {analysisResult.recommendations.length} AI agents
                             </div>
                             <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
-                              Save {Math.round(((analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) - 
-                                analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65) / 
-                                analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0)) * 100)}% 
-                              (${(analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) - 
-                                analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65)
-                                .toLocaleString()}/year)
+                              Save 35% 
+                              (${Math.round(analysisResult.recommendations.length * 9 * 12 * 0.35).toLocaleString()}/year)
                             </div>
                           </div>
                           <div className="mt-4 space-y-2">
@@ -513,8 +499,7 @@ export default function BusinessAnalyzer() {
                           <div className="text-2xl font-bold text-green-600">
                             {Math.round(analysisResult.recommendations
                               .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0) /
-                              (analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65))}x
+                              (analysisResult.recommendations.length * 9 * 12 * 0.65))}x
                           </div>
                           <div className="text-sm text-gray-600">ROI Multiplier</div>
                         </div>
@@ -522,8 +507,7 @@ export default function BusinessAnalyzer() {
                           <div className="text-2xl font-bold text-green-600">
                             {Math.round((analysisResult.recommendations
                               .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0) /
-                              (analysisResult.recommendations
-                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65) - 1) * 100)}%
+                              (analysisResult.recommendations.length * 9 * 12 * 0.65) - 1) * 100)}%
                           </div>
                           <div className="text-sm text-gray-600">Annual ROI</div>
                         </div>
