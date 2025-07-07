@@ -17,7 +17,7 @@ export class GeminiService {
         contents: fullPrompt,
         config: {
           temperature: 0.3,
-          maxOutputTokens: 2000, // Reduced to avoid truncation issues
+          maxOutputTokens: 4000, // Increased to handle comprehensive responses
         }
       });
 
@@ -78,7 +78,7 @@ Focus on being specific and actionable. Identify real business challenges that A
             required: ["businessType", "businessName", "industry", "painPoints", "workflows", "contentSummary", "keyFeatures", "targetAudience", "currentTech"]
           },
           temperature: 0.3,
-          maxOutputTokens: 1500,
+          maxOutputTokens: 4000, // Increased for comprehensive responses
         },
         contents: prompt,
       });
@@ -113,15 +113,22 @@ Focus on being specific and actionable. Identify real business challenges that A
         };
       } catch (parseError) {
         console.error('Gemini JSON parsing failed, attempting fallback parsing:', parseError);
-        console.log('Raw response:', cleanedResponse);
+        console.log('Raw response length:', cleanedResponse.length);
+        console.log('Raw response preview:', cleanedResponse.substring(0, 500));
+        console.log('Raw response ending:', cleanedResponse.substring(-200));
         
         // Try to fix truncated JSON by attempting to close incomplete structures
         let fixedResponse = cleanedResponse;
         
         // Check if the response is truncated and try to fix it
-        if (parseError.message.includes('Unterminated string')) {
+        if (parseError.message.includes('Unterminated string') || 
+            parseError.message.includes('Unexpected end of JSON input') ||
+            parseError.message.includes('Unexpected token')) {
+          
+          console.log('Attempting to fix truncated JSON response...');
           // Try to close unterminated strings and arrays
           fixedResponse = this.fixTruncatedJSON(cleanedResponse);
+          console.log('Fixed response length:', fixedResponse.length);
           
           try {
             const analysis = JSON.parse(fixedResponse);
@@ -138,12 +145,13 @@ Focus on being specific and actionable. Identify real business challenges that A
               currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
             };
           } catch (fixError) {
-            console.error('Failed to fix JSON, falling back to error:', fixError);
+            console.error('Failed to fix JSON after multiple attempts:', fixError);
+            console.log('Fixed response that failed:', fixedResponse.substring(0, 500));
           }
         }
         
         // If all parsing attempts fail, throw error to trigger fallback
-        throw new Error(`Failed to parse Gemini response: ${parseError.message}`);
+        throw new Error(`Failed to parse Gemini response after all attempts: ${parseError.message}. Response length: ${cleanedResponse.length} chars`);
       }
     } catch (error: any) {
       console.error('Error analyzing website with Gemini:', error);
