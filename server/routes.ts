@@ -2145,7 +2145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recommendations.map(async (rec: any) => {
             try {
               // Validate analysis_id before saving
-              if (!savedAnalysis.id || savedAnalysis.id <= 0) {
+              if (!savedAnalysis.id) {
                 console.log('No valid analysis_id provided, skipping database save for recommendation');
                 return null;
               }

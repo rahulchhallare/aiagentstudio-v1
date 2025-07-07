@@ -730,8 +730,8 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createAiRecommendation(insertAiRecommendation: any): Promise<any> {
-    // Only save to database if analysis_id corresponds to a saved analysis
-    if (!insertAiRecommendation.analysis_id || insertAiRecommendation.analysis_id < 1000000000) {
+    // Only save to database if analysis_id is provided
+    if (!insertAiRecommendation.analysis_id) {
       console.log('No valid analysis_id provided, skipping database save for recommendation');
       return { id: Date.now(), ...insertAiRecommendation, created_at: new Date() };
     }
