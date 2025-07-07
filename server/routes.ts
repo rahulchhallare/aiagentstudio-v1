@@ -2016,14 +2016,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Business Analysis API Routes
   app.post("/api/analyze-website", async (req: Request, res: Response) => {
   try {
-    const { websiteUrl } = req.body;
+    const { websiteUrl, userId } = req.body;
 
     if (!websiteUrl) {
       return res.status(400).json({ error: "Website URL is required" });
     }
 
-    // Get user ID from session (if authenticated)
-    const userId = req.session?.user?.id;
+    // Get user ID from request body or session
+    const authenticatedUserId = userId || req.session?.user?.id;
 
     // Import analyzer here to avoid circular dependencies
     const { websiteAnalyzer } = await import("./website-analyzer");
@@ -2034,10 +2034,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Save analysis to database
     let savedAnalysis = null;
-    if (userId) {
+    if (authenticatedUserId) {
       try {
         savedAnalysis = await storage.createBusinessAnalysis({
-          user_id: userId,
+          user_id: authenticatedUserId,
           website_url: websiteUrl,
           business_name: analysis.businessName,
           business_type: analysis.businessType,
@@ -2059,7 +2059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const recommendations = await recommendationEngine.generateRecommendations(analysis);
 
     // Save recommendations to database
-    if (savedAnalysis && userId) {
+    if (savedAnalysis && authenticatedUserId) {
       try {
         const savedRecommendations = await Promise.all(
           recommendations.map(async (rec: any) => {

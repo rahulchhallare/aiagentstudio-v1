@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ export default function BusinessAnalyzer() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [selectedRecommendations, setSelectedRecommendations] = useState<Set<number>>(new Set());
   const { toast } = useToast();
+  const { user } = useContext(AuthContext);
 
   const handleAnalyze = async () => {
     if (!websiteUrl) {
@@ -91,7 +93,8 @@ export default function BusinessAnalyzer() {
     setIsAnalyzing(true);
     try {
       const response = await apiRequest("POST", "/api/analyze-website", {
-        websiteUrl
+        websiteUrl,
+        userId: user?.id
       });
 
       if (response.ok) {
@@ -160,6 +163,15 @@ export default function BusinessAnalyzer() {
           <p className="text-xl text-gray-600 mb-6">
             Discover which AI solutions can transform your business
           </p>
+          
+          {!user && (
+            <Alert className="max-w-2xl mx-auto mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Please log in to save your analysis results. You can still analyze websites without logging in, but results won't be saved.
+              </AlertDescription>
+            </Alert>
+          )}
           
           {/* URL Input */}
           <Card className="max-w-2xl mx-auto">
