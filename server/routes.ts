@@ -1,6 +1,3 @@
-tags.
-
-<replit_final_file>
 import type { Express, Request, Response, NextFunction } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
