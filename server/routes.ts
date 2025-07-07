@@ -80,7 +80,7 @@ async function sendContactFormNotifications(contactData: {
     service: 'gmail', // or your preferred email service
     auth: {
       user: process.env.SMTP_USER, // Your email
-      pass: process.env.SMTP_PASS, // Your app password
+      pass: process.env.SMTP_PASS, // Your app password,
     },
   });
 
@@ -576,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createUser(userData);
-      
+
       // Store user in session
       req.session.user = {
         id: user.id,
@@ -893,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res
             .status(403)
             .json({ message: "Agent is not currently active" });
-        }
+                }
 
         const flowData = flowDataSchema.parse(agent.flow_data);
         const result = await executeFlow(flowData, input);
@@ -2133,11 +2133,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const recommendations = await recommendationEngine.generateRecommendations(analysis);
 
     // Save recommendations to database
-    if (savedAnalysis && authenticatedUserId) {
+    if (savedAnalysis && savedAnalysis.id && authenticatedUserId) {
+      console.log('Saving recommendations for authenticated user:', {
+        analysisId: savedAnalysis.id,
+        userId: authenticatedUserId,
+        recommendationCount: recommendations.length
+      });
+
       try {
         const savedRecommendations = await Promise.all(
           recommendations.map(async (rec: any) => {
             try {
+              // Validate analysis_id before saving
+              if (!savedAnalysis.id || savedAnalysis.id <= 0) {
+                console.log('No valid analysis_id provided, skipping database save for recommendation');
+                return null;
+              }
+
+              console.log(`Saving recommendation: ${rec.solutionType} for analysis ${savedAnalysis.id}`);
+
               return await storage.createAiRecommendation({
                 analysis_id: savedAnalysis.id,
                 solution_type: rec.solutionType,
@@ -2174,6 +2188,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (recError) {
         console.error("Failed to save recommendations:", recError);
       }
+    } else {
+      console.log('Skipping recommendation database saves:', {
+        savedAnalysis: !!savedAnalysis,
+        analysisId: savedAnalysis?.id,
+        authenticatedUserId,
+        reason: !savedAnalysis ? 'No saved analysis' : !savedAnalysis.id ? 'No analysis ID' : !authenticatedUserId ? 'User not authenticated' : 'Unknown'
+      });
     }
 
     res.json({
