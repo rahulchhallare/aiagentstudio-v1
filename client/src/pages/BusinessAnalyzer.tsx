@@ -395,6 +395,143 @@ export default function BusinessAnalyzer() {
                   </CardContent>
                 </Card>
 
+                {/* Pricing Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Pricing Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Individual Pricing */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Individual AI Agent Pricing</h4>
+                        <div className="space-y-3">
+                          {analysisResult.recommendations
+                            .sort((a, b) => b.priorityScore - a.priorityScore)
+                            .map((rec, index) => {
+                              const individualPrice = Math.round(Number(rec.estimatedCostSavings) * 0.15); // 15% of annual savings
+                              return (
+                                <div key={rec.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <div>
+                                    <div className="font-medium">{rec.solutionName}</div>
+                                    <div className="text-sm text-gray-600">{rec.solutionType}</div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-blue-600">${individualPrice.toLocaleString()}/year</div>
+                                    <div className="text-xs text-gray-500">${Math.round(individualPrice/12).toLocaleString()}/month</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          <div className="border-t pt-3">
+                            <div className="flex justify-between items-center font-semibold">
+                              <span>Total Individual Cost:</span>
+                              <span className="text-blue-600">
+                                ${analysisResult.recommendations
+                                  .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0)
+                                  .toLocaleString()}/year
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Subscription Pricing */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">All-Inclusive Subscription</h4>
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
+                          <div className="text-center">
+                            <div className="text-sm text-purple-600 font-medium mb-2">RECOMMENDED</div>
+                            <div className="text-3xl font-bold text-purple-700 mb-2">
+                              ${Math.round(analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65)
+                                .toLocaleString()}/year
+                            </div>
+                            <div className="text-purple-600 mb-4">
+                              ${Math.round(analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65 / 12)
+                                .toLocaleString()}/month
+                            </div>
+                            <div className="text-sm text-gray-600 mb-4">
+                              Access to all {analysisResult.recommendations.length} AI agents
+                            </div>
+                            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
+                              Save {Math.round(((analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) - 
+                                analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65) / 
+                                analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0)) * 100)}% 
+                              (${(analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) - 
+                                analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65)
+                                .toLocaleString()}/year)
+                            </div>
+                          </div>
+                          <div className="mt-4 space-y-2">
+                            <div className="flex items-center text-sm text-gray-700">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              All AI agents included
+                            </div>
+                            <div className="flex items-center text-sm text-gray-700">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              Priority support & updates
+                            </div>
+                            <div className="flex items-center text-sm text-gray-700">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              Custom integrations
+                            </div>
+                            <div className="flex items-center text-sm text-gray-700">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              Performance monitoring
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* ROI Summary */}
+                    <div className="mt-6 p-4 bg-green-50 rounded-lg">
+                      <h4 className="font-semibold text-lg mb-3 flex items-center">
+                        <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+                        Return on Investment
+                      </h4>
+                      <div className="grid md:grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">
+                            ${analysisResult.recommendations
+                              .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0)
+                              .toLocaleString()}
+                          </div>
+                          <div className="text-sm text-gray-600">Total Annual Savings</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">
+                            {Math.round(analysisResult.recommendations
+                              .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0) /
+                              (analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65))}x
+                          </div>
+                          <div className="text-sm text-gray-600">ROI Multiplier</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">
+                            {Math.round((analysisResult.recommendations
+                              .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0) /
+                              (analysisResult.recommendations
+                                .reduce((sum, rec) => sum + Math.round(Number(rec.estimatedCostSavings) * 0.15), 0) * 0.65) - 1) * 100)}%
+                          </div>
+                          <div className="text-sm text-gray-600">Annual ROI</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="space-y-4">
                   {analysisResult.recommendations
                     .sort((a, b) => b.priorityScore - a.priorityScore)
