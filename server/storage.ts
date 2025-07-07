@@ -20,7 +20,7 @@ export interface IStorage {
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
-  
+
   // Business Analysis methods
   createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any>;
   getBusinessAnalysis(id: number): Promise<any>;
@@ -696,7 +696,8 @@ export class SupabaseStorage implements IStorage {
     // Only save to database if user_id is provided (authenticated user)
     if (!insertBusinessAnalysis.user_id) {
       console.log('No user_id provided, skipping database save for business analysis');
-      return { id: Date.now(), ...insertBusinessAnalysis, created_at: new Date() };
+      // Use a safe integer range for mock IDs
+      return { id: Math.floor(Math.random() * 1000000) + 1000000, ...insertBusinessAnalysis, created_at: new Date() };
     }
 
     try {
@@ -708,18 +709,12 @@ export class SupabaseStorage implements IStorage {
 
       if (error) {
         console.error('Supabase business analysis error:', error);
-        // If RLS policy fails, return a mock object but don't throw
-        if (error.message.includes('row-level security policy')) {
-          console.log('RLS policy violation, returning mock analysis object');
-          return { id: Date.now(), ...insertBusinessAnalysis, created_at: new Date() };
-        }
         throw new Error(error.message);
       }
       return data;
     } catch (err) {
       console.error('Failed to save business analysis:', err);
-      // Return mock object for non-authenticated users
-      return { id: Date.now(), ...insertBusinessAnalysis, created_at: new Date() };
+      throw err;
     }
   }
 

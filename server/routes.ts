@@ -1,3 +1,6 @@
+tags.
+
+<replit_final_file>
 import type { Express, Request, Response, NextFunction } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
@@ -2035,7 +2038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let savedAnalysis = null;
     try {
       savedAnalysis = await storage.createBusinessAnalysis({
-        user_id: userId || null, // Pass null for unauthenticated users
+        user_id: authenticatedUserId || null, // Use numeric user ID from session or request
         website_url: websiteUrl,
         business_name: analysis.businessName,
         business_type: analysis.businessType,

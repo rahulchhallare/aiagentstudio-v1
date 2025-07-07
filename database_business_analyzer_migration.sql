@@ -1,4 +1,3 @@
-
 -- Business Analysis tables for Supabase
 -- Run this SQL in your Supabase SQL editor
 
@@ -85,45 +84,31 @@ CREATE INDEX IF NOT EXISTS idx_ai_recommendations_analysis_id ON ai_recommendati
 CREATE INDEX IF NOT EXISTS idx_deployed_solutions_user_id ON deployed_solutions(user_id);
 CREATE INDEX IF NOT EXISTS idx_deployed_solutions_analysis_id ON deployed_solutions(analysis_id);
 
--- Enable Row Level Security (RLS)
-ALTER TABLE business_analyses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ai_recommendations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ai_agent_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE deployed_solutions ENABLE ROW LEVEL SECURITY;
+-- Disable Row Level Security for application-managed access control
+ALTER TABLE business_analyses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_recommendations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_agent_templates DISABLE ROW LEVEL SECURITY;
+ALTER TABLE deployed_solutions DISABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
-CREATE POLICY "Users can view their own business analyses" ON business_analyses
-  FOR SELECT USING (auth.uid()::text = user_id::text);
+-- Drop existing RLS policies if they exist
+DROP POLICY IF EXISTS "Users can view their own business analyses" ON business_analyses;
+DROP POLICY IF EXISTS "Users can insert their own business analyses" ON business_analyses;
+DROP POLICY IF EXISTS "Users can view recommendations for their analyses" ON ai_recommendations;
+DROP POLICY IF EXISTS "Users can insert recommendations for their analyses" ON ai_recommendations;
+DROP POLICY IF EXISTS "Everyone can view active AI agent templates" ON ai_agent_templates;
+DROP POLICY IF EXISTS "Users can view their own deployed solutions" ON deployed_solutions;
+DROP POLICY IF EXISTS "Users can insert their own deployed solutions" ON deployed_solutions;
+DROP POLICY IF EXISTS "Users can update their own deployed solutions" ON deployed_solutions;
 
-CREATE POLICY "Users can insert their own business analyses" ON business_analyses
-  FOR INSERT WITH CHECK (auth.uid()::text = user_id::text);
+-- Grant appropriate permissions to authenticated users
+-- Replace 'authenticated' with your actual database role if different
+GRANT SELECT, INSERT, UPDATE, DELETE ON business_analyses TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ai_recommendations TO authenticated;
+GRANT SELECT ON ai_agent_templates TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON deployed_solutions TO authenticated;
 
-CREATE POLICY "Users can view recommendations for their analyses" ON ai_recommendations
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM business_analyses 
-      WHERE business_analyses.id = ai_recommendations.analysis_id 
-      AND business_analyses.user_id::text = auth.uid()::text
-    )
-  );
-
-CREATE POLICY "Users can insert recommendations for their analyses" ON ai_recommendations
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM business_analyses 
-      WHERE business_analyses.id = ai_recommendations.analysis_id 
-      AND business_analyses.user_id::text = auth.uid()::text
-    )
-  );
-
-CREATE POLICY "Everyone can view active AI agent templates" ON ai_agent_templates
-  FOR SELECT USING (is_active = TRUE);
-
-CREATE POLICY "Users can view their own deployed solutions" ON deployed_solutions
-  FOR SELECT USING (auth.uid()::text = user_id::text);
-
-CREATE POLICY "Users can insert their own deployed solutions" ON deployed_solutions
-  FOR INSERT WITH CHECK (auth.uid()::text = user_id::text);
-
-CREATE POLICY "Users can update their own deployed solutions" ON deployed_solutions
-  FOR UPDATE USING (auth.uid()::text = user_id::text);
+-- Grant usage on sequences
+GRANT USAGE, SELECT ON SEQUENCE business_analyses_id_seq TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE ai_recommendations_id_seq TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE ai_agent_templates_id_seq TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE deployed_solutions_id_seq TO authenticated;
