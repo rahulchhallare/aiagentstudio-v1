@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import express from "express";
+import session from "express-session";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -29,6 +30,17 @@ import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
 // import { chatbotService } from "./chatbot-service";
+
+// Extend session type
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      id: number;
+      email: string;
+      username: string;
+    };
+  }
+}
 
 // Helper function to map Razorpay plan ID to plan name
 function getPlanNameFromId(planId: string): string {
@@ -172,16 +184,27 @@ async function getPlanPricing(): Promise<{
 
 // Middleware to require authentication
 function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (req.session && req.session.user) {
+  if (req.session && req.session.user && req.session.user.id) {
     // User is authenticated
     next();
   } else {
     // User is not authenticated
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized", message: "Please log in to continue" });
   }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Session configuration
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+
   // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
   app.post(
     "/api/webhook/razorpay",
@@ -553,6 +576,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createUser(userData);
+      
+      // Store user in session
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      };
+
       const { password, ...userWithoutPassword } = user;
       return res.status(201).json(userWithoutPassword);
     } catch (error) {
@@ -579,6 +610,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      // Store user in session
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      };
+
       const { password: _, ...userWithoutPassword } = user;
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
@@ -592,6 +630,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     process.env.GOOGLE_CLIENT_SECRET,
     "https://aiagentstudio.ai/api/auth/google/callback",
   );
+
+  // Session check route
+  app.get("/api/auth/session", (req: Request, res: Response) => {
+    if (req.session && req.session.user) {
+      res.json({ user: req.session.user, authenticated: true });
+    } else {
+      res.json({ user: null, authenticated: false });
+    }
+  });
+
+  // Logout route
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Could not log out" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
 
   // Google OAuth routes
   app.get("/api/auth/google", (req: Request, res: Response) => {
@@ -648,6 +705,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         user = existingUser;
       }
+
+      // Store user in session
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      };
 
       const userData = encodeURIComponent(JSON.stringify(user));
       res.redirect(`/?auth=success&user=${userData}`);
@@ -2021,8 +2085,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Website URL is required" });
     }
 
-    // Get user ID from request body or session
-    const authenticatedUserId = userId || req.session?.user?.id;
+    // Get user ID from session (authenticated users) or request body (fallback)
+    const authenticatedUserId = req.session?.user?.id || userId;
 
     // Import analyzer here to avoid circular dependencies
     const { websiteAnalyzer } = await import("./website-analyzer");
