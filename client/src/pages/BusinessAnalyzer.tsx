@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
+import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +78,7 @@ export default function BusinessAnalyzer() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [selectedRecommendations, setSelectedRecommendations] = useState<Set<number>>(new Set());
   const { toast } = useToast();
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
 
   const handleAnalyze = async () => {
     if (!websiteUrl) {
@@ -122,7 +122,7 @@ export default function BusinessAnalyzer() {
   const handleSelectRecommendation = async (id: number) => {
     try {
       const response = await apiRequest("POST", `/api/recommendations/${id}/select`);
-      
+
       if (response.ok) {
         setSelectedRecommendations(prev => new Set([...prev, id]));
         toast({
@@ -163,7 +163,7 @@ export default function BusinessAnalyzer() {
           <p className="text-xl text-gray-600 mb-6">
             Discover which AI solutions can transform your business
           </p>
-          
+
           {!user && (
             <Alert className="max-w-2xl mx-auto mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -172,7 +172,7 @@ export default function BusinessAnalyzer() {
               </AlertDescription>
             </Alert>
           )}
-          
+
           {/* URL Input */}
           <Card className="max-w-2xl mx-auto">
             <CardContent className="pt-6">
@@ -208,7 +208,7 @@ export default function BusinessAnalyzer() {
                     </Button>
                   </div>
                 </div>
-                
+
                 {isAnalyzing && (
                   <div className="space-y-2">
                     <Progress value={33} className="w-full" />
@@ -469,7 +469,7 @@ export default function BusinessAnalyzer() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <p className="text-gray-700">{recommendation.description}</p>
-                        
+
                         <div className="grid md:grid-cols-3 gap-4">
                           <div className="text-center p-4 bg-green-50 rounded-lg">
                             <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
@@ -478,7 +478,7 @@ export default function BusinessAnalyzer() {
                             </div>
                             <div className="text-sm text-gray-600">Annual Savings</div>
                           </div>
-                          
+
                           <div className="text-center p-4 bg-blue-50 rounded-lg">
                             <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                             <div className="text-2xl font-bold text-blue-600">
@@ -486,7 +486,7 @@ export default function BusinessAnalyzer() {
                             </div>
                             <div className="text-sm text-gray-600">Time Saved</div>
                           </div>
-                          
+
                           <div className="text-center p-4 bg-purple-50 rounded-lg">
                             <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
                             <div className="text-2xl font-bold text-purple-600">
@@ -550,7 +550,7 @@ export default function BusinessAnalyzer() {
                                 <p className="text-sm text-gray-700">{recommendation.implementationTimeline}</p>
                               </div>
                             )}
-                            
+
                             {recommendation.expectedRevenue && (
                               <div className="bg-orange-50 p-4 rounded-lg">
                                 <h4 className="font-medium mb-2 flex items-center">
@@ -699,7 +699,7 @@ export default function BusinessAnalyzer() {
                       You've selected {selectedRecommendations.size} AI solution(s) for implementation.
                       Our guided setup process will help you deploy these solutions quickly.
                     </p>
-                    
+
                     <Card>
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
