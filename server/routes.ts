@@ -2093,8 +2093,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sessionUser: req.session?.user,
       sessionUserId: req.session?.user?.id,
       bodyUserId: userId,
-      finalUserId: authenticatedUserId
+      finalUserId: authenticatedUserId,
+      isAuthenticated: !!req.session?.user?.id
     });
+
+    // Only proceed with database save if user is properly authenticated via session
+    const isAuthenticated = !!req.session?.user?.id;
 
     // Import analyzer here to avoid circular dependencies
     const { websiteAnalyzer } = await import("./website-analyzer");
@@ -2103,11 +2107,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Analyze website content
     const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
 
-    // Save analysis to database 
+    // Save analysis to database only if user is authenticated via session
     let savedAnalysis = null;
     try {
       savedAnalysis = await storage.createBusinessAnalysis({
-        user_id: authenticatedUserId || null, // Use numeric user ID from session or request
+        user_id: isAuthenticated ? authenticatedUserId : null, // Only use user ID if properly authenticated
         website_url: websiteUrl,
         business_name: analysis.businessName,
         business_type: analysis.businessType,
@@ -2120,17 +2124,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         current_tech: analysis.currentTech,
       });
 
-      if (userId && savedAnalysis.id > 1000000000) {
-        console.log('Business analysis saved to database with ID:', savedAnalysis.id);
+      if (isAuthenticated && savedAnalysis.id) {
+        console.log('Business analysis saved to database for authenticated user:', authenticatedUserId, 'with ID:', savedAnalysis.id);
       } else {
-        console.log('Business analysis created for unauthenticated user (not persisted)');
+        console.log('Business analysis created for unauthenticated user (not persisted to database)');
       }
     } catch (analysisError) {
       console.error("Failed to save analysis to database:", analysisError);
       // Create a fallback analysis object
       savedAnalysis = { 
         id: Date.now(), 
-        user_id: userId,
+        user_id: isAuthenticated ? authenticatedUserId : null,
         website_url: websiteUrl,
         business_name: analysis.businessName,
         created_at: new Date() 
@@ -2140,12 +2144,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Generate AI recommendations
     const recommendations = await recommendationEngine.generateRecommendations(analysis);
 
-    // Save recommendations to database
-    if (savedAnalysis && savedAnalysis.id && authenticatedUserId) {
+    // Save recommendations to database only if user is authenticated and analysis was saved
+    if (savedAnalysis && savedAnalysis.id && isAuthenticated && authenticatedUserId) {
       console.log('Saving recommendations for authenticated user:', {
         analysisId: savedAnalysis.id,
         userId: authenticatedUserId,
-        recommendationCount: recommendations.length
+        recommendationCount: recommendations.length,
+        isAuthenticated: isAuthenticated
       });
 
       try {
