@@ -695,10 +695,12 @@ export class SupabaseStorage implements IStorage {
   async createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any> {
     // Only save to database if user_id is provided (authenticated user)
     if (!insertBusinessAnalysis.user_id) {
-      console.log('No user_id provided, skipping database save for business analysis');
+      console.log('No user_id provided - user not authenticated, creating temporary analysis object');
       // Use a safe integer range for mock IDs
       return { id: Math.floor(Math.random() * 1000000) + 1000000, ...insertBusinessAnalysis, created_at: new Date() };
     }
+
+    console.log('Authenticated user detected, saving business analysis to database for user:', insertBusinessAnalysis.user_id);
 
     try {
       const { data, error } = await this.supabase

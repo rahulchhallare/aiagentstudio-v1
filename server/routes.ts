@@ -2087,6 +2087,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Get user ID from session (authenticated users) or request body (fallback)
     const authenticatedUserId = req.session?.user?.id || userId;
+    
+    console.log('Authentication check:', {
+      sessionExists: !!req.session,
+      sessionUser: req.session?.user,
+      sessionUserId: req.session?.user?.id,
+      bodyUserId: userId,
+      finalUserId: authenticatedUserId
+    });
 
     // Import analyzer here to avoid circular dependencies
     const { websiteAnalyzer } = await import("./website-analyzer");
