@@ -156,6 +156,44 @@ export const deployedSolutions = pgTable("deployed_solutions", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Chatbot related tables
+export const chat_sessions = pgTable("chat_sessions", {
+  id: serial("id").primaryKey(),
+  session_id: text("session_id").notNull().unique(),
+  user_id: integer("user_id").references(() => users.id),
+  gdpr_consent: boolean("gdpr_consent").default(false),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const chat_messages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  session_id: text("session_id").notNull().references(() => chat_sessions.session_id),
+  sender: text("sender").notNull(), // "user" or "bot"
+  message: text("message").notNull(),
+  message_type: text("message_type").default("text"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const return_requests = pgTable("return_requests", {
+  id: serial("id").primaryKey(),
+  session_id: text("session_id").notNull().references(() => chat_sessions.session_id),
+  order_number: text("order_number").notNull(),
+  product_name: text("product_name"),
+  return_reason: text("return_reason"),
+  status: text("status").default("pending"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const chatbot_analytics = pgTable("chatbot_analytics", {
+  id: serial("id").primaryKey(),
+  session_id: text("session_id").notNull().references(() => chat_sessions.session_id),
+  event_type: text("event_type").notNull(),
+  event_data: jsonb("event_data"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -226,6 +264,33 @@ export const insertDeployedSolutionSchema = createInsertSchema(deployedSolutions
   deployment_id: true,
   configuration: true,
   performance_metrics: true,
+});
+
+export const insertChatSessionSchema = createInsertSchema(chat_sessions).pick({
+  session_id: true,
+  user_id: true,
+  gdpr_consent: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chat_messages).pick({
+  session_id: true,
+  sender: true,
+  message: true,
+  message_type: true,
+});
+
+export const insertReturnRequestSchema = createInsertSchema(return_requests).pick({
+  session_id: true,
+  order_number: true,
+  product_name: true,
+  return_reason: true,
+  status: true,
+});
+
+export const insertChatbotAnalyticsSchema = createInsertSchema(chatbot_analytics).pick({
+  session_id: true,
+  event_type: true,
+  event_data: true,
 });
 
 // Custom flow data schema
