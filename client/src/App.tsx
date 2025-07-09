@@ -42,7 +42,6 @@ import AgentLibraryManager from "@/pages/AgentLibraryManager";
 import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
-import CanvasHeader from "@/components/CanvasHeader";
 import SignupModal from "@/components/SignupModal";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";

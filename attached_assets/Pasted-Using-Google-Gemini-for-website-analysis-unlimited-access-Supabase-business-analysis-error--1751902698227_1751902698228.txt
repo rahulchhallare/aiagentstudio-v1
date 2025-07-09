@@ -1,0 +1,42 @@
+Using Google Gemini for website analysis (unlimited access)...
+Supabase business analysis error: {
+  code: '42501',
+  details: null,
+  hint: null,
+  message: 'new row violates row-level security policy for table "business_analyses"'
+}
+RLS policy violation, returning mock analysis object
+Business analysis saved to database with ID: 1751902228783
+Using Google Gemini for recommendations (unlimited access)...
+Supabase recommendation error: {
+  code: '22003',
+  details: null,
+  hint: null,
+  message: 'value "1751902228783" is out of range for type integer'
+}
+Failed to save recommendation: Error: value "1751902228783" is out of range for type integer
+    at SupabaseStorage.createAiRecommendation (/home/runner/workspace/server/storage.ts:758:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2077:22)
+    at async Promise.all (index 0)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2074:38)
+Supabase recommendation error: {
+  code: '22003',
+  details: null,
+  hint: null,
+  message: 'value "1751902228783" is out of range for type integer'
+}
+Failed to save recommendation: Error: value "1751902228783" is out of range for type integer
+    at SupabaseStorage.createAiRecommendation (/home/runner/workspace/server/storage.ts:758:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2077:22)
+    at async Promise.all (index 1)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2074:38)
+Supabase recommendation error: {
+  code: '22003',
+  details: null,
+  hint: null,
+  message: 'value "1751902228783" is out of range for type integer'
+}
+Failed to save recommendation: Error: value "1751902228783" is out of range for type integer
+    at SupabaseStorage.createAiRecommendation (/home/runner/workspace/server/storage.ts:758:15)

@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import express from "express";
+import session from "express-session";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -29,6 +30,17 @@ import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
 // import { chatbotService } from "./chatbot-service";
+
+// Extend session type
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      id: number;
+      email: string;
+      username: string;
+    };
+  }
+}
 
 // Helper function to map Razorpay plan ID to plan name
 function getPlanNameFromId(planId: string): string {
@@ -68,7 +80,7 @@ async function sendContactFormNotifications(contactData: {
     service: 'gmail', // or your preferred email service
     auth: {
       user: process.env.SMTP_USER, // Your email
-      pass: process.env.SMTP_PASS, // Your app password
+      pass: process.env.SMTP_PASS, // Your app password,
     },
   });
 
@@ -106,7 +118,7 @@ async function sendContactFormNotifications(contactData: {
         <h2 style="color: #2563eb;">Thank you for reaching out!</h2>
         <p>Hi ${contactData.name},</p>
         <p>We've received your message and will get back to you within 24 hours.</p>
-        
+
         <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #374151;">Your Message:</h3>
           <p><strong>Subject:</strong> ${contactData.subject}</p>
@@ -125,7 +137,7 @@ async function sendContactFormNotifications(contactData: {
 
         <p>Best regards,<br>
         The AIAgentStudio.AI Team</p>
-        
+
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="font-size: 12px; color: #6b7280;">
           This is an automated response. Please do not reply to this email.
@@ -170,7 +182,29 @@ async function getPlanPricing(): Promise<{
   }
 }
 
+// Middleware to require authentication
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (req.session && req.session.user && req.session.user.id) {
+    // User is authenticated
+    next();
+  } else {
+    // User is not authenticated
+    res.status(401).json({ error: "Unauthorized", message: "Please log in to continue" });
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Session configuration
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+
   // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
   app.post(
     "/api/webhook/razorpay",
@@ -193,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const bodyString = Buffer.isBuffer(req.body)
           ? req.body.toString()
           : JSON.stringify(req.body);
-        
+
         const expectedSignature = crypto
           .createHmac("sha256", webhookSecret)
           .update(bodyString)
@@ -542,6 +576,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.createUser(userData);
+
+      // Store user in session
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      };
+
       const { password, ...userWithoutPassword } = user;
       return res.status(201).json(userWithoutPassword);
     } catch (error) {
@@ -568,6 +610,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      // Store user in session
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      };
+
       const { password: _, ...userWithoutPassword } = user;
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
@@ -581,6 +630,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     process.env.GOOGLE_CLIENT_SECRET,
     "https://aiagentstudio.ai/api/auth/google/callback",
   );
+
+  // Session check route
+  app.get("/api/auth/session", (req: Request, res: Response) => {
+    if (req.session && req.session.user) {
+      res.json({ user: req.session.user, authenticated: true });
+    } else {
+      res.json({ user: null, authenticated: false });
+    }
+  });
+
+  // Logout route
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Could not log out" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
 
   // Google OAuth routes
   app.get("/api/auth/google", (req: Request, res: Response) => {
@@ -637,6 +705,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         user = existingUser;
       }
+
+      // Store user in session
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      };
 
       const userData = encodeURIComponent(JSON.stringify(user));
       res.redirect(`/?auth=success&user=${userData}`);
@@ -818,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res
             .status(403)
             .json({ message: "Agent is not currently active" });
-        }
+                }
 
         const flowData = flowDataSchema.parse(agent.flow_data);
         const result = await executeFlow(flowData, input);
@@ -875,8 +950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deployUrl = `https://${host}/agent/${deployId}`;
 
       const agent = await storage.createAgent({
-        user_id: 1,
-        name: "Reliable Content Assistant",
+        user_id: 1,        name: "Reliable Content Assistant",
         description:
           "A helpful AI assistant using reliable Hugging Face models that can generate creative content based on your prompts.",
         flow_data,
@@ -933,10 +1007,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let customer;
       try {
         const customers = await razorpay.customers.all({ email: email });
-        
+
         // Find exact email match
         const exactMatch = customers.items?.find(c => c.email === email);
-        
+
         if (exactMatch) {
           customer = exactMatch;
           console.log("Found existing customer for manual payment:", customer.id, "email:", customer.email);
@@ -1102,15 +1176,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: email,
             count: 10 
           });
-          
+
           console.log("Razorpay customers API response:", {
             count: customers.count,
             items: customers.items?.length || 0
           });
-          
+
           // Properly filter to find exact email match
           const exactMatch = customers.items?.find(c => c.email === email);
-          
+
           if (exactMatch) {
             customer = exactMatch;
             console.log("Found existing customer:", customer.id, "for email:", customer.email);
@@ -1121,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (customerError) {
           console.log("Creating new customer for email:", email);
           console.log("Customer creation error context:", customerError.message);
-          
+
           try {
             // Validate email format before creating customer
             if (!email || !email.includes('@')) {
@@ -1129,7 +1203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             const customerName = email.split("@")[0] || "Customer";
-            
+
             const customerParams = {
               name: customerName,
               email: email,
@@ -1183,7 +1257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Try to create a proper Razorpay subscription first
         let razorpayPlanId: string | undefined;
-        
+
         try {
           switch (planId) {
             case "pro-monthly":
@@ -1278,7 +1352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Error Message:", subscriptionError.message);
           console.log("Error Status Code:", subscriptionError.statusCode);
           console.log("Timestamp:", new Date().toISOString());
-          
+
           console.error("Subscription creation failed:", {
             message: subscriptionError.message,
             error: subscriptionError.error || subscriptionError,
@@ -1286,7 +1360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             planId: razorpayPlanId,
             customerId: customer?.id
           });
-          
+
           // Log detailed error information
           if (subscriptionError.error) {
             console.error("Razorpay error details:", {
@@ -1297,9 +1371,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               reason: subscriptionError.error.reason
             });
           }
-          
+
           console.log("Subscription creation failed, falling back to payment link. Error:", subscriptionError.message || "Unknown error");
-          
+
           // Fallback to payment link
           try {
             const paymentLinkParams = {
@@ -1746,10 +1820,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use the new switchSubscriptionPlan method to mark old as inactive and create new free plan
       const newSubscription = await storage.switchSubscriptionPlan(parseInt(userId), {
         razorpay_subscription_id: `free_${currentSubscription.id}_${Date.now()}`,
-        razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",
-        status: "cancelled",
-        plan_name: "Free",
-        plan_id: "free",
+        razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",        status: "cancelled",
+        plan_name: "Free",        plan_id: "free",
         price_id: "free",
         current_period_start: new Date(),
         current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now (free plan)
@@ -1766,6 +1838,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error downgrading to free:", error);
       res.status(500).json({ error: "Failed to downgrade to free plan" });
+    }
+  });
+
+  // Get user's saved business analyses
+  app.get("/api/business-analyses", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session!.user!.id;
+      const analyses = await storage.getBusinessAnalysesByUserId(userId);
+      res.json(analyses);
+    } catch (error: any) {
+      console.error("Error fetching business analyses:", error);
+      res.status(500).json({ error: "Failed to fetch business analyses" });
+    }
+  });
+
+  // Get specific business analysis with recommendations
+  app.get("/api/business-analyses/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const analysisId = parseInt(req.params.id);
+      const userId = req.session!.user!.id;
+
+      const analysis = await storage.getBusinessAnalysis(analysisId);
+      if (!analysis || analysis.user_id !== userId) {
+        return res.status(404).json({ error: "Analysis not found" });
+      }
+
+      const recommendations = await storage.getRecommendationsByAnalysisId(analysisId);
+
+      res.json({
+        analysis,
+        recommendations
+      });
+    } catch (error: any) {
+      console.error("Error fetching business analysis:", error);
+      res.status(500).json({ error: "Failed to fetch business analysis" });
     }
   });
 
@@ -1851,7 +1958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chatbot/session", async (req: Request, res: Response) => {
     try {
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      
+
       res.json({
         sessionId,
         message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
@@ -1873,17 +1980,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chatbot/message", async (req: Request, res: Response) => {
     try {
       const { sessionId, message } = req.body;
-      
+
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
 
       console.log(`Chatbot message received: ${message}`);
-      
+
       // Simple chatbot responses without external dependencies
       const lowerMessage = message.toLowerCase();
       let response;
-      
+
       if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
         response = {
           message: "Hello! Thanks for reaching out. I'm here to help you with:\n\n" +
@@ -1941,7 +2048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   "What specific question can I help you with today?"
         };
       }
-      
+
       console.log(`Chatbot response: ${JSON.stringify(response)}`);
       res.json(response);
     } catch (error) {
@@ -1956,7 +2063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chatbot/consent", async (req: Request, res: Response) => {
     try {
       const { sessionId, consent } = req.body;
-      
+
       res.json({
         message: consent 
           ? "Thank you for your consent. How can I help you today?" 
@@ -1971,50 +2078,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Business Analysis API Routes
   app.post("/api/analyze-website", async (req: Request, res: Response) => {
-    try {
-      const { websiteUrl } = req.body;
-      
-      if (!websiteUrl) {
-        return res.status(400).json({ message: "Website URL is required" });
-      }
+  try {
+    const { websiteUrl, userId } = req.body;
 
-      // Import analyzer here to avoid circular dependencies
-      const { websiteAnalyzer } = await import("./website-analyzer");
-      const { recommendationEngine } = await import("./recommendation-engine");
-      
-      // Comprehensive AI-powered website analysis
-      const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
-      
-      // Generate AI-powered recommendations
-      const recommendations = await recommendationEngine.generateRecommendations(analysis);
-      
-      // For demo purposes, return results directly without database storage
-      // TODO: Implement proper database storage once schema is properly set up
-      res.json({
-        success: true,
-        analysis: {
-          id: Date.now(), // Temporary ID for demo
-          ...analysis
-        },
-        recommendations: recommendations.map((rec, index) => ({
-          id: index + 1,
-          ...rec,
-          status: 'pending'
-        }))
+    if (!websiteUrl) {
+      return res.status(400).json({ error: "Website URL is required" });
+    }
+
+    // Get user ID from session (authenticated users) or request body (fallback)
+    const authenticatedUserId = req.session?.user?.id || userId;
+    
+    console.log('Authentication check:', {
+      sessionExists: !!req.session,
+      sessionUser: req.session?.user,
+      sessionUserId: req.session?.user?.id,
+      bodyUserId: userId,
+      finalUserId: authenticatedUserId,
+      isAuthenticated: !!req.session?.user?.id
+    });
+
+    // Only proceed with database save if user is properly authenticated via session
+    const isAuthenticated = !!req.session?.user?.id;
+
+    // Import analyzer here to avoid circular dependencies
+    const { websiteAnalyzer } = await import("./website-analyzer");
+    const { recommendationEngine } = await import("./recommendation-engine");
+
+    // Analyze website content
+    const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
+
+    // Save analysis to database only if user is authenticated via session
+    let savedAnalysis = null;
+    try {
+      savedAnalysis = await storage.createBusinessAnalysis({
+        user_id: isAuthenticated ? authenticatedUserId : null, // Only use user ID if properly authenticated
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        business_type: analysis.businessType,
+        industry: analysis.industry,
+        pain_points: analysis.painPoints,
+        workflows: analysis.workflows,
+        content_summary: analysis.contentSummary,
+        key_features: analysis.keyFeatures,
+        target_audience: analysis.targetAudience,
+        current_tech: analysis.currentTech,
       });
-    } catch (error: any) {
-      console.error('Error analyzing website:', error);
-      res.status(500).json({ 
-        message: "Failed to analyze website",
-        error: error.message 
+
+      if (isAuthenticated && savedAnalysis.id) {
+        console.log('Business analysis saved to database for authenticated user:', authenticatedUserId, 'with ID:', savedAnalysis.id);
+      } else {
+        console.log('Business analysis created for unauthenticated user (not persisted to database)');
+      }
+    } catch (analysisError) {
+      console.error("Failed to save analysis to database:", analysisError);
+      // Create a fallback analysis object
+      savedAnalysis = { 
+        id: Date.now(), 
+        user_id: isAuthenticated ? authenticatedUserId : null,
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        created_at: new Date() 
+      };
+    }
+
+    // Generate AI recommendations
+    const recommendations = await recommendationEngine.generateRecommendations(analysis);
+
+    // Save recommendations to database only if user is authenticated and analysis was saved
+    if (savedAnalysis && savedAnalysis.id && isAuthenticated && authenticatedUserId) {
+      console.log('Saving recommendations for authenticated user:', {
+        analysisId: savedAnalysis.id,
+        userId: authenticatedUserId,
+        recommendationCount: recommendations.length,
+        isAuthenticated: isAuthenticated
+      });
+
+      try {
+        const savedRecommendations = await Promise.all(
+          recommendations.map(async (rec: any) => {
+            try {
+              // Validate analysis_id before saving
+              if (!savedAnalysis.id) {
+                console.log('No valid analysis_id provided, skipping database save for recommendation');
+                return null;
+              }
+
+              console.log(`Saving recommendation: ${rec.solutionType} for analysis ${savedAnalysis.id}`);
+
+              return await storage.createAiRecommendation({
+                analysis_id: savedAnalysis.id,
+                solution_type: rec.solutionType,
+                solution_name: rec.solutionName,
+                description: rec.description,
+                estimated_cost_savings: rec.estimatedCostSavings,
+                estimated_time_savings: rec.estimatedTimeSavings,
+                implementation_difficulty: rec.implementationDifficulty,
+                roi_percentage: rec.roiPercentage,
+                industry_benchmark: rec.industryBenchmark || '',
+                priority_score: rec.priorityScore,
+                template_id: rec.templateId,
+                customization_data: rec.customizationData || {},
+                reasoning: rec.reasoning,
+                rag_evidence: rec.ragEvidence || [],
+                case_studies: rec.caseStudies || [],
+                ethical_considerations: rec.ethicalConsiderations || '',
+                compliance_requirements: rec.complianceRequirements || [],
+                monitoring_metrics: rec.monitoringMetrics || [],
+                implementation_timeline: rec.implementationTimeline || '',
+                expected_revenue: rec.expectedRevenue || 0,
+                risk_factors: rec.riskFactors || []
+              });
+            } catch (recError) {
+              console.error("Failed to save recommendation:", recError);
+              return null;
+            }
+          })
+        );
+
+        // Filter out failed saves
+        const validRecommendations = savedRecommendations.filter(rec => rec !== null);
+        console.log(`Saved ${validRecommendations.length} recommendations to database`);
+      } catch (recError) {
+        console.error("Failed to save recommendations:", recError);
+      }
+    } else {
+      console.log('Skipping recommendation database saves:', {
+        savedAnalysis: !!savedAnalysis,
+        analysisId: savedAnalysis?.id,
+        authenticatedUserId,
+        reason: !savedAnalysis ? 'No saved analysis' : !savedAnalysis.id ? 'No analysis ID' : !authenticatedUserId ? 'User not authenticated' : 'Unknown'
       });
     }
-  });
+
+    res.json({
+      success: true,
+      analysis: analysis,
+      recommendations: recommendations,
+      websiteUrl: websiteUrl,
+      analysisId: savedAnalysis?.id || null
+    });
+  } catch (error: any) {
+    console.error("Website analysis error:", error);
+    res.status(500).json({ 
+      message: "Failed to analyze website",
+      error: error.message 
+    });
+  }
+});
 
   app.get("/api/analysis/:id", async (req: Request, res: Response) => {
     try {
       const analysisId = parseInt(req.params.id);
-      
+
       if (isNaN(analysisId)) {
         return res.status(400).json({ message: "Invalid analysis ID" });
       }
@@ -2043,7 +2258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/recommendations/:id/select", async (req: Request, res: Response) => {
     try {
       const recommendationId = parseInt(req.params.id);
-      
+
       if (isNaN(recommendationId)) {
         return res.status(400).json({ message: "Invalid recommendation ID" });
       }
@@ -2064,7 +2279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Agent Deployment API Routes
-  
+
   // Get deployed solutions for current user
   app.get("/api/deployed-solutions", async (req: Request, res: Response) => {
     try {
@@ -2338,14 +2553,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </head>
 <body>
     <div class="status">Chatbot: Active</div>
-    
+
     <div class="container">
         <h1>E-commerce Chatbot Demo</h1>
         <p class="subtitle">AI-Powered Customer Support for Shopify & E-commerce</p>
-        
+
         <div class="content">
             <p>Welcome to our AI Agent Studio chatbot demonstration! This shows how our intelligent customer service bot integrates seamlessly into any e-commerce website.</p>
-            
+
             <div class="highlight">
                 <h3>Features Available</h3>
                 <ul>
@@ -2357,47 +2572,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <li><strong>GDPR Compliant:</strong> Privacy-first data handling</li>
                 </ul>
             </div>
-            
+
             <div class="instructions">
                 <strong>Look for the chat button in the bottom-right corner!</strong>
                 <br>Click it to start a conversation with our AI customer service agent.
             </div>
-            
+
             <div class="test-scenarios">
                 <h3>Test Conversation Flows</h3>
                 <p>Try these realistic customer service scenarios:</p>
-                
+
                 <div class="scenario">
                     <strong>1. Order Tracking</strong><br>
                     Say: "Can you track my order?"<br>
                     Then provide: "ABC123" when asked for order number
                 </div>
-                
+
                 <div class="scenario">
                     <strong>2. Return Request</strong><br>
                     Say: "I want to return something"<br>
                     Follow the guided return process
                 </div>
-                
+
                 <div class="scenario">
                     <strong>3. Human Agent</strong><br>
                     Say: "I need to speak to a human agent"<br>
                     See the escalation process in action
                 </div>
-                
+
                 <div class="scenario">
                     <strong>4. Shipping Information</strong><br>
                     Ask: "What are your shipping options?"<br>
                     Get detailed shipping policy information
                 </div>
-                
+
                 <div class="scenario">
                     <strong>5. Payment Support</strong><br>
                     Ask: "What payment methods do you accept?"<br>
                     Learn about available payment options
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
                 <h3>Ready for Your E-commerce Store?</h3>
                 <p>This chatbot can be embedded in any website with just 2 lines of code!</p>
@@ -2416,7 +2631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
     </script>
     <script src="/chatbot-embed.js"></script>
-    
+
     <script>
       // Add some debugging
       window.addEventListener('load', () => {
@@ -2431,7 +2646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     </script>
 </body>
 </html>`;
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(testPageHTML);
   });
@@ -2455,10 +2670,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { agentAutoDeployer } = await import("./agent-auto-deploy");
       const userId = req.body.userId || 1; // Default to system user
-      
+
       await agentAutoDeployer.deployAllMissingAgents(userId);
       const status = await agentAutoDeployer.getDeploymentStatus();
-      
+
       res.json({
         success: true,
         message: "Missing agents deployed successfully",
@@ -2479,7 +2694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { agentAutoDeployer } = await import("./agent-auto-deploy");
       const templates = agentAutoDeployer.getAvailableTemplates();
       const categorized = agentAutoDeployer.getTemplatesByCategory();
-      
+
       res.json({
         success: true,
         templates,
@@ -2501,9 +2716,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { templateId } = req.params;
       const { agentAutoDeployer } = await import("./agent-auto-deploy");
       const userId = req.body.userId || 1;
-      
+
       const deployedAgent = await agentAutoDeployer.deploySpecificAgent(templateId, userId);
-      
+
       res.json({
         success: true,
         message: "Agent deployed successfully",
