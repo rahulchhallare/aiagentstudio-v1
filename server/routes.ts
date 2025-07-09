@@ -2076,6 +2076,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Response Concising API Routes
+  app.get("/api/conciser/status", async (req: Request, res: Response) => {
+    try {
+      const { responseConciser } = await import("./response-conciser");
+      const availableServices = await responseConciser.getAvailableServices();
+      
+      res.json({
+        available: availableServices,
+        count: availableServices.length,
+        recommendation: availableServices.length > 2 ? 
+          "Multiple concising services available for optimal response quality" :
+          "Consider adding MEANING_CLOUD_API_KEY or ANTHROPIC_API_KEY for enhanced concising"
+      });
+    } catch (error) {
+      console.error('Error checking conciser status:', error);
+      res.status(500).json({ error: 'Failed to check conciser status' });
+    }
+  });
+
   // Business Analysis API Routes
   app.post("/api/analyze-website", async (req: Request, res: Response) => {
   try {

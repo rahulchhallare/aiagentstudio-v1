@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import type { WebsiteAnalysisResult } from "./website-analyzer";
+import { responseConciser, type ConciseOptions } from "./response-conciser";
 
 export class GeminiService {
   private ai: GoogleGenAI;
@@ -100,7 +101,7 @@ Focus on being specific and actionable. Identify real business challenges that A
         const analysis = JSON.parse(cleanedResponse);
         
         // Validate and clean the response
-        return {
+        const result = {
           businessType: analysis.businessType || 'Unknown',
           businessName: analysis.businessName || 'Unknown',
           industry: analysis.industry || 'Unknown',
@@ -111,6 +112,21 @@ Focus on being specific and actionable. Identify real business challenges that A
           targetAudience: analysis.targetAudience || '',
           currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
         };
+
+        // Concise the content summary for better user experience
+        if (result.contentSummary && result.contentSummary.length > 200) {
+          try {
+            result.contentSummary = await responseConciser.conciseResponse(result.contentSummary, {
+              maxLength: 50,
+              style: 'paragraph',
+              preserveStructure: true
+            });
+          } catch (error) {
+            console.log('Failed to concise summary, using original:', error.message);
+          }
+        }
+
+        return result;
       } catch (parseError) {
         console.error('Gemini JSON parsing failed, attempting fallback parsing:', parseError);
         console.log('Raw response length:', cleanedResponse.length);
@@ -289,11 +305,41 @@ Return only the JSON, no additional text.`;
       }
       
       const parsed = JSON.parse(cleanedResponse);
-      const recommendations = parsed.recommendations || [];
+      let recommendations = parsed.recommendations || [];
       
       if (recommendations.length === 0) {
         throw new Error('Gemini returned no recommendations');
       }
+
+      // Concise descriptions for better user experience
+      recommendations = await Promise.all(recommendations.map(async (rec: any) => {
+        if (rec.description && rec.description.length > 150) {
+          try {
+            rec.description = await responseConciser.conciseResponse(rec.description, {
+              maxLength: 40,
+              style: 'paragraph',
+              preserveStructure: true
+            });
+          } catch (error) {
+            console.log('Failed to concise recommendation description:', error.message);
+          }
+        }
+
+        // Also concise reasoning if too long
+        if (rec.reasoning && rec.reasoning.length > 120) {
+          try {
+            rec.reasoning = await responseConciser.conciseResponse(rec.reasoning, {
+              maxLength: 30,
+              style: 'paragraph',
+              preserveStructure: true
+            });
+          } catch (error) {
+            console.log('Failed to concise recommendation reasoning:', error.message);
+          }
+        }
+
+        return rec;
+      }));
       
       return recommendations;
     } catch (error: any) {
