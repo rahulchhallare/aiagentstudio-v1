@@ -106,7 +106,7 @@ async function sendContactFormNotifications(contactData: {
         <h2 style="color: #2563eb;">Thank you for reaching out!</h2>
         <p>Hi ${contactData.name},</p>
         <p>We've received your message and will get back to you within 24 hours.</p>
-        
+
         <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #374151;">Your Message:</h3>
           <p><strong>Subject:</strong> ${contactData.subject}</p>
@@ -125,7 +125,7 @@ async function sendContactFormNotifications(contactData: {
 
         <p>Best regards,<br>
         The AIAgentStudio.AI Team</p>
-        
+
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="font-size: 12px; color: #6b7280;">
           This is an automated response. Please do not reply to this email.
@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const bodyString = Buffer.isBuffer(req.body)
           ? req.body.toString()
           : JSON.stringify(req.body);
-        
+
         const expectedSignature = crypto
           .createHmac("sha256", webhookSecret)
           .update(bodyString)
@@ -901,40 +901,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug endpoint for AI provider status
-  app.get("/api/debug/ai-providers", async (req: Request, res: Response) => {
-    try {
-      const status = {
-        environment: process.env.NODE_ENV || 'development',
-        domain: req.get('host'),
-        timestamp: new Date().toISOString(),
-        providers: {
-          gemini: {
-            available: !!process.env.GEMINI_API_KEY,
-            keyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0
-          },
-          openai: {
-            available: !!process.env.OPENAI_API_KEY,
-            keyLength: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0
-          },
-          deepseek: {
-            available: !!process.env.DEEPSEEK_API_KEY,
-            keyLength: process.env.DEEPSEEK_API_KEY ? process.env.DEEPSEEK_API_KEY.length : 0
-          },
-          aiml: {
-            available: !!process.env.AIML_API_KEY,
-            keyLength: process.env.AIML_API_KEY ? process.env.AIML_API_KEY.length : 0
-          }
-        }
-      };
-      
-      res.json(status);
-    } catch (error) {
-      console.error("Debug endpoint error:", error);
-      res.status(500).json({ error: "Debug check failed" });
-    }
-  });
-
   // Exchange rate endpoint
   app.get("/api/exchange-rate", async (req: Request, res: Response) => {
     try {
@@ -967,10 +933,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let customer;
       try {
         const customers = await razorpay.customers.all({ email: email });
-        
+
         // Find exact email match
         const exactMatch = customers.items?.find(c => c.email === email);
-        
+
         if (exactMatch) {
           customer = exactMatch;
           console.log("Found existing customer for manual payment:", customer.id, "email:", customer.email);
@@ -1136,15 +1102,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: email,
             count: 10 
           });
-          
+
           console.log("Razorpay customers API response:", {
             count: customers.count,
             items: customers.items?.length || 0
           });
-          
+
           // Properly filter to find exact email match
           const exactMatch = customers.items?.find(c => c.email === email);
-          
+
           if (exactMatch) {
             customer = exactMatch;
             console.log("Found existing customer:", customer.id, "for email:", customer.email);
@@ -1155,7 +1121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (customerError) {
           console.log("Creating new customer for email:", email);
           console.log("Customer creation error context:", customerError.message);
-          
+
           try {
             // Validate email format before creating customer
             if (!email || !email.includes('@')) {
@@ -1163,7 +1129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             const customerName = email.split("@")[0] || "Customer";
-            
+
             const customerParams = {
               name: customerName,
               email: email,
@@ -1217,7 +1183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Try to create a proper Razorpay subscription first
         let razorpayPlanId: string | undefined;
-        
+
         try {
           switch (planId) {
             case "pro-monthly":
@@ -1312,7 +1278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Error Message:", subscriptionError.message);
           console.log("Error Status Code:", subscriptionError.statusCode);
           console.log("Timestamp:", new Date().toISOString());
-          
+
           console.error("Subscription creation failed:", {
             message: subscriptionError.message,
             error: subscriptionError.error || subscriptionError,
@@ -1320,7 +1286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             planId: razorpayPlanId,
             customerId: customer?.id
           });
-          
+
           // Log detailed error information
           if (subscriptionError.error) {
             console.error("Razorpay error details:", {
@@ -1328,12 +1294,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               description: subscriptionError.error.description,
               field: subscriptionError.error.field,
               step: subscriptionError.error.step,
-              reason: subscriptionError.error.reason
+              reason: subscriptionError.error
             });
           }
-          
+
           console.log("Subscription creation failed, falling back to payment link. Error:", subscriptionError.message || "Unknown error");
-          
+
           // Fallback to payment link
           try {
             const paymentLinkParams = {
@@ -1885,7 +1851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chatbot/session", async (req: Request, res: Response) => {
     try {
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      
+
       res.json({
         sessionId,
         message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
@@ -1907,17 +1873,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chatbot/message", async (req: Request, res: Response) => {
     try {
       const { sessionId, message } = req.body;
-      
+
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
 
       console.log(`Chatbot message received: ${message}`);
-      
+
       // Simple chatbot responses without external dependencies
       const lowerMessage = message.toLowerCase();
       let response;
-      
+
       if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
         response = {
           message: "Hello! Thanks for reaching out. I'm here to help you with:\n\n" +
@@ -1975,7 +1941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   "What specific question can I help you with today?"
         };
       }
-      
+
       console.log(`Chatbot response: ${JSON.stringify(response)}`);
       res.json(response);
     } catch (error) {
@@ -1990,7 +1956,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chatbot/consent", async (req: Request, res: Response) => {
     try {
       const { sessionId, consent } = req.body;
-      
+
       res.json({
         message: consent 
           ? "Thank you for your consent. How can I help you today?" 
@@ -2007,7 +1973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/analyze-website", async (req: Request, res: Response) => {
     try {
       const { websiteUrl } = req.body;
-      
+
       if (!websiteUrl) {
         return res.status(400).json({ message: "Website URL is required" });
       }
@@ -2015,13 +1981,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import analyzer here to avoid circular dependencies
       const { websiteAnalyzer } = await import("./website-analyzer");
       const { recommendationEngine } = await import("./recommendation-engine");
-      
+
       // Comprehensive AI-powered website analysis
       const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
-      
+
       // Generate AI-powered recommendations
       const recommendations = await recommendationEngine.generateRecommendations(analysis);
-      
+
       // For demo purposes, return results directly without database storage
       // TODO: Implement proper database storage once schema is properly set up
       res.json({
@@ -2048,7 +2014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/analysis/:id", async (req: Request, res: Response) => {
     try {
       const analysisId = parseInt(req.params.id);
-      
+
       if (isNaN(analysisId)) {
         return res.status(400).json({ message: "Invalid analysis ID" });
       }
@@ -2077,7 +2043,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/recommendations/:id/select", async (req: Request, res: Response) => {
     try {
       const recommendationId = parseInt(req.params.id);
-      
+
       if (isNaN(recommendationId)) {
         return res.status(400).json({ message: "Invalid recommendation ID" });
       }
@@ -2098,7 +2064,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Agent Deployment API Routes
-  
+
   // Get deployed solutions for current user
   app.get("/api/deployed-solutions", async (req: Request, res: Response) => {
     try {
@@ -2372,14 +2338,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </head>
 <body>
     <div class="status">Chatbot: Active</div>
-    
+
     <div class="container">
         <h1>E-commerce Chatbot Demo</h1>
         <p class="subtitle">AI-Powered Customer Support for Shopify & E-commerce</p>
-        
+
         <div class="content">
             <p>Welcome to our AI Agent Studio chatbot demonstration! This shows how our intelligent customer service bot integrates seamlessly into any e-commerce website.</p>
-            
+
             <div class="highlight">
                 <h3>Features Available</h3>
                 <ul>
@@ -2391,47 +2357,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <li><strong>GDPR Compliant:</strong> Privacy-first data handling</li>
                 </ul>
             </div>
-            
+
             <div class="instructions">
                 <strong>Look for the chat button in the bottom-right corner!</strong>
                 <br>Click it to start a conversation with our AI customer service agent.
             </div>
-            
+
             <div class="test-scenarios">
                 <h3>Test Conversation Flows</h3>
                 <p>Try these realistic customer service scenarios:</p>
-                
+
                 <div class="scenario">
                     <strong>1. Order Tracking</strong><br>
                     Say: "Can you track my order?"<br>
                     Then provide: "ABC123" when asked for order number
                 </div>
-                
+
                 <div class="scenario">
                     <strong>2. Return Request</strong><br>
                     Say: "I want to return something"<br>
                     Follow the guided return process
                 </div>
-                
+
                 <div class="scenario">
                     <strong>3. Human Agent</strong><br>
                     Say: "I need to speak to a human agent"<br>
                     See the escalation process in action
                 </div>
-                
+
                 <div class="scenario">
                     <strong>4. Shipping Information</strong><br>
                     Ask: "What are your shipping options?"<br>
                     Get detailed shipping policy information
                 </div>
-                
+
                 <div class="scenario">
                     <strong>5. Payment Support</strong><br>
                     Ask: "What payment methods do you accept?"<br>
                     Learn about available payment options
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
                 <h3>Ready for Your E-commerce Store?</h3>
                 <p>This chatbot can be embedded in any website with just 2 lines of code!</p>
@@ -2450,7 +2416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
     </script>
     <script src="/chatbot-embed.js"></script>
-    
+
     <script>
       // Add some debugging
       window.addEventListener('load', () => {
@@ -2465,7 +2431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     </script>
 </body>
 </html>`;
-    
+
     res.setHeader('Content-Type', 'text/html');
     res.send(testPageHTML);
   });
@@ -2489,10 +2455,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { agentAutoDeployer } = await import("./agent-auto-deploy");
       const userId = req.body.userId || 1; // Default to system user
-      
+
       await agentAutoDeployer.deployAllMissingAgents(userId);
       const status = await agentAutoDeployer.getDeploymentStatus();
-      
+
       res.json({
         success: true,
         message: "Missing agents deployed successfully",
@@ -2513,7 +2479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { agentAutoDeployer } = await import("./agent-auto-deploy");
       const templates = agentAutoDeployer.getAvailableTemplates();
       const categorized = agentAutoDeployer.getTemplatesByCategory();
-      
+
       res.json({
         success: true,
         templates,
@@ -2535,9 +2501,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { templateId } = req.params;
       const { agentAutoDeployer } = await import("./agent-auto-deploy");
       const userId = req.body.userId || 1;
-      
+
       const deployedAgent = await agentAutoDeployer.deploySpecificAgent(templateId, userId);
-      
+
       res.json({
         success: true,
         message: "Agent deployed successfully",

@@ -25,24 +25,24 @@ export class WebsiteAnalyzer {
     if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
       normalizedUrl = 'https://' + normalizedUrl;
     }
-    
+
     let response;
     let finalUrl = normalizedUrl;
     let extractedContent;
-    
+
     try {
       try {
         // First try with HTTPS
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
+
         response = await fetch(normalizedUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
           },
           signal: controller.signal
         });
-        
+
         clearTimeout(timeoutId);
       } catch (httpsError) {
         // If HTTPS fails, try HTTP
@@ -50,27 +50,27 @@ export class WebsiteAnalyzer {
           finalUrl = normalizedUrl.replace('https://', 'http://');
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
-          
+
           response = await fetch(finalUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             },
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
         } else {
           throw new Error(`Unable to access website. Please check if the URL is correct and the website is online.`);
         }
       }
-      
+
       if (!response.ok) {
         throw new Error(`Website returned an error (${response.status}). Please check if the URL is correct.`);
       }
 
       const html = await response.text();
       extractedContent = this.extractContent(html);
-      
+
       // Use AI to analyze the content
       try {
         const analysis = await this.analyzeContentWithAI(extractedContent, finalUrl);
@@ -91,7 +91,7 @@ export class WebsiteAnalyzer {
       }
     } catch (error) {
       console.error('Error analyzing website:', error);
-      
+
       // Provide user-friendly error messages
       if (error instanceof Error) {
         if (error.message.includes('Invalid URL') || error.message.includes('Failed to parse URL')) {
@@ -105,7 +105,7 @@ export class WebsiteAnalyzer {
         }
         throw new Error(error.message);
       }
-      
+
       throw new Error('Failed to analyze website. Please check the URL and try again.');
     }
   }
@@ -120,13 +120,13 @@ export class WebsiteAnalyzer {
     links: string[];
   } {
     const $ = load(html);
-    
+
     // Remove scripts, styles, and other non-content elements
     $('script, style, nav, footer, header, aside, .advertisement, .ads, .popup').remove();
-    
+
     const title = $('title').text().trim() || '';
     const metaDescription = $('meta[name="description"]').attr('content') || '';
-    
+
     // Extract headings
     const headings: string[] = [];
     $('h1, h2, h3, h4, h5, h6').each((_, el) => {
@@ -135,14 +135,14 @@ export class WebsiteAnalyzer {
         headings.push(text);
       }
     });
-    
+
     // Extract main content
     const contentSelectors = [
       'main', '.main-content', '.content', '.page-content',
       'article', '.article', '.post', '.entry-content',
       '.description', '.about', '.services', '.products'
     ];
-    
+
     let mainContent = '';
     for (const selector of contentSelectors) {
       const content = $(selector).text().trim();
@@ -150,12 +150,12 @@ export class WebsiteAnalyzer {
         mainContent = content;
       }
     }
-    
+
     // Fallback to body content if no main content found
     if (!mainContent) {
       mainContent = $('body').text().trim();
     }
-    
+
     // Extract navigation items
     const navigationItems: string[] = [];
     $('nav a, .nav a, .menu a, .navigation a, header a').each((_, el) => {
@@ -164,7 +164,7 @@ export class WebsiteAnalyzer {
         navigationItems.push(text);
       }
     });
-    
+
     // Extract image alt texts
     const images: string[] = [];
     $('img[alt]').each((_, el) => {
@@ -173,7 +173,7 @@ export class WebsiteAnalyzer {
         images.push(alt);
       }
     });
-    
+
     // Extract important links
     const links: string[] = [];
     $('a').each((_, el) => {
@@ -183,7 +183,7 @@ export class WebsiteAnalyzer {
         links.push(text);
       }
     });
-    
+
     return {
       title,
       headings: headings.slice(0, 20), // Limit to first 20 headings
@@ -196,14 +196,6 @@ export class WebsiteAnalyzer {
   }
 
   private async analyzeContentWithAI(content: any, url: string): Promise<WebsiteAnalysisResult> {
-    console.log('=== AI PROVIDER DEBUG INFO ===');
-    console.log('Environment:', process.env.NODE_ENV || 'development');
-    console.log('Gemini API Key Available:', !!process.env.GEMINI_API_KEY);
-    console.log('OpenAI API Key Available:', !!process.env.OPENAI_API_KEY);
-    console.log('DeepSeek API Key Available:', !!process.env.DEEPSEEK_API_KEY);
-    console.log('AI/ML API Key Available:', !!process.env.AIML_API_KEY);
-    console.log('===============================');
-
     try {
       // Try Gemini first as it has unlimited free access
       if (process.env.GEMINI_API_KEY) {
@@ -280,7 +272,7 @@ Focus on being specific and actionable. Identify real business challenges that A
 
         try {
           const analysis = JSON.parse(analysisText);
-          
+
           // Validate and clean the response
           return {
             businessType: analysis.businessType || 'Unknown',
@@ -353,11 +345,11 @@ Key Links: ${content.links.join(', ')}`;
     // Generate realistic demo analysis based on the extracted content
     const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
     const businessName = extractedContent.title || domain.split('.')[0] || 'Business';
-    
+
     // Determine industry based on content keywords
     let industry = 'Technology';
     const content = (extractedContent.mainContent + ' ' + extractedContent.headings.join(' ')).toLowerCase();
-    
+
     if (content.includes('restaurant') || content.includes('food') || content.includes('menu')) {
       industry = 'Food & Restaurant';
     } else if (content.includes('shop') || content.includes('buy') || content.includes('product') || content.includes('store')) {
