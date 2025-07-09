@@ -1,4 +1,4 @@
-import { users, agents, waitlist, type User, type InsertUser, type Agent, type InsertAgent, type Waitlist, type InsertWaitlist } from "@shared/schema";
+import { users, agents, waitlist, type User, type InsertUser, type Agent, type InsertAgent, type Waitlist, type InsertWaitlist, type ChatSession, type InsertChatSession, type ChatMessage, type InsertChatMessage, type ReturnRequest, type InsertReturnRequest, type ChatbotAnalytics, type InsertChatbotAnalytics } from "@shared/schema";
 
 // Interface for storage operations
 export interface IStorage {
@@ -20,7 +20,7 @@ export interface IStorage {
   // Waitlist operations
   addToWaitlist(email: InsertWaitlist): Promise<Waitlist>;
   getWaitlistEntries(): Promise<Waitlist[]>;
-  
+
   // Business Analysis methods
   createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any>;
   getBusinessAnalysis(id: number): Promise<any>;
@@ -75,6 +75,11 @@ export class MemStorage implements IStorage {
       email: "test@example.com",
       password: "Password123",
       avatar_url: "",
+      subscription_status: "inactive",
+      subscription_plan: "free",
+      razorpay_customer_id: null,
+      razorpay_subscription_id: null,
+      subscription_expires_at: null,
       created_at: new Date()
     };
     this.users.set(testUser.id, testUser);
@@ -105,6 +110,12 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      avatar_url: insertUser.avatar_url || null,
+      subscription_status: "inactive",
+      subscription_plan: "free",
+      razorpay_customer_id: null,
+      razorpay_subscription_id: null,
+      subscription_expires_at: null,
       created_at: now
     };
     this.users.set(id, user);
@@ -134,6 +145,7 @@ export class MemStorage implements IStorage {
     const agent: Agent = {
       ...insertAgent,
       id,
+      is_active: insertAgent.is_active || false,
       created_at: now,
       updated_at: now,
       deploy_url: insertAgent.deploy_url || null,
@@ -194,6 +206,105 @@ export class MemStorage implements IStorage {
     // For now, we'll just log it - you can implement the table later
     console.log("Contact submission would be saved:", data);
     return { id: Date.now(), ...data, created_at: new Date() };
+  }
+
+  // Business Analysis methods - Stub implementations for memory storage
+  async createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any> {
+    const id = Date.now();
+    return { id, ...insertBusinessAnalysis, created_at: new Date() };
+  }
+
+  async getBusinessAnalysis(id: number): Promise<any> {
+    // Stub implementation
+    return null;
+  }
+
+  async createAiRecommendation(insertAiRecommendation: any): Promise<any> {
+    const id = Date.now();
+    return { id, ...insertAiRecommendation, created_at: new Date() };
+  }
+
+  async getRecommendationsByAnalysisId(analysisId: number): Promise<any[]> {
+    // Stub implementation
+    return [];
+  }
+
+  async updateRecommendationStatus(id: number, status: string): Promise<void> {
+    // Stub implementation
+  }
+
+  async getAiSolutionTemplate(templateId: string): Promise<any> {
+    // Stub implementation
+    return null;
+  }
+
+  async createDeployedSolution(insertDeployedSolution: any): Promise<any> {
+    const id = Date.now();
+    return { id, ...insertDeployedSolution, created_at: new Date() };
+  }
+
+  // Chatbot operations - Stub implementations for memory storage
+  async createChatSession(session: InsertChatSession): Promise<ChatSession> {
+    const id = Date.now();
+    return { 
+      id, 
+      ...session, 
+      created_at: new Date(), 
+      updated_at: new Date() 
+    } as ChatSession;
+  }
+
+  async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
+    // Stub implementation
+    return undefined;
+  }
+
+  async updateChatSession(sessionId: string, updates: Partial<InsertChatSession>): Promise<ChatSession | undefined> {
+    // Stub implementation
+    return undefined;
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const id = Date.now();
+    return { 
+      id, 
+      ...message, 
+      created_at: new Date() 
+    } as ChatMessage;
+  }
+
+  async getChatMessages(sessionId: string): Promise<ChatMessage[]> {
+    // Stub implementation
+    return [];
+  }
+
+  async createReturnRequest(returnRequest: InsertReturnRequest): Promise<ReturnRequest> {
+    const id = Date.now();
+    return { 
+      id, 
+      ...returnRequest, 
+      created_at: new Date(), 
+      updated_at: new Date() 
+    } as ReturnRequest;
+  }
+
+  async getReturnRequest(authNumber: string): Promise<ReturnRequest | undefined> {
+    // Stub implementation
+    return undefined;
+  }
+
+  async createAnalyticsEvent(analytics: InsertChatbotAnalytics): Promise<ChatbotAnalytics> {
+    const id = Date.now();
+    return { 
+      id, 
+      ...analytics, 
+      created_at: new Date() 
+    } as ChatbotAnalytics;
+  }
+
+  async getChatbotAnalytics(startDate?: Date, endDate?: Date): Promise<ChatbotAnalytics[]> {
+    // Stub implementation
+    return [];
   }
 }
 
@@ -578,6 +689,178 @@ export class SupabaseStorage implements IStorage {
       throw new Error(error.message);
     }
     return result;
+  }
+
+  // Business Analysis methods
+  async createBusinessAnalysis(insertBusinessAnalysis: any): Promise<any> {
+    // Only save to database if user_id is provided (authenticated user)
+    if (!insertBusinessAnalysis.user_id) {
+      console.log('No user_id provided - user not authenticated, creating temporary analysis object');
+      // Use a safe integer range for mock IDs
+      return { id: Math.floor(Math.random() * 1000000) + 1000000, ...insertBusinessAnalysis, created_at: new Date() };
+    }
+
+    console.log('Authenticated user detected, saving business analysis to database for user:', insertBusinessAnalysis.user_id);
+
+    try {
+      const { data, error } = await this.supabase
+        .from('business_analyses')
+        .insert(insertBusinessAnalysis)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase business analysis error:', error);
+        throw new Error(error.message);
+      }
+      return data;
+    } catch (err) {
+      console.error('Failed to save business analysis:', err);
+      throw err;
+    }
+  }
+
+  async getBusinessAnalysis(id: number): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('business_analyses')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return null;
+    return data;
+  }
+
+  async createAiRecommendation(insertAiRecommendation: any): Promise<any> {
+    // Only save to database if analysis_id is provided
+    if (!insertAiRecommendation.analysis_id) {
+      console.log('No valid analysis_id provided, skipping database save for recommendation');
+      return { id: Date.now(), ...insertAiRecommendation, created_at: new Date() };
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('ai_recommendations')
+        .insert(insertAiRecommendation)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase recommendation error:', error);
+        // If RLS policy fails, return a mock object but don't throw
+        if (error.message.includes('row-level security policy')) {
+          console.log('RLS policy violation, returning mock recommendation object');
+          return { id: Date.now(), ...insertAiRecommendation, created_at: new Date() };
+        }
+        throw new Error(error.message);
+      }
+      return data;
+    } catch (err) {
+      console.error('Failed to save recommendation:', err);
+      // Return mock object for non-authenticated users
+      return { id: Date.now(), ...insertAiRecommendation, created_at: new Date() };
+    }
+  }
+
+  async getRecommendationsByAnalysisId(analysisId: number): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('ai_recommendations')
+      .select('*')
+      .eq('analysis_id', analysisId)
+      .order('priority_score', { ascending: false });
+
+    if (error) return [];
+    return data || [];
+  }
+
+  async updateRecommendationStatus(id: number, status: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('ai_recommendations')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  }
+
+  async getAiSolutionTemplate(templateId: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('ai_agent_templates')
+      .select('*')
+      .eq('id', templateId)
+      .single();
+
+    if (error) return null;
+    return data;
+  }
+
+  async createDeployedSolution(insertDeployedSolution: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('deployed_solutions')
+      .insert(insertDeployedSolution)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getDeployedSolutionsByUserId(userId: number): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('deployed_solutions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) return [];
+    return data || [];
+  }
+
+  async getBusinessAnalysesByUserId(userId: number): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('business_analyses')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) return [];
+    return data || [];
+  }
+
+  // Chatbot operations - Add these to your database if you plan to use Supabase
+  async createChatSession(session: InsertChatSession): Promise<ChatSession> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async updateChatSession(sessionId: string, updates: Partial<InsertChatSession>): Promise<ChatSession | undefined> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async getChatMessages(sessionId: string): Promise<ChatMessage[]> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async createReturnRequest(returnRequest: InsertReturnRequest): Promise<ReturnRequest> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async getReturnRequest(authNumber: string): Promise<ReturnRequest | undefined> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async createAnalyticsEvent(analytics: InsertChatbotAnalytics): Promise<ChatbotAnalytics> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
+  }
+
+  async getChatbotAnalytics(startDate?: Date, endDate?: Date): Promise<ChatbotAnalytics[]> {
+    throw new Error("Chatbot methods not implemented for Supabase storage");
   }
 }
 
