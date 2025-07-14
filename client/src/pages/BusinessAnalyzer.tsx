@@ -349,6 +349,7 @@ export default function BusinessAnalyzer() {
                             <th className="text-left p-2">Solution</th>
                             <th className="text-left p-2">Type</th>
                             <th className="text-left p-2">Availability</th>
+                            <th className="text-left p-2">Cost</th>
                             <th className="text-left p-2">Annual Savings</th>
                             <th className="text-left p-2">Priority</th>
                           </tr>
@@ -378,6 +379,9 @@ export default function BusinessAnalyzer() {
                                     </>
                                   )}
                                 </Badge>
+                              </td>
+                              <td className="p-2 font-medium text-orange-600">
+                                $9/month
                               </td>
                               <td className="p-2 font-medium text-green-600">
                                 ${Number(rec.estimatedCostSavings).toLocaleString()}
@@ -591,7 +595,7 @@ export default function BusinessAnalyzer() {
                       <CardContent className="space-y-4">
                         <p className="text-gray-700">{recommendation.description}</p>
 
-                        <div className="grid md:grid-cols-3 gap-4">
+                        <div className="grid md:grid-cols-4 gap-4">
                           <div className="text-center p-4 bg-green-50 rounded-lg">
                             <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
                             <div className="text-2xl font-bold text-green-600">
@@ -614,6 +618,16 @@ export default function BusinessAnalyzer() {
                               {Number(recommendation.roiPercentage)}%
                             </div>
                             <div className="text-sm text-gray-600">ROI</div>
+                          </div>
+
+                          <div className="text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
+                            <div className="w-8 h-8 mx-auto mb-2 bg-orange-500 rounded-full flex items-center justify-center">
+                              <DollarSign className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="text-2xl font-bold text-orange-600">
+                              $9
+                            </div>
+                            <div className="text-sm text-gray-600">per month</div>
                           </div>
                         </div>
 
