@@ -1031,7 +1031,7 @@ export default function BusinessAnalyzer() {
                               className="w-full bg-brand-blue hover:bg-brand-blue/90"
                               onClick={() => {
                                 // Open booking link in new tab
-                                window.open('https://calendly.com/ai-expert-consultation', '_blank');
+                                window.open('https://calendly.com/aiagentstudio9/30min', '_blank');
                               }}
                             >
                               <Clock className="w-4 h-4 mr-2" />
@@ -1211,7 +1211,7 @@ export default function BusinessAnalyzer() {
                               className="w-full bg-brand-blue hover:bg-brand-blue/90"
                               onClick={() => {
                                 // Open booking link in new tab
-                                window.open('https://calendly.com/ai-expert-consultation', '_blank');
+                                window.open('https://calendly.com/aiagentstudio9/30min', '_blank');
                               }}
                             >
                               <Clock className="w-4 h-4 mr-2" />
