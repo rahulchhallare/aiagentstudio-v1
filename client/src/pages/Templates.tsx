@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Bot,
   FileText,
@@ -194,41 +195,40 @@ export default function Templates() {
       <div
         className={`flex-1 ${user ? "ml-0 lg:ml-64" : "ml-0"} transition-all duration-300 overflow-y-auto`}
       >
-        <div className="w-full px-6 py-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-12 text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Agent Templates
-              </h1>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Get started quickly with pre-built agent templates designed for various use cases
-              </p>
-            </div>
+        <div className="container max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              AI Agent Templates
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Get started quickly with pre-built agent templates designed for various use cases and industries
+            </p>
+          </div>
 
-            <div className="space-y-16">
-              {templateCategories.map((category, index) => (
-                <div key={index}>
-                  <div className="mb-8">
-                    <h2 className="text-3xl font-semibold text-gray-900 mb-3">
-                      {category.name}
-                    </h2>
-                    <div className="w-24 h-1 bg-gradient-to-r from-brand-blue to-brand-green rounded"></div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {category.templates.map((template) => (
-                      <div
-                        key={template.id}
-                        className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 hover:shadow-lg hover:border-primary-200 transition-all duration-300 group flex flex-col h-full"
-                      >
-                        <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{template.icon}</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                          {template.name}
-                        </h3>
-                        <p className="text-gray-600 mb-6 leading-relaxed flex-grow">
+          <div className="space-y-16">
+            {templateCategories.map((category, index) => (
+              <div key={index}>
+                <div className="mb-8">
+                  <h2 className="text-3xl font-semibold text-gray-900 mb-3">
+                    {category.name}
+                  </h2>
+                  <div className="w-24 h-1 bg-gradient-to-r from-brand-blue to-brand-green rounded"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {category.templates.map((template) => (
+                    <Card key={template.id} className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <div className="mb-4">{template.icon}</div>
+                        <CardTitle className="text-xl">{template.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CardDescription className="text-gray-600 text-base">
                           {template.description}
-                        </p>
+                        </CardDescription>
+                      </CardContent>
+                      <CardFooter>
                         <Button
-                          className="w-full py-3 text-base font-medium mt-auto"
+                          className="w-full py-3 text-base font-medium"
                           onClick={() => {
                             // Special handling for business analyzer
                             if (template.id === "ba-1") {
@@ -254,11 +254,38 @@ export default function Templates() {
                         >
                           {user ? "Use Template" : "Sign up to use"}
                         </Button>
-                      </div>
-                    ))}
-                  </div>
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Section */}
+          <div className="bg-gradient-to-r from-brand-blue to-brand-green rounded-2xl p-8 md:p-12 mb-16 text-white">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold mb-4">Ready to deploy your AI agent?</h2>
+              <p className="text-lg text-white/90 mb-6 max-w-2xl mx-auto">
+                Choose from our comprehensive library of pre-built AI agent templates and start automating your business processes today.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-brand-blue hover:bg-white/90 hover:text-brand-blue/90"
+                  onClick={() => navigate("/business-analyzer")}
+                >
+                  Analyze Your Business
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10"
+                  onClick={() => navigate("/pricing")}
+                >
+                  View Pricing
+                </Button>
+              </div>
             </div>
           </div>
         </div>
