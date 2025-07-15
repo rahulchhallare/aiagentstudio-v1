@@ -180,6 +180,16 @@ export default function CanvasHome() {
       new: true,
     },
     
+    // LLM SEO Optimizer - positioned prominently after Business Analyzer
+    {
+      id: "llm-seo-optimizer",
+      title: "LLM SEO Optimizer AI Agent",
+      description: "Advanced AI-powered SEO optimization specifically for LLM and generative search engines like ChatGPT Search, Google AI Search, Perplexity, and Claude",
+      category: "operations",
+      new: true,
+      popular: true,
+    },
+    
     // Customer Support & Service Agents
     {
       id: "customer-support-assistant",
@@ -261,14 +271,6 @@ export default function CanvasHome() {
     },
 
     // Operations & Automation Agents
-    {
-      id: "llm-seo-optimizer",
-      title: "LLM SEO Optimizer AI Agent",
-      description: "Advanced AI-powered SEO optimization specifically for LLM and generative search engines like ChatGPT Search, Google AI Search, Perplexity, and Claude",
-      category: "operations",
-      new: true,
-      popular: true,
-    },
     {
       id: "ai-monitoring-dashboard",
       title: "Continuous AI Evaluation & Monitoring Dashboard",
