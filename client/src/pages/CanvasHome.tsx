@@ -17,6 +17,10 @@ import {
   Copy,
   Layout,
   Share,
+  Target,
+  BarChart,
+  Cog,
+  Building,
 } from "lucide-react";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
@@ -30,7 +34,7 @@ interface TemplateCardProps {
   id: string;
   title: string;
   description: string;
-  category: "content" | "customer-support" | "data-processing" | "business-analysis";
+  category: "content" | "customer-support" | "data-processing" | "business-analysis" | "sales-marketing" | "analytics" | "operations" | "industry-specific";
   popular?: boolean;
   new?: boolean;
   onClick: () => void;
@@ -50,6 +54,10 @@ const TemplateCard = ({
     "customer-support": "bg-gradient-to-r from-brand-blue to-primary-600",
     "data-processing": "bg-gradient-to-r from-brand-green to-secondary-600",
     "business-analysis": "bg-gradient-to-r from-purple-600 to-blue-600",
+    "sales-marketing": "bg-gradient-to-r from-emerald-600 to-teal-600",
+    "analytics": "bg-gradient-to-r from-orange-600 to-red-600",
+    "operations": "bg-gradient-to-r from-indigo-600 to-purple-600",
+    "industry-specific": "bg-gradient-to-r from-amber-600 to-orange-600",
   }[category];
 
   const categoryName = {
@@ -57,6 +65,10 @@ const TemplateCard = ({
     "customer-support": "Customer Support",
     "data-processing": "Data Processing",
     "business-analysis": "Business Analysis",
+    "sales-marketing": "Sales & Marketing",
+    "analytics": "Analytics",
+    "operations": "Operations",
+    "industry-specific": "Industry Specific",
   }[category];
 
   const categoryIcon = {
@@ -64,6 +76,10 @@ const TemplateCard = ({
     "customer-support": <Users className="h-5 w-5 mr-1" />,
     "data-processing": <Layout className="h-5 w-5 mr-1" />,
     "business-analysis": <TrendingUp className="h-5 w-5 mr-1" />,
+    "sales-marketing": <Target className="h-5 w-5 mr-1" />,
+    "analytics": <BarChart className="h-5 w-5 mr-1" />,
+    "operations": <Cog className="h-5 w-5 mr-1" />,
+    "industry-specific": <Building className="h-5 w-5 mr-1" />,
   }[category];
 
   return (
