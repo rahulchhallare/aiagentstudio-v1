@@ -1121,6 +1121,8 @@ export default function BusinessAnalyzer() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    <CalendlyBookingWidget />
                   </div>
                 ) : (
                   <div className="space-y-6">
