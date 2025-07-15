@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,19 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Globe, 
-  TrendingUp, 
-  Clock, 
-  DollarSign, 
-  Target, 
+import {
+  Globe,
+  TrendingUp,
+  Clock,
+  DollarSign,
+  Target,
   Zap,
   CheckCircle,
   AlertCircle,
   ArrowRight,
   BarChart3,
   Lightbulb,
-  Rocket
+  Rocket,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -60,7 +60,7 @@ interface AnalysisResult {
     expectedRevenue?: number;
     riskFactors?: string[];
     // New comprehensive analysis features
-    availabilityStatus: 'Available' | 'Missing';
+    availabilityStatus: "Available" | "Missing";
     creationPrompt?: {
       agentName: string;
       purpose: string;
@@ -75,8 +75,12 @@ interface AnalysisResult {
 export default function BusinessAnalyzer() {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [selectedRecommendations, setSelectedRecommendations] = useState<Set<number>>(new Set());
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null,
+  );
+  const [selectedRecommendations, setSelectedRecommendations] = useState<
+    Set<number>
+  >(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -85,7 +89,7 @@ export default function BusinessAnalyzer() {
       toast({
         title: "URL Required",
         description: "Please enter a website URL to analyze",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -94,7 +98,7 @@ export default function BusinessAnalyzer() {
     try {
       const response = await apiRequest("POST", "/api/analyze-website", {
         websiteUrl,
-        userId: user?.id
+        userId: user?.id,
       });
 
       if (response.ok) {
@@ -102,7 +106,7 @@ export default function BusinessAnalyzer() {
         setAnalysisResult(result);
         toast({
           title: "Analysis Complete",
-          description: `Found ${result.recommendations.length} AI solution recommendations for your business`
+          description: `Found ${result.recommendations.length} AI solution recommendations for your business`,
         });
       } else {
         const error = await response.json();
@@ -112,7 +116,7 @@ export default function BusinessAnalyzer() {
       toast({
         title: "Analysis Failed",
         description: error.message || "Failed to analyze website",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsAnalyzing(false);
@@ -121,37 +125,45 @@ export default function BusinessAnalyzer() {
 
   const handleSelectRecommendation = async (id: number) => {
     try {
-      const response = await apiRequest("POST", `/api/recommendations/${id}/select`);
+      const response = await apiRequest(
+        "POST",
+        `/api/recommendations/${id}/select`,
+      );
 
       if (response.ok) {
-        setSelectedRecommendations(prev => new Set([...prev, id]));
+        setSelectedRecommendations((prev) => new Set([...prev, id]));
         toast({
           title: "Recommendation Selected",
-          description: "This solution has been added to your implementation queue"
+          description:
+            "This solution has been added to your implementation queue",
         });
       }
     } catch (error: any) {
       toast({
         title: "Selection Failed",
         description: error.message || "Failed to select recommendation",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'hard': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "easy":
+        return "bg-green-100 text-green-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "hard":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getPriorityColor = (score: number) => {
-    if (score >= 8) return 'bg-red-100 text-red-800';
-    if (score >= 6) return 'bg-orange-100 text-orange-800';
-    return 'bg-blue-100 text-blue-800';
+    if (score >= 8) return "bg-red-100 text-red-800";
+    if (score >= 6) return "bg-orange-100 text-orange-800";
+    return "bg-blue-100 text-blue-800";
   };
 
   return (
@@ -168,7 +180,8 @@ export default function BusinessAnalyzer() {
             <Alert className="max-w-2xl mx-auto mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Please log in to save your analysis results. You can still analyze websites without logging in, but results won't be saved.
+                Please log in to save your analysis results. You can still
+                analyze websites without logging in, but results won't be saved.
               </AlertDescription>
             </Alert>
           )}
@@ -189,7 +202,7 @@ export default function BusinessAnalyzer() {
                       className="flex-1"
                       disabled={isAnalyzing}
                     />
-                    <Button 
+                    <Button
                       onClick={handleAnalyze}
                       disabled={isAnalyzing || !websiteUrl}
                       className="ml-2"
@@ -213,7 +226,8 @@ export default function BusinessAnalyzer() {
                   <div className="space-y-2">
                     <Progress value={33} className="w-full" />
                     <p className="text-sm text-gray-600">
-                      Analyzing website content and identifying AI opportunities...
+                      Analyzing website content and identifying AI
+                      opportunities...
                     </p>
                   </div>
                 )}
@@ -228,7 +242,9 @@ export default function BusinessAnalyzer() {
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="overview">Business Overview</TabsTrigger>
-                <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
+                <TabsTrigger value="recommendations">
+                  AI Recommendations
+                </TabsTrigger>
                 <TabsTrigger value="implementation">Implementation</TabsTrigger>
               </TabsList>
 
@@ -244,8 +260,12 @@ export default function BusinessAnalyzer() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <Label className="text-sm font-medium">Business Name</Label>
-                        <p className="text-lg">{analysisResult.analysis.businessName}</p>
+                        <Label className="text-sm font-medium">
+                          Business Name
+                        </Label>
+                        <p className="text-lg">
+                          {analysisResult.analysis.businessName}
+                        </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium">Type</Label>
@@ -277,12 +297,14 @@ export default function BusinessAnalyzer() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {analysisResult.analysis.painPoints.map((point, index) => (
-                          <div key={index} className="flex items-start">
-                            <div className="w-2 h-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0" />
-                            <span className="text-sm">{point}</span>
-                          </div>
-                        ))}
+                        {analysisResult.analysis.painPoints.map(
+                          (point, index) => (
+                            <div key={index} className="flex items-start">
+                              <div className="w-2 h-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0" />
+                              <span className="text-sm">{point}</span>
+                            </div>
+                          ),
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -296,11 +318,17 @@ export default function BusinessAnalyzer() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {analysisResult.analysis.workflows.map((workflow, index) => (
-                          <Badge key={index} variant="outline" className="mr-2 mb-2">
-                            {workflow}
-                          </Badge>
-                        ))}
+                        {analysisResult.analysis.workflows.map(
+                          (workflow, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="mr-2 mb-2"
+                            >
+                              {workflow}
+                            </Badge>
+                          ),
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -314,12 +342,14 @@ export default function BusinessAnalyzer() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {analysisResult.analysis.keyFeatures.map((feature, index) => (
-                          <div key={index} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
-                          </div>
-                        ))}
+                        {analysisResult.analysis.keyFeatures.map(
+                          (feature, index) => (
+                            <div key={index} className="flex items-start">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                              <span className="text-sm">{feature}</span>
+                            </div>
+                          ),
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -331,8 +361,9 @@ export default function BusinessAnalyzer() {
                 <Alert>
                   <Lightbulb className="h-4 w-4" />
                   <AlertDescription>
-                    These AI solutions are specifically recommended for your business type and identified pain points.
-                    Cost savings are estimated based on industry benchmarks.
+                    These AI solutions are specifically recommended for your
+                    business type and identified pain points. Cost savings are
+                    estimated based on industry benchmarks.
                   </AlertDescription>
                 </Alert>
 
@@ -358,16 +389,102 @@ export default function BusinessAnalyzer() {
                           {analysisResult.recommendations
                             .sort((a, b) => b.priorityScore - a.priorityScore)
                             .map((rec, index) => (
-                            <tr key={rec.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                              <td className="p-2 font-medium">{rec.solutionName}</td>
-                              <td className="p-2">{rec.solutionType}</td>
-                              <td className="p-2">
-                                <Badge 
-                                  className={rec.availabilityStatus === 'Available' 
-                                    ? 'bg-green-100 text-green-800 border-green-300' 
-                                    : 'bg-orange-100 text-orange-800 border-orange-300'}
+                              <tr
+                                key={rec.id}
+                                className={
+                                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                }
+                              >
+                                <td className="p-2 font-medium">
+                                  {rec.solutionName}
+                                </td>
+                                <td className="p-2">{rec.solutionType}</td>
+                                <td className="p-2">
+                                  <Badge
+                                    className={
+                                      rec.availabilityStatus === "Available"
+                                        ? "bg-green-100 text-green-800 border-green-300"
+                                        : "bg-orange-100 text-orange-800 border-orange-300"
+                                    }
+                                  >
+                                    {rec.availabilityStatus === "Available" ? (
+                                      <>
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                        Available
+                                      </>
+                                    ) : (
+                                      <>
+                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                        Missing
+                                      </>
+                                    )}
+                                  </Badge>
+                                </td>
+                                <td className="p-2 font-medium text-orange-600">
+                                  $9/month
+                                </td>
+                                <td className="p-2 font-medium text-green-600">
+                                  $
+                                  {Number(
+                                    rec.estimatedCostSavings,
+                                  ).toLocaleString()}
+                                </td>
+                                <td className="p-2">
+                                  <Badge
+                                    className={getPriorityColor(
+                                      rec.priorityScore,
+                                    )}
+                                  >
+                                    {rec.priorityScore}/10
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-4">
+                  {analysisResult.recommendations
+                    .sort((a, b) => b.priorityScore - a.priorityScore)
+                    .map((recommendation, index) => (
+                      <Card
+                        key={recommendation.id}
+                        className="border-l-4 border-l-blue-500"
+                      >
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-xl">
+                                {recommendation.solutionName}
+                              </CardTitle>
+                              <div className="flex gap-2 mt-2">
+                                <Badge
+                                  className={getPriorityColor(
+                                    recommendation.priorityScore,
+                                  )}
                                 >
-                                  {rec.availabilityStatus === 'Available' ? (
+                                  Priority: {recommendation.priorityScore}/10
+                                </Badge>
+                                <Badge
+                                  className={getDifficultyColor(
+                                    recommendation.implementationDifficulty,
+                                  )}
+                                >
+                                  {recommendation.implementationDifficulty}
+                                </Badge>
+                                <Badge
+                                  className={
+                                    recommendation.availabilityStatus ===
+                                    "Available"
+                                      ? "bg-green-100 text-green-800 border-green-300"
+                                      : "bg-orange-100 text-orange-800 border-orange-300"
+                                  }
+                                >
+                                  {recommendation.availabilityStatus ===
+                                  "Available" ? (
                                     <>
                                       <CheckCircle className="w-3 h-3 mr-1" />
                                       Available
@@ -379,439 +496,368 @@ export default function BusinessAnalyzer() {
                                     </>
                                   )}
                                 </Badge>
-                              </td>
-                              <td className="p-2 font-medium text-orange-600">
-                                $9/month
-                              </td>
-                              <td className="p-2 font-medium text-green-600">
-                                ${Number(rec.estimatedCostSavings).toLocaleString()}
-                              </td>
-                              <td className="p-2">
-                                <Badge className={getPriorityColor(rec.priorityScore)}>
-                                  {rec.priorityScore}/10
-                                </Badge>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Pricing Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5" />
-                      Pricing Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Individual Pricing */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Individual AI Agent Pricing</h4>
-                        <div className="space-y-3">
-                          {analysisResult.recommendations
-                            .sort((a, b) => b.priorityScore - a.priorityScore)
-                            .map((rec, index) => {
-                              const monthlyPrice = 9; // Fixed price: $9/month
-                              const yearlyPrice = monthlyPrice * 12;
-                              return (
-                                <div key={rec.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                  <div>
-                                    <div className="font-medium">{rec.solutionName}</div>
-                                    <div className="text-sm text-gray-600">{rec.solutionType}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-blue-600">${yearlyPrice}/year</div>
-                                    <div className="text-xs text-gray-500">${monthlyPrice}/month</div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          <div className="border-t pt-3">
-                            <div className="flex justify-between items-center font-semibold">
-                              <span>Total Individual Cost:</span>
-                              <span className="text-blue-600">
-                                ${(analysisResult.recommendations.length * 9 * 12).toLocaleString()}/year
-                              </span>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Subscription Pricing */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">All-Inclusive Subscription</h4>
-                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
-                          <div className="text-center">
-                            <div className="text-sm text-purple-600 font-medium mb-2">RECOMMENDED</div>
-                            <div className="text-3xl font-bold text-purple-700 mb-2">
-                              ${Math.round(analysisResult.recommendations.length * 9 * 12 * 0.65).toLocaleString()}/year
-                            </div>
-                            <div className="text-purple-600 mb-4">
-                              ${Math.round(analysisResult.recommendations.length * 9 * 0.65).toLocaleString()}/month
-                            </div>
-                            <div className="text-sm text-gray-600 mb-4">
-                              Access to all {analysisResult.recommendations.length} AI agents
-                            </div>
-                            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
-                              Save 35% 
-                              (${Math.round(analysisResult.recommendations.length * 9 * 12 * 0.35).toLocaleString()}/year)
-                            </div>
-                          </div>
-                          <div className="mt-4 space-y-2">
-                            <div className="flex items-center text-sm text-gray-700">
-                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                              All AI agents included
-                            </div>
-                            <div className="flex items-center text-sm text-gray-700">
-                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                              Priority support & updates
-                            </div>
-                            <div className="flex items-center text-sm text-gray-700">
-                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                              Custom integrations
-                            </div>
-                            <div className="flex items-center text-sm text-gray-700">
-                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                              Performance monitoring
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* ROI Summary */}
-                    <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-semibold text-lg mb-3 flex items-center">
-                        <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-                        Return on Investment
-                      </h4>
-                      <div className="grid md:grid-cols-3 gap-4 text-center">
-                        <div>
-                          <div className="text-2xl font-bold text-green-600">
-                            ${analysisResult.recommendations
-                              .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0)
-                              .toLocaleString()}
-                          </div>
-                          <div className="text-sm text-gray-600">Total Annual Savings</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-green-600">
-                            {Math.round(analysisResult.recommendations
-                              .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0) /
-                              (analysisResult.recommendations.length * 9 * 12 * 0.65))}x
-                          </div>
-                          <div className="text-sm text-gray-600">ROI Multiplier</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-green-600">
-                            {Math.round((analysisResult.recommendations
-                              .reduce((sum, rec) => sum + Number(rec.estimatedCostSavings), 0) /
-                              (analysisResult.recommendations.length * 9 * 12 * 0.65) - 1) * 100)}%
-                          </div>
-                          <div className="text-sm text-gray-600">Annual ROI</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="space-y-4">
-                  {analysisResult.recommendations
-                    .sort((a, b) => b.priorityScore - a.priorityScore)
-                    .map((recommendation, index) => (
-                    <Card key={recommendation.id} className="border-l-4 border-l-blue-500">
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-xl">
-                              {recommendation.solutionName}
-                            </CardTitle>
-                            <div className="flex gap-2 mt-2">
-                              <Badge 
-                                className={getPriorityColor(recommendation.priorityScore)}
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() =>
+                                  (window.location.href = `/agent-deployment?recommendation=${recommendation.id}&name=${encodeURIComponent(recommendation.solutionName)}`)
+                                }
+                                variant="default"
+                                size="sm"
+                                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                               >
-                                Priority: {recommendation.priorityScore}/10
-                              </Badge>
-                              <Badge 
-                                className={getDifficultyColor(recommendation.implementationDifficulty)}
+                                <Rocket className="w-4 h-4 mr-2" />
+                                Deploy Agent
+                              </Button>
+                              <Button
+                                onClick={() =>
+                                  handleSelectRecommendation(recommendation.id)
+                                }
+                                disabled={selectedRecommendations.has(
+                                  recommendation.id,
+                                )}
+                                variant={
+                                  selectedRecommendations.has(recommendation.id)
+                                    ? "outline"
+                                    : "secondary"
+                                }
+                                size="sm"
                               >
-                                {recommendation.implementationDifficulty}
-                              </Badge>
-                              <Badge 
-                                className={recommendation.availabilityStatus === 'Available' 
-                                  ? 'bg-green-100 text-green-800 border-green-300' 
-                                  : 'bg-orange-100 text-orange-800 border-orange-300'}
-                              >
-                                {recommendation.availabilityStatus === 'Available' ? (
+                                {selectedRecommendations.has(
+                                  recommendation.id,
+                                ) ? (
                                   <>
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                    Available
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Selected
                                   </>
                                 ) : (
                                   <>
-                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                    Missing
+                                    Select
+                                    <ArrowRight className="w-4 h-4 ml-2" />
                                   </>
                                 )}
-                              </Badge>
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => window.location.href = `/agent-deployment?recommendation=${recommendation.id}&name=${encodeURIComponent(recommendation.solutionName)}`}
-                              variant="default"
-                              size="sm"
-                              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                            >
-                              <Rocket className="w-4 h-4 mr-2" />
-                              Deploy Agent
-                            </Button>
-                            <Button
-                              onClick={() => handleSelectRecommendation(recommendation.id)}
-                              disabled={selectedRecommendations.has(recommendation.id)}
-                              variant={selectedRecommendations.has(recommendation.id) ? "outline" : "secondary"}
-                              size="sm"
-                            >
-                              {selectedRecommendations.has(recommendation.id) ? (
-                                <>
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Selected
-                                </>
-                              ) : (
-                                <>
-                                  Select
-                                  <ArrowRight className="w-4 h-4 ml-2" />
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-gray-700">{recommendation.description}</p>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <p className="text-gray-700">
+                            {recommendation.description}
+                          </p>
 
-                        <div className="grid md:grid-cols-4 gap-4">
-                          <div className="text-center p-4 bg-green-50 rounded-lg">
-                            <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-green-600">
-                              ${Number(recommendation.estimatedCostSavings).toLocaleString()}
-                            </div>
-                            <div className="text-sm text-gray-600">Annual Savings</div>
-                          </div>
-
-                          <div className="text-center p-4 bg-blue-50 rounded-lg">
-                            <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-blue-600">
-                              {recommendation.estimatedTimeSavings}
-                            </div>
-                            <div className="text-sm text-gray-600">Time Saved</div>
-                          </div>
-
-                          <div className="text-center p-4 bg-purple-50 rounded-lg">
-                            <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                            <div className="text-2xl font-bold text-purple-600">
-                              {Number(recommendation.roiPercentage)}%
-                            </div>
-                            <div className="text-sm text-gray-600">ROI</div>
-                          </div>
-
-                          <div className="text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
-                            <div className="w-8 h-8 mx-auto mb-2 bg-orange-500 rounded-full flex items-center justify-center">
-                              <DollarSign className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="text-2xl font-bold text-orange-600">
-                              $9
-                            </div>
-                            <div className="text-sm text-gray-600">per month</div>
-                          </div>
-                        </div>
-
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="font-medium mb-2">Why this solution fits your business:</h4>
-                          <p className="text-sm text-gray-700">{recommendation.reasoning}</p>
-                        </div>
-
-                        {/* Enhanced Features Section */}
-                        <div className="space-y-4">
-                          {/* RAG Evidence */}
-                          {recommendation.ragEvidence && recommendation.ragEvidence.length > 0 && (
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
-                                <BarChart3 className="w-4 h-4 mr-2 text-blue-600" />
-                                Research Evidence
-                              </h4>
-                              <ul className="text-sm text-gray-700 space-y-1">
-                                {recommendation.ragEvidence.map((evidence, idx) => (
-                                  <li key={idx} className="flex items-start">
-                                    <span className="text-blue-600 mr-2">•</span>
-                                    {evidence}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Case Studies */}
-                          {recommendation.caseStudies && recommendation.caseStudies.length > 0 && (
-                            <div className="bg-green-50 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
-                                <Lightbulb className="w-4 h-4 mr-2 text-green-600" />
-                                Success Stories
-                              </h4>
-                              <ul className="text-sm text-gray-700 space-y-1">
-                                {recommendation.caseStudies.map((caseStudy, idx) => (
-                                  <li key={idx} className="flex items-start">
-                                    <span className="text-green-600 mr-2">•</span>
-                                    {caseStudy}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Implementation Details */}
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {recommendation.implementationTimeline && (
-                              <div className="bg-purple-50 p-4 rounded-lg">
-                                <h4 className="font-medium mb-2 flex items-center">
-                                  <Clock className="w-4 h-4 mr-2 text-purple-600" />
-                                  Timeline
-                                </h4>
-                                <p className="text-sm text-gray-700">{recommendation.implementationTimeline}</p>
+                          <div className="grid md:grid-cols-4 gap-4">
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                              <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                              <div className="text-2xl font-bold text-green-600">
+                                $
+                                {Number(
+                                  recommendation.estimatedCostSavings,
+                                ).toLocaleString()}
                               </div>
-                            )}
+                              <div className="text-sm text-gray-600">
+                                Annual Savings
+                              </div>
+                            </div>
 
-                            {recommendation.expectedRevenue && (
-                              <div className="bg-orange-50 p-4 rounded-lg">
+                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                              <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                              <div className="text-2xl font-bold text-blue-600">
+                                {recommendation.estimatedTimeSavings}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Time Saved
+                              </div>
+                            </div>
+
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                              <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                              <div className="text-2xl font-bold text-purple-600">
+                                {Number(recommendation.roiPercentage)}%
+                              </div>
+                              <div className="text-sm text-gray-600">ROI</div>
+                            </div>
+
+                            <div className="text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
+                              <div className="w-8 h-8 mx-auto mb-2 bg-orange-500 rounded-full flex items-center justify-center">
+                                <DollarSign className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="text-2xl font-bold text-orange-600">
+                                $9
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                per month
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium mb-2">
+                              Why this solution fits your business:
+                            </h4>
+                            <p className="text-sm text-gray-700">
+                              {recommendation.reasoning}
+                            </p>
+                          </div>
+
+                          {/* Enhanced Features Section */}
+                          <div className="space-y-4">
+                            {/* RAG Evidence */}
+                            {recommendation.ragEvidence &&
+                              recommendation.ragEvidence.length > 0 && (
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <BarChart3 className="w-4 h-4 mr-2 text-blue-600" />
+                                    Research Evidence
+                                  </h4>
+                                  <ul className="text-sm text-gray-700 space-y-1">
+                                    {recommendation.ragEvidence.map(
+                                      (evidence, idx) => (
+                                        <li
+                                          key={idx}
+                                          className="flex items-start"
+                                        >
+                                          <span className="text-blue-600 mr-2">
+                                            •
+                                          </span>
+                                          {evidence}
+                                        </li>
+                                      ),
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+
+                            {/* Case Studies */}
+                            {recommendation.caseStudies &&
+                              recommendation.caseStudies.length > 0 && (
+                                <div className="bg-green-50 p-4 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <Lightbulb className="w-4 h-4 mr-2 text-green-600" />
+                                    Success Stories
+                                  </h4>
+                                  <ul className="text-sm text-gray-700 space-y-1">
+                                    {recommendation.caseStudies.map(
+                                      (caseStudy, idx) => (
+                                        <li
+                                          key={idx}
+                                          className="flex items-start"
+                                        >
+                                          <span className="text-green-600 mr-2">
+                                            •
+                                          </span>
+                                          {caseStudy}
+                                        </li>
+                                      ),
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+
+                            {/* Implementation Details */}
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {recommendation.implementationTimeline && (
+                                <div className="bg-purple-50 p-4 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <Clock className="w-4 h-4 mr-2 text-purple-600" />
+                                    Timeline
+                                  </h4>
+                                  <p className="text-sm text-gray-700">
+                                    {recommendation.implementationTimeline}
+                                  </p>
+                                </div>
+                              )}
+
+                              {recommendation.expectedRevenue && (
+                                <div className="bg-orange-50 p-4 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <TrendingUp className="w-4 h-4 mr-2 text-orange-600" />
+                                    Expected Revenue
+                                  </h4>
+                                  <p className="text-sm font-semibold text-orange-700">
+                                    $
+                                    {Number(
+                                      recommendation.expectedRevenue,
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Compliance & Ethics */}
+                            {recommendation.complianceRequirements &&
+                              recommendation.complianceRequirements.length >
+                                0 && (
+                                <div className="bg-yellow-50 p-4 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
+                                    Compliance Requirements
+                                  </h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {recommendation.complianceRequirements.map(
+                                      (requirement, idx) => (
+                                        <Badge
+                                          key={idx}
+                                          variant="outline"
+                                          className="text-yellow-700 border-yellow-300"
+                                        >
+                                          {requirement}
+                                        </Badge>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                            {/* Ethical Considerations */}
+                            {recommendation.ethicalConsiderations && (
+                              <div className="bg-indigo-50 p-4 rounded-lg">
                                 <h4 className="font-medium mb-2 flex items-center">
-                                  <TrendingUp className="w-4 h-4 mr-2 text-orange-600" />
-                                  Expected Revenue
+                                  <AlertCircle className="w-4 h-4 mr-2 text-indigo-600" />
+                                  Ethical Considerations
                                 </h4>
-                                <p className="text-sm font-semibold text-orange-700">
-                                  ${Number(recommendation.expectedRevenue).toLocaleString()}
+                                <p className="text-sm text-gray-700">
+                                  {recommendation.ethicalConsiderations}
                                 </p>
                               </div>
                             )}
+
+                            {/* Monitoring Metrics */}
+                            {recommendation.monitoringMetrics &&
+                              recommendation.monitoringMetrics.length > 0 && (
+                                <div className="bg-teal-50 p-4 rounded-lg">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <BarChart3 className="w-4 h-4 mr-2 text-teal-600" />
+                                    Key Performance Metrics
+                                  </h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {recommendation.monitoringMetrics.map(
+                                      (metric, idx) => (
+                                        <Badge
+                                          key={idx}
+                                          variant="outline"
+                                          className="text-teal-700 border-teal-300"
+                                        >
+                                          {metric}
+                                        </Badge>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                            {/* Creation Prompt for Missing Agents */}
+                            {recommendation.availabilityStatus === "Missing" &&
+                              recommendation.creationPrompt && (
+                                <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
+                                  <h4 className="font-medium mb-3 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                                    Agent Creation Prompt
+                                  </h4>
+                                  <div className="space-y-3">
+                                    <div>
+                                      <p className="text-sm font-medium text-orange-800">
+                                        Agent Name:
+                                      </p>
+                                      <p className="text-sm text-gray-700">
+                                        {
+                                          recommendation.creationPrompt
+                                            .agentName
+                                        }
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-orange-800">
+                                        Purpose:
+                                      </p>
+                                      <p className="text-sm text-gray-700">
+                                        {recommendation.creationPrompt.purpose}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-orange-800">
+                                        Key Workflows:
+                                      </p>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {recommendation.creationPrompt.keyWorkflows.map(
+                                          (workflow, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="text-orange-700 border-orange-300 text-xs"
+                                            >
+                                              {workflow}
+                                            </Badge>
+                                          ),
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-orange-800">
+                                        Required Integrations:
+                                      </p>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {recommendation.creationPrompt.requiredIntegrations.map(
+                                          (integration, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="text-orange-700 border-orange-300 text-xs"
+                                            >
+                                              {integration}
+                                            </Badge>
+                                          ),
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-orange-800">
+                                        Customization Options:
+                                      </p>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {recommendation.creationPrompt.customizationOptions.map(
+                                          (option, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="text-orange-700 border-orange-300 text-xs"
+                                            >
+                                              {option}
+                                            </Badge>
+                                          ),
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-orange-800">
+                                        Performance Metrics:
+                                      </p>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {recommendation.creationPrompt.performanceMetrics.map(
+                                          (metric, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="text-orange-700 border-orange-300 text-xs"
+                                            >
+                                              {metric}
+                                            </Badge>
+                                          ),
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                           </div>
 
-                          {/* Compliance & Ethics */}
-                          {recommendation.complianceRequirements && recommendation.complianceRequirements.length > 0 && (
-                            <div className="bg-yellow-50 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
-                                <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
-                                Compliance Requirements
-                              </h4>
-                              <div className="flex flex-wrap gap-2">
-                                {recommendation.complianceRequirements.map((requirement, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-yellow-700 border-yellow-300">
-                                    {requirement}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Ethical Considerations */}
-                          {recommendation.ethicalConsiderations && (
-                            <div className="bg-indigo-50 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
-                                <AlertCircle className="w-4 h-4 mr-2 text-indigo-600" />
-                                Ethical Considerations
-                              </h4>
-                              <p className="text-sm text-gray-700">{recommendation.ethicalConsiderations}</p>
-                            </div>
-                          )}
-
-                          {/* Monitoring Metrics */}
-                          {recommendation.monitoringMetrics && recommendation.monitoringMetrics.length > 0 && (
-                            <div className="bg-teal-50 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
-                                <BarChart3 className="w-4 h-4 mr-2 text-teal-600" />
-                                Key Performance Metrics
-                              </h4>
-                              <div className="flex flex-wrap gap-2">
-                                {recommendation.monitoringMetrics.map((metric, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-teal-700 border-teal-300">
-                                    {metric}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Creation Prompt for Missing Agents */}
-                          {recommendation.availabilityStatus === 'Missing' && recommendation.creationPrompt && (
-                            <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
-                              <h4 className="font-medium mb-3 flex items-center">
-                                <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
-                                Agent Creation Prompt
-                              </h4>
-                              <div className="space-y-3">
-                                <div>
-                                  <p className="text-sm font-medium text-orange-800">Agent Name:</p>
-                                  <p className="text-sm text-gray-700">{recommendation.creationPrompt.agentName}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-orange-800">Purpose:</p>
-                                  <p className="text-sm text-gray-700">{recommendation.creationPrompt.purpose}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-orange-800">Key Workflows:</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {recommendation.creationPrompt.keyWorkflows.map((workflow, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
-                                        {workflow}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-orange-800">Required Integrations:</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {recommendation.creationPrompt.requiredIntegrations.map((integration, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
-                                        {integration}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-orange-800">Customization Options:</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {recommendation.creationPrompt.customizationOptions.map((option, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
-                                        {option}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-orange-800">Performance Metrics:</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {recommendation.creationPrompt.performanceMetrics.map((metric, idx) => (
-                                      <Badge key={idx} variant="outline" className="text-orange-700 border-orange-300 text-xs">
-                                        {metric}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                        </div>
-
-                        <div className="text-sm text-gray-600 pt-4 border-t">
-                          <strong>Industry Benchmark:</strong> {recommendation.industryBenchmark}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          <div className="text-sm text-gray-600 pt-4 border-t">
+                            <strong>Industry Benchmark:</strong>{" "}
+                            {recommendation.industryBenchmark}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                 </div>
               </TabsContent>
 
@@ -821,27 +867,36 @@ export default function BusinessAnalyzer() {
                   <Card>
                     <CardContent className="pt-6 text-center">
                       <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Select Solutions to Implement</h3>
+                      <h3 className="text-lg font-medium mb-2">
+                        Select Solutions to Implement
+                      </h3>
                       <p className="text-gray-600">
-                        Go to the Recommendations tab and select the AI solutions you'd like to deploy.
+                        Go to the Recommendations tab and select the AI
+                        solutions you'd like to deploy.
                       </p>
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                    <h3 className="text-xl font-semibold">Ready for Implementation</h3>
+                    <h3 className="text-xl font-semibold">
+                      Ready for Implementation
+                    </h3>
                     <p className="text-gray-600">
-                      You've selected {selectedRecommendations.size} AI solution(s) for implementation.
-                      Our guided setup process will help you deploy these solutions quickly.
+                      You've selected {selectedRecommendations.size} AI
+                      solution(s) for implementation. Our guided setup process
+                      will help you deploy these solutions quickly.
                     </p>
 
                     <Card>
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-medium">Next: Guided Setup Process</h4>
+                            <h4 className="font-medium">
+                              Next: Guided Setup Process
+                            </h4>
                             <p className="text-sm text-gray-600">
-                              Configure and deploy your selected AI solutions with step-by-step guidance
+                              Configure and deploy your selected AI solutions
+                              with step-by-step guidance
                             </p>
                           </div>
                           <Button size="lg">
@@ -855,6 +910,13 @@ export default function BusinessAnalyzer() {
                 )}
               </TabsContent>
             </Tabs>
+            
+            {/* Disclaimer Footer */}
+            <div className="mt-8 p-4 bg-gray-50 border-t border-gray-200 rounded-lg">
+              <p className="text-sm text-gray-600 text-center">
+                This Analysis, including all recommendations and financial projections, has been crafted by AI Business Analyzer. All estimations are AI-generated.
+              </p>
+            </div>
           </div>
         )}
       </div>
