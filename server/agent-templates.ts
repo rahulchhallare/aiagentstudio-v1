@@ -371,6 +371,79 @@ export const analyticsAgents: AgentTemplate[] = [
 // Operations & Automation Agents
 export const operationsAgents: AgentTemplate[] = [
   {
+    id: "llm-seo-optimizer",
+    name: "LLM SEO Optimizer AI Agent",
+    description: "Advanced AI-powered SEO optimization specifically for LLM and generative search engines like ChatGPT Search, Google AI Search, Perplexity, and Claude",
+    solutionType: "LLM SEO Optimization",
+    industry: ["All Industries"],
+    capabilities: ["Content Optimization", "Schema Markup", "AI Readability Enhancement", "Semantic Structure", "Entity Recognition"],
+    integrationRequirements: ["Website CMS", "Analytics Tools", "SEO Tools", "Content Management System"],
+    pricingModel: "Subscription",
+    estimatedCostSavings: 25000,
+    estimatedTimeSavings: "15 hours/week",
+    implementationDifficulty: "medium",
+    roiPercentage: 320,
+    flowData: {
+      nodes: [
+        {
+          id: "input-1",
+          type: "inputNode",
+          position: { x: 100, y: 100 },
+          data: { label: "Website Content Input" }
+        },
+        {
+          id: "content-analysis-1",
+          type: "gptNode",
+          position: { x: 300, y: 100 },
+          data: {
+            label: "LLM SEO Content Analysis",
+            prompt: "Analyze website content for LLM SEO optimization. Evaluate: 1) Content quality for AI understanding, 2) Structured data implementation, 3) Semantic clarity, 4) Entity recognition potential, 5) AI readability score. Provide detailed recommendations for each factor."
+          }
+        },
+        {
+          id: "optimization-1",
+          type: "gptNode",
+          position: { x: 500, y: 100 },
+          data: {
+            label: "Content Optimization",
+            prompt: "Generate optimized content versions that perform better in AI search engines. Focus on: clear semantic structure, entity-rich content, FAQ sections, and structured data markup. Maintain readability while enhancing AI comprehension."
+          }
+        },
+        {
+          id: "schema-generation-1",
+          type: "gptNode",
+          position: { x: 700, y: 100 },
+          data: {
+            label: "Schema Markup Generation",
+            prompt: "Generate appropriate schema markup (JSON-LD) for the content to enhance AI search engine understanding. Include Organization, Product, Service, FAQ, and other relevant schema types."
+          }
+        },
+        {
+          id: "performance-tracking-1",
+          type: "gptNode",
+          position: { x: 900, y: 100 },
+          data: {
+            label: "LLM SEO Performance Tracking",
+            prompt: "Track and analyze performance metrics for LLM SEO including: AI search visibility, content citation rates, entity recognition accuracy, and semantic search performance. Provide improvement recommendations."
+          }
+        },
+        {
+          id: "output-1",
+          type: "outputNode",
+          position: { x: 1100, y: 100 },
+          data: { label: "LLM SEO Optimization Report" }
+        }
+      ],
+      edges: [
+        { id: "e1", source: "input-1", target: "content-analysis-1" },
+        { id: "e2", source: "content-analysis-1", target: "optimization-1" },
+        { id: "e3", source: "optimization-1", target: "schema-generation-1" },
+        { id: "e4", source: "schema-generation-1", target: "performance-tracking-1" },
+        { id: "e5", source: "performance-tracking-1", target: "output-1" }
+      ]
+    }
+  },
+  {
     id: "ai-monitoring-dashboard",
     name: "Continuous AI Evaluation & Monitoring Dashboard",
     description: "Real-time monitoring of all AI solutions' performance, ROI tracking, bias detection, and continuous improvement recommendations",

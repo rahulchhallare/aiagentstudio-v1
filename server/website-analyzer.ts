@@ -16,6 +16,18 @@ export interface WebsiteAnalysisResult {
   keyFeatures: string[];
   targetAudience: string;
   currentTech: string[];
+  llmSearchRanking: {
+    score: number;
+    grade: string;
+    factors: {
+      contentQuality: number;
+      structuredData: number;
+      aiReadability: number;
+      semanticClarity: number;
+      entityRecognition: number;
+    };
+    recommendations: string[];
+  };
 }
 
 export class WebsiteAnalyzer {
@@ -195,6 +207,119 @@ export class WebsiteAnalyzer {
     };
   }
 
+  private calculateLLMSearchRanking(content: any, analysis: any): {
+    score: number;
+    grade: string;
+    factors: {
+      contentQuality: number;
+      structuredData: number;
+      aiReadability: number;
+      semanticClarity: number;
+      entityRecognition: number;
+    };
+    recommendations: string[];
+  } {
+    const factors = {
+      contentQuality: 0,
+      structuredData: 0,
+      aiReadability: 0,
+      semanticClarity: 0,
+      entityRecognition: 0
+    };
+
+    const recommendations: string[] = [];
+
+    // Content Quality Score (0-100)
+    let contentScore = 0;
+    if (content.title && content.title.length > 10) contentScore += 20;
+    if (content.metaDescription && content.metaDescription.length > 50) contentScore += 15;
+    if (content.headings && content.headings.length >= 3) contentScore += 15;
+    if (content.mainContent && content.mainContent.length > 500) contentScore += 25;
+    if (content.images && content.images.length > 0) contentScore += 15;
+    if (content.links && content.links.length > 3) contentScore += 10;
+    factors.contentQuality = Math.min(100, contentScore);
+
+    // Structured Data Score (0-100)
+    let structuredScore = 0;
+    if (content.title) structuredScore += 30;
+    if (content.metaDescription) structuredScore += 30;
+    if (content.headings && content.headings.length > 0) structuredScore += 25;
+    if (content.navigationItems && content.navigationItems.length > 0) structuredScore += 15;
+    factors.structuredData = Math.min(100, structuredScore);
+
+    // AI Readability Score (0-100)
+    let readabilityScore = 0;
+    if (analysis.businessName && analysis.businessName !== 'Unknown') readabilityScore += 25;
+    if (analysis.businessType && analysis.businessType !== 'Unknown') readabilityScore += 25;
+    if (analysis.industry && analysis.industry !== 'Unknown') readabilityScore += 20;
+    if (analysis.keyFeatures && analysis.keyFeatures.length > 0) readabilityScore += 20;
+    if (analysis.targetAudience && analysis.targetAudience.length > 10) readabilityScore += 10;
+    factors.aiReadability = Math.min(100, readabilityScore);
+
+    // Semantic Clarity Score (0-100)
+    let semanticScore = 0;
+    if (analysis.contentSummary && analysis.contentSummary.length > 20) semanticScore += 40;
+    if (analysis.workflows && analysis.workflows.length > 0) semanticScore += 30;
+    if (analysis.painPoints && analysis.painPoints.length > 0) semanticScore += 30;
+    factors.semanticClarity = Math.min(100, semanticScore);
+
+    // Entity Recognition Score (0-100)
+    let entityScore = 0;
+    if (analysis.businessName && analysis.businessName !== 'Unknown') entityScore += 30;
+    if (analysis.industry && analysis.industry !== 'Unknown') entityScore += 25;
+    if (analysis.currentTech && analysis.currentTech.length > 0) entityScore += 25;
+    if (analysis.targetAudience && analysis.targetAudience.length > 0) entityScore += 20;
+    factors.entityRecognition = Math.min(100, entityScore);
+
+    // Calculate overall score
+    const overallScore = Math.round(
+      (factors.contentQuality * 0.25) +
+      (factors.structuredData * 0.20) +
+      (factors.aiReadability * 0.25) +
+      (factors.semanticClarity * 0.15) +
+      (factors.entityRecognition * 0.15)
+    );
+
+    // Generate grade
+    let grade = 'F';
+    if (overallScore >= 90) grade = 'A+';
+    else if (overallScore >= 85) grade = 'A';
+    else if (overallScore >= 80) grade = 'A-';
+    else if (overallScore >= 75) grade = 'B+';
+    else if (overallScore >= 70) grade = 'B';
+    else if (overallScore >= 65) grade = 'B-';
+    else if (overallScore >= 60) grade = 'C+';
+    else if (overallScore >= 55) grade = 'C';
+    else if (overallScore >= 50) grade = 'C-';
+    else if (overallScore >= 45) grade = 'D+';
+    else if (overallScore >= 40) grade = 'D';
+    else if (overallScore >= 35) grade = 'D-';
+
+    // Generate recommendations
+    if (factors.contentQuality < 70) {
+      recommendations.push("Improve content quality with longer, more descriptive text");
+    }
+    if (factors.structuredData < 70) {
+      recommendations.push("Add more structured data elements (headings, meta descriptions)");
+    }
+    if (factors.aiReadability < 70) {
+      recommendations.push("Make business information more explicit and clear");
+    }
+    if (factors.semanticClarity < 70) {
+      recommendations.push("Clarify business processes and pain points");
+    }
+    if (factors.entityRecognition < 70) {
+      recommendations.push("Include more specific industry and technology information");
+    }
+
+    return {
+      score: overallScore,
+      grade,
+      factors,
+      recommendations: recommendations.slice(0, 3) // Top 3 recommendations
+    };
+  }
+
   private async analyzeContentWithAI(content: any, url: string): Promise<WebsiteAnalysisResult> {
     try {
       // Try Gemini first as it has unlimited free access
@@ -211,7 +336,9 @@ Main Content: ${content.mainContent}
 Image Alt Texts: ${content.images.join(', ')}
 Key Links: ${content.links.join(', ')}`;
 
-        return await gemini.analyzeWebsite(websiteContent, url);
+        const analysis = await gemini.analyzeWebsite(websiteContent, url);
+        const llmSearchRanking = this.calculateLLMSearchRanking(content, analysis);
+        return { ...analysis, llmSearchRanking };
       }
     } catch (geminiError) {
       console.error('Gemini failed, trying OpenAI as backup:', geminiError);
@@ -274,7 +401,7 @@ Focus on being specific and actionable. Identify real business challenges that A
           const analysis = JSON.parse(analysisText);
 
           // Validate and clean the response
-          return {
+          const cleanedAnalysis = {
             businessType: analysis.businessType || 'Unknown',
             businessName: analysis.businessName || 'Unknown',
             industry: analysis.industry || 'Unknown',
@@ -285,6 +412,9 @@ Focus on being specific and actionable. Identify real business challenges that A
             targetAudience: analysis.targetAudience || '',
             currentTech: Array.isArray(analysis.currentTech) ? analysis.currentTech : []
           };
+          
+          const llmSearchRanking = this.calculateLLMSearchRanking(content, cleanedAnalysis);
+          return { ...cleanedAnalysis, llmSearchRanking };
         } catch (error) {
           console.error('Failed to parse AI analysis response:', error);
           throw new Error('Failed to parse analysis results');
@@ -309,7 +439,9 @@ Main Content: ${content.mainContent}
 Image Alt Texts: ${content.images.join(', ')}
 Key Links: ${content.links.join(', ')}`;
 
-        return await deepSeek.analyzeWebsite(websiteContent, url);
+        const analysis = await deepSeek.analyzeWebsite(websiteContent, url);
+        const llmSearchRanking = this.calculateLLMSearchRanking(content, analysis);
+        return { ...analysis, llmSearchRanking };
       }
     } catch (deepSeekError) {
       console.error('DeepSeek also failed, trying AI/ML API as final backup:', deepSeekError);
@@ -330,7 +462,9 @@ Main Content: ${content.mainContent}
 Image Alt Texts: ${content.images.join(', ')}
 Key Links: ${content.links.join(', ')}`;
 
-        return await aiml.analyzeWebsite(websiteContent, url);
+        const analysis = await aiml.analyzeWebsite(websiteContent, url);
+        const llmSearchRanking = this.calculateLLMSearchRanking(content, analysis);
+        return { ...analysis, llmSearchRanking };
       }
     } catch (aimlError) {
       console.error('All AI providers exhausted, falling back to demo analysis:', aimlError);
@@ -338,7 +472,9 @@ Key Links: ${content.links.join(', ')}`;
 
     // If all providers fail, use demo analysis as final fallback
     console.log('All AI providers exhausted, using demo analysis as final fallback');
-    return this.generateDemoAnalysis(url, content);
+    const analysis = this.generateDemoAnalysis(url, content);
+    const llmSearchRanking = this.calculateLLMSearchRanking(content, analysis);
+    return { ...analysis, llmSearchRanking };
   }
 
   private generateDemoAnalysis(url: string, extractedContent: any): WebsiteAnalysisResult {

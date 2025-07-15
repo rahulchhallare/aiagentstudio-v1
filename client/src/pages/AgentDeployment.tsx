@@ -281,41 +281,9 @@ export default function AgentDeployment() {
                   </Card>
                 ))}
               </div>
-            ) : (
+            ) : agentTemplates?.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Demo templates since we don't have real ones yet */}
-                {[
-                  {
-                    id: 1,
-                    name: "Customer Support Assistant",
-                    description: "24/7 automated customer service with advanced sentiment analysis",
-                    solution_type: "Customer Support",
-                    industry: "E-commerce",
-                    capabilities: ["Order Tracking", "Returns Processing", "FAQ Handling", "Human Escalation"],
-                    integration_requirements: ["Website Integration", "CRM Connection", "Email System"],
-                    pricing_model: "Usage-based"
-                  },
-                  {
-                    id: 2,
-                    name: "Predictive Analytics Engine",
-                    description: "AI-powered business forecasting and trend analysis",
-                    solution_type: "Analytics",
-                    industry: "Finance",
-                    capabilities: ["Sales Forecasting", "Risk Assessment", "Market Analysis", "Custom Reports"],
-                    integration_requirements: ["Database Access", "API Integration", "Dashboard Setup"],
-                    pricing_model: "Subscription"
-                  },
-                  {
-                    id: 3,
-                    name: "Personalization Engine",
-                    description: "AI-driven content and product recommendations",
-                    solution_type: "Personalization",
-                    industry: "Retail",
-                    capabilities: ["Product Recommendations", "Content Curation", "User Segmentation", "A/B Testing"],
-                    integration_requirements: ["E-commerce Platform", "User Tracking", "Analytics"],
-                    pricing_model: "Revenue Share"
-                  }
-                ].map((template) => (
+                {agentTemplates.map((template) => (
                   <Card key={template.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -364,6 +332,19 @@ export default function AgentDeployment() {
                   </Card>
                 ))}
               </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Templates Available</h3>
+                  <p className="text-gray-600 mb-4">
+                    Agent templates are being loaded. Please try again in a moment.
+                  </p>
+                  <Button onClick={() => window.location.reload()}>
+                    Refresh Templates
+                  </Button>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 

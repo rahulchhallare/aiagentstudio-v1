@@ -17,6 +17,10 @@ import {
   Copy,
   Layout,
   Share,
+  Target,
+  BarChart,
+  Cog,
+  Building,
 } from "lucide-react";
 import CanvasHeader from "@/components/CanvasHeader";
 import LoginModal from "@/components/LoginModal";
@@ -30,7 +34,7 @@ interface TemplateCardProps {
   id: string;
   title: string;
   description: string;
-  category: "content" | "customer-support" | "data-processing" | "business-analysis";
+  category: "content" | "customer-support" | "data-processing" | "business-analysis" | "sales-marketing" | "analytics" | "operations" | "industry-specific";
   popular?: boolean;
   new?: boolean;
   onClick: () => void;
@@ -49,7 +53,11 @@ const TemplateCard = ({
     content: "bg-gradient-to-r from-brand-blue to-brand-green",
     "customer-support": "bg-gradient-to-r from-brand-blue to-primary-600",
     "data-processing": "bg-gradient-to-r from-brand-green to-secondary-600",
-    "business-analysis": "bg-gradient-to-r from-purple-600 to-blue-600",
+    "business-analysis": "bg-gradient-to-r from-brand-blue to-brand-green",
+    "sales-marketing": "bg-gradient-to-r from-brand-green to-brand-blue",
+    "analytics": "bg-gradient-to-r from-brand-blue to-brand-green",
+    "operations": "bg-gradient-to-r from-brand-green to-brand-blue",
+    "industry-specific": "bg-gradient-to-r from-brand-blue to-brand-green",
   }[category];
 
   const categoryName = {
@@ -57,6 +65,10 @@ const TemplateCard = ({
     "customer-support": "Customer Support",
     "data-processing": "Data Processing",
     "business-analysis": "Business Analysis",
+    "sales-marketing": "Sales & Marketing",
+    "analytics": "Analytics",
+    "operations": "Operations",
+    "industry-specific": "Industry Specific",
   }[category];
 
   const categoryIcon = {
@@ -64,6 +76,10 @@ const TemplateCard = ({
     "customer-support": <Users className="h-5 w-5 mr-1" />,
     "data-processing": <Layout className="h-5 w-5 mr-1" />,
     "business-analysis": <TrendingUp className="h-5 w-5 mr-1" />,
+    "sales-marketing": <Target className="h-5 w-5 mr-1" />,
+    "analytics": <BarChart className="h-5 w-5 mr-1" />,
+    "operations": <Cog className="h-5 w-5 mr-1" />,
+    "industry-specific": <Building className="h-5 w-5 mr-1" />,
   }[category];
 
   return (
@@ -178,6 +194,16 @@ export default function CanvasHome() {
       category: "business-analysis",
       popular: true,
       new: true,
+    },
+    
+    // LLM SEO Optimizer - positioned prominently after Business Analyzer
+    {
+      id: "llm-seo-optimizer",
+      title: "LLM SEO Optimizer AI Agent",
+      description: "Advanced AI-powered SEO optimization specifically for LLM and generative search engines like ChatGPT Search, Google AI Search, Perplexity, and Claude",
+      category: "operations",
+      new: true,
+      popular: true,
     },
     
     // Customer Support & Service Agents
@@ -464,33 +490,36 @@ export default function CanvasHome() {
           />
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-8 max-w-md mx-auto">
-          <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search templates..."
-            className="w-full rounded-full pl-8 bg-background border-muted-foreground/20"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Templates Section */}
-        <Tabs defaultValue="all" className="mb-12">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">AI Agent Templates</h2>
-            <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="customer-support">Support</TabsTrigger>
-              <TabsTrigger value="sales-marketing">Sales</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="operations">Operations</TabsTrigger>
-              <TabsTrigger value="industry-specific">Industry</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
-              <TabsTrigger value="data-processing">Data</TabsTrigger>
-            </TabsList>
+        {/* AI Agent Templates Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-center mb-8">AI Agent Templates</h2>
+          
+          {/* Search Bar */}
+          <div className="relative mb-8 max-w-md mx-auto">
+            <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search templates..."
+              className="w-full rounded-full pl-8 bg-background border-muted-foreground/20"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
+
+          {/* Templates Tabs */}
+          <Tabs defaultValue="all" className="mb-12">
+            <div className="flex justify-center mb-8">
+              <TabsList className="grid grid-cols-4 lg:grid-cols-8 w-full max-w-4xl">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="customer-support">Support</TabsTrigger>
+                <TabsTrigger value="sales-marketing">Sales</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="operations">Operations</TabsTrigger>
+                <TabsTrigger value="industry-specific">Industry</TabsTrigger>
+                <TabsTrigger value="content">Content</TabsTrigger>
+                <TabsTrigger value="data-processing">Data</TabsTrigger>
+              </TabsList>
+            </div>
 
           <TabsContent value="all" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -641,7 +670,8 @@ export default function CanvasHome() {
                 ))}
             </div>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
 
         {/* Features */}
         <div className="py-12">
