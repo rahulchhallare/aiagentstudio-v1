@@ -200,9 +200,7 @@ export default function Templates() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               AI Agent Templates
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Get started quickly with pre-built agent templates designed for various use cases and industries
-            </p>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">Get started quickly with pre-built agent templates designed for various use cases and industries</p>
           </div>
 
           <div className="space-y-16">
