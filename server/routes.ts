@@ -2346,39 +2346,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available agent templates
   app.get("/api/agent-templates", async (req: Request, res: Response) => {
     try {
-      // Return sample agent templates for demo
-      const templates = [
-        {
-          id: 1,
-          name: "Customer Support Assistant",
-          description: "24/7 automated customer service with advanced sentiment analysis",
-          solution_type: "Customer Support",
-          industry: "E-commerce",
-          capabilities: ["Order Tracking", "Returns Processing", "FAQ Handling", "Human Escalation"],
-          integration_requirements: ["Website Integration", "CRM Connection", "Email System"],
-          pricing_model: "Usage-based"
-        },
-        {
-          id: 2,
-          name: "Predictive Analytics Engine",
-          description: "AI-powered business forecasting and trend analysis",
-          solution_type: "Analytics",
-          industry: "Finance",
-          capabilities: ["Sales Forecasting", "Risk Assessment", "Market Analysis", "Custom Reports"],
-          integration_requirements: ["Database Access", "API Integration", "Dashboard Setup"],
-          pricing_model: "Subscription"
-        },
-        {
-          id: 3,
-          name: "Personalization Engine",
-          description: "AI-driven content and product recommendations",
-          solution_type: "Personalization",
-          industry: "Retail",
-          capabilities: ["Product Recommendations", "Content Curation", "User Segmentation", "A/B Testing"],
-          integration_requirements: ["E-commerce Platform", "User Tracking", "Analytics"],
-          pricing_model: "Revenue Share"
-        }
-      ];
+      // Import actual agent templates from agent-templates.ts
+      const { allAgentTemplates } = await import("./agent-templates");
+      
+      // Transform templates to match the expected API format
+      const templates = allAgentTemplates.map((template, index) => ({
+        id: index + 1,
+        name: template.name,
+        description: template.description,
+        solution_type: template.solutionType,
+        industry: Array.isArray(template.industry) ? template.industry.join(", ") : template.industry,
+        capabilities: template.capabilities,
+        integration_requirements: template.integrationRequirements,
+        pricing_model: template.pricingModel,
+        template_id: template.id,
+        estimated_cost_savings: template.estimatedCostSavings,
+        estimated_time_savings: template.estimatedTimeSavings,
+        implementation_difficulty: template.implementationDifficulty,
+        roi_percentage: template.roiPercentage
+      }));
 
       res.json(templates);
     } catch (error: any) {
