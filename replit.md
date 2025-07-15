@@ -190,6 +190,15 @@ AI-powered business analysis platform that helps business owners identify optima
 - Automatically concises long descriptions and summaries for better readability
 - Integrated with Gemini responses to provide cleaner, more digestible content for end users
 - Added API endpoint /api/conciser/status to check available concising services
+- 2025-01-15: LLM SEO SCORING SYSTEM - Critical Business Metric Enhancement
+- Renamed "LLM Search Ranking" to "LLM SEO" for clearer business terminology
+- Moved LLM SEO score to prominent position at top of Business Overview tab
+- Enhanced UI with full-width card, gradient background, and "CRITICAL METRIC" badge
+- Added comprehensive 5-factor scoring algorithm with visual progress bars
+- Included AI search engine badges (Google AI Search, ChatGPT Search, Perplexity, Claude)
+- Integrated into all AI analysis providers with consistent scoring methodology
+- LLM SEO now positioned as primary business intelligence metric for generative search visibility
+- Enhanced visual design with color-coded grading system and actionable improvement recommendations
 
 ## User Preferences
 - Language: English

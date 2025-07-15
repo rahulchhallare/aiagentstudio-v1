@@ -250,6 +250,122 @@ export default function BusinessAnalyzer() {
 
               {/* Business Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
+                {/* LLM SEO Score - Critical Business Metric */}
+                <Card className="mb-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-blue-800">
+                      <Globe className="w-6 h-6 mr-2" />
+                      LLM SEO Score
+                      <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 border-blue-300">
+                        CRITICAL METRIC
+                      </Badge>
+                    </CardTitle>
+                    <p className="text-sm text-blue-600 mt-1">How well your website performs in AI-powered search engines</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center">
+                          <div className={`text-5xl font-bold mr-4 ${
+                            analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'text-green-600' :
+                            analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {analysisResult.analysis.llmSearchRanking?.score || 0}
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-gray-700">AI Search Visibility</div>
+                            <Badge className={`text-sm ${
+                              analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'bg-green-100 text-green-800' :
+                              analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              Grade {analysisResult.analysis.llmSearchRanking?.grade || 'N/A'}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className="text-xs">Google AI Search</Badge>
+                          <Badge variant="outline" className="text-xs">ChatGPT Search</Badge>
+                          <Badge variant="outline" className="text-xs">Perplexity</Badge>
+                          <Badge variant="outline" className="text-xs">Claude</Badge>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium text-gray-700">Performance Factors:</div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Content Quality:</span>
+                              <div className="flex items-center">
+                                <div className="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                                  <div 
+                                    className="h-2 bg-blue-500 rounded-full" 
+                                    style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%</span>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">AI Readability:</span>
+                              <div className="flex items-center">
+                                <div className="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                                  <div 
+                                    className="h-2 bg-blue-500 rounded-full" 
+                                    style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%</span>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Structured Data:</span>
+                              <div className="flex items-center">
+                                <div className="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                                  <div 
+                                    className="h-2 bg-blue-500 rounded-full" 
+                                    style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%</span>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Semantic Clarity:</span>
+                              <div className="flex items-center">
+                                <div className="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                                  <div 
+                                    className="h-2 bg-blue-500 rounded-full" 
+                                    style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {analysisResult.analysis.llmSearchRanking?.recommendations && analysisResult.analysis.llmSearchRanking.recommendations.length > 0 && (
+                          <div className="p-3 bg-blue-100 rounded-lg">
+                            <div className="text-sm font-medium mb-2 text-blue-800">Priority Improvements:</div>
+                            <div className="space-y-1">
+                              {analysisResult.analysis.llmSearchRanking.recommendations.map((rec, index) => (
+                                <div key={index} className="text-xs text-blue-700 flex items-start">
+                                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0" />
+                                  <span>{rec}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
@@ -354,75 +470,7 @@ export default function BusinessAnalyzer() {
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Globe className="w-5 h-5 mr-2" />
-                        LLM Search Ranking
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className={`text-3xl font-bold mr-3 ${
-                              analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'text-green-600' :
-                              analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'text-yellow-600' :
-                              'text-red-600'
-                            }`}>
-                              {analysisResult.analysis.llmSearchRanking?.score || 0}
-                            </div>
-                            <div>
-                              <div className="text-sm text-gray-600">AI Search Score</div>
-                              <Badge className={`${
-                                analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'bg-green-100 text-green-800' :
-                                analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                Grade {analysisResult.analysis.llmSearchRanking?.grade || 'N/A'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium">Key Factors:</div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="flex justify-between">
-                              <span>Content Quality:</span>
-                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>AI Readability:</span>
-                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Structured Data:</span>
-                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Semantic Clarity:</span>
-                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%</span>
-                            </div>
-                          </div>
-                        </div>
 
-                        {analysisResult.analysis.llmSearchRanking?.recommendations && analysisResult.analysis.llmSearchRanking.recommendations.length > 0 && (
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                            <div className="text-sm font-medium mb-2">Improvement Recommendations:</div>
-                            <div className="space-y-1">
-                              {analysisResult.analysis.llmSearchRanking.recommendations.map((rec, index) => (
-                                <div key={index} className="text-xs text-blue-700 flex items-start">
-                                  <div className="w-1 h-1 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0" />
-                                  <span>{rec}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
                 </div>
               </TabsContent>
 
