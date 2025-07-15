@@ -353,6 +353,76 @@ export default function BusinessAnalyzer() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Globe className="w-5 h-5 mr-2" />
+                        LLM Search Ranking
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className={`text-3xl font-bold mr-3 ${
+                              analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'text-green-600' :
+                              analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              {analysisResult.analysis.llmSearchRanking?.score || 0}
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600">AI Search Score</div>
+                              <Badge className={`${
+                                analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'bg-green-100 text-green-800' :
+                                analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                Grade {analysisResult.analysis.llmSearchRanking?.grade || 'N/A'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">Key Factors:</div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span>Content Quality:</span>
+                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>AI Readability:</span>
+                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Structured Data:</span>
+                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Semantic Clarity:</span>
+                              <span className="font-medium">{analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {analysisResult.analysis.llmSearchRanking?.recommendations && analysisResult.analysis.llmSearchRanking.recommendations.length > 0 && (
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <div className="text-sm font-medium mb-2">Improvement Recommendations:</div>
+                            <div className="space-y-1">
+                              {analysisResult.analysis.llmSearchRanking.recommendations.map((rec, index) => (
+                                <div key={index} className="text-xs text-blue-700 flex items-start">
+                                  <div className="w-1 h-1 bg-blue-400 rounded-full mt-1.5 mr-2 flex-shrink-0" />
+                                  <span>{rec}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
 
