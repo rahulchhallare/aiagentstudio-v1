@@ -1078,8 +1078,8 @@ export default function BusinessAnalyzer() {
                     </Card>
 
                     {/* Action Options */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card className="border-2 border-brand-blue">
+                    <div className="flex justify-center">
+                      <Card className="border-2 border-brand-blue max-w-md w-full">
                         <CardContent className="pt-6">
                           <div className="text-center">
                             <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
@@ -1264,8 +1264,8 @@ export default function BusinessAnalyzer() {
                     </Card>
 
                     {/* Action Options */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card className="border-2 border-brand-blue">
+                    <div className="flex justify-center">
+                      <Card className="border-2 border-brand-blue max-w-md w-full">
                         <CardContent className="pt-6">
                           <div className="text-center">
                             <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
