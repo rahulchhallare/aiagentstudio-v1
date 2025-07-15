@@ -1014,7 +1014,7 @@ export default function BusinessAnalyzer() {
                     </Card>
 
                     {/* Action Options */}
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Card className="border-2 border-brand-blue">
                         <CardContent className="pt-6">
                           <div className="text-center">
@@ -1041,6 +1041,32 @@ export default function BusinessAnalyzer() {
                         </CardContent>
                       </Card>
 
+                      <Card className="border-2 border-brand-green">
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <Lightbulb className="w-10 h-10 text-brand-green mx-auto mb-3" />
+                            <h4 className="font-semibold text-lg mb-2">
+                              Live Demo & Setup
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                              See your AI solutions in action with a live demo and get them 
+                              deployed to your business systems immediately.
+                            </p>
+                            <Button 
+                              size="lg" 
+                              className="w-full bg-brand-green hover:bg-brand-green/90"
+                              onClick={() => {
+                                // Open demo booking link in new tab
+                                window.open('https://calendly.com/ai-demo-implementation', '_blank');
+                              }}
+                            >
+                              <Rocket className="w-4 h-4 mr-2" />
+                              Book Demo & Setup
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
 
                     {/* Implementation Details */}
                     <Card>
@@ -1121,19 +1147,155 @@ export default function BusinessAnalyzer() {
                         </div>
                       </CardContent>
                     </Card>
-
-                    <CalendlyBookingWidget />
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <div className="text-center">
                       <h3 className="text-2xl font-semibold mb-2">
-                        Implementation Ready
+                        Ready for Implementation
                       </h3>
                       <p className="text-gray-600 max-w-2xl mx-auto">
-                        Our AI experts will implement your selected solutions completely free of charge.
+                        You've selected {selectedRecommendations.size} AI
+                        solution(s) for implementation. Get your solutions deployed by our AI experts completely free of charge.
                       </p>
                     </div>
+
+                    {/* Free Expert Implementation Offer */}
+                    <Card className="bg-gradient-to-r from-brand-blue to-brand-green text-white">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <Rocket className="w-12 h-12 mx-auto mb-4 text-white" />
+                          <h4 className="text-xl font-bold mb-2">
+                            🎉 FREE AI Expert Implementation
+                          </h4>
+                          <p className="text-white/90 mb-4 max-w-2xl mx-auto">
+                            Our certified AI experts will implement your selected solutions completely free of charge. 
+                            No hidden costs, no setup fees - just professional deployment and ongoing support.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div className="text-center">
+                              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">100% Free Setup</p>
+                              <p className="text-xs text-white/80">No charges for implementation</p>
+                            </div>
+                            <div className="text-center">
+                              <Clock className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">Quick Deployment</p>
+                              <p className="text-xs text-white/80">Live within 24-48 hours</p>
+                            </div>
+                            <div className="text-center">
+                              <Target className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">Ongoing Support</p>
+                              <p className="text-xs text-white/80">Free consultation & optimization</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Action Options */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="border-2 border-brand-blue">
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
+                            <h4 className="font-semibold text-lg mb-2">
+                              Free Expert Consultation
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                              Schedule a 30-minute consultation with our AI experts to discuss your 
+                              implementation strategy and get personalized recommendations.
+                            </p>
+                            <Button 
+                              size="lg" 
+                              className="w-full bg-brand-blue hover:bg-brand-blue/90"
+                              onClick={() => {
+                                // Open booking link in new tab
+                                window.open('https://calendly.com/aiagentstudio9/30min', '_blank');
+                              }}
+                            >
+                              <Clock className="w-4 h-4 mr-2" />
+                              Book Free Consultation
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-2 border-brand-green">
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <Lightbulb className="w-10 h-10 text-brand-green mx-auto mb-3" />
+                            <h4 className="font-semibold text-lg mb-2">
+                              Live Demo & Setup
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                              See your AI solutions in action with a live demo and get them 
+                              deployed to your business systems immediately.
+                            </p>
+                            <Button 
+                              size="lg" 
+                              className="w-full bg-brand-green hover:bg-brand-green/90"
+                              onClick={() => {
+                                // Open demo booking link in new tab
+                                window.open('https://calendly.com/ai-demo-implementation', '_blank');
+                              }}
+                            >
+                              <Rocket className="w-4 h-4 mr-2" />
+                              Book Demo & Setup
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Implementation Details */}
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h4 className="font-semibold mb-3">What's Included in Your Free Implementation:</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h5 className="font-medium mb-2 text-brand-blue">Setup & Configuration</h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              <li>• Complete solution deployment</li>
+                              <li>• Custom integration with your systems</li>
+                              <li>• Data migration and setup</li>
+                              <li>• Performance optimization</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium mb-2 text-brand-green">Training & Support</h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              <li>• Team training sessions</li>
+                              <li>• Documentation and guides</li>
+                              <li>• 90-day free support</li>
+                              <li>• Performance monitoring</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Emergency Contact */}
+                    <Card className="bg-gray-50">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <h4 className="font-medium mb-2">Need Immediate Assistance?</h4>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Our AI experts are available 24/7 for urgent implementation needs
+                          </p>
+                          <div className="flex justify-center gap-4">
+                            <Button variant="outline" size="sm">
+                              <span className="mr-2">📞</span>
+                              Call: +1 (555) 123-4567
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <span className="mr-2">💬</span>
+                              Live Chat Support
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
               </TabsContent>
