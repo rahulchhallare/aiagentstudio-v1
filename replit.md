@@ -214,6 +214,9 @@ AI-powered business analysis platform that helps business owners identify optima
 - Aligned all color stripes with website's blue-green color palette using brand-blue (#0350bc) and brand-green (#40bc58)
 - Restructured AI Agent Templates section layout with centered title above search bar
 - Added comprehensive category support with proper icons and color mappings for all template types
+- Updated Templates page to include all AI agents from homepage (Business Analyzer, LLM SEO Optimizer, etc.)
+- Added proper routing for special templates (Business Analyzer, Chatbot Demo) in Templates page
+- Applied brand color scheme (brand-blue, brand-green) consistently across Templates page
 
 ## User Preferences
 - Language: English
