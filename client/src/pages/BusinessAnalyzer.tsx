@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import CalendlyBookingWidget from "@/components/CalendlyBookingWidget";
 
 interface AnalysisResult {
   analysis: {
@@ -83,6 +84,8 @@ export default function BusinessAnalyzer() {
   >(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
+
+
 
   const handleAnalyze = async () => {
     if (!websiteUrl) {
@@ -1113,6 +1116,8 @@ export default function BusinessAnalyzer() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    <CalendlyBookingWidget />
 
                     {/* CTA to select solutions */}
                     <Card className="border-2 border-orange-200 bg-orange-50">
