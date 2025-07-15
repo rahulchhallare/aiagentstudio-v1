@@ -26,6 +26,8 @@ import {
   Target,
   BarChart,
   Cog,
+  ArrowRight,
+  Star,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 
@@ -83,40 +85,69 @@ const TemplateCard = ({
   }[category];
 
   return (
-    <Card className="group cursor-pointer border-2 border-gray-200 hover:border-primary-300 transition-all duration-300 hover:shadow-lg h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-1">
-            {categoryIcon}
-            <Badge variant="outline" className="text-xs font-medium">
-              {categoryName}
-            </Badge>
-          </div>
-          <div className="flex space-x-1">
-            {popular && (
-              <Badge className="bg-yellow-500 text-white text-xs">Popular</Badge>
-            )}
-            {isNew && (
-              <Badge className="bg-green-500 text-white text-xs">New</Badge>
-            )}
+    <Card
+      className="overflow-hidden h-full transition-all duration-200 hover:shadow-lg cursor-pointer border-transparent hover:border-primary/20 relative"
+      onClick={onClick}
+    >
+      {popular && !isNew && (
+        <Badge
+          variant="secondary"
+          className="absolute top-2 right-2 flex items-center gap-1"
+        >
+          <Star className="h-3 w-3 text-yellow-500" fill="currentColor" />
+          Popular
+        </Badge>
+      )}
+      {isNew && (
+        <Badge
+          variant="secondary"
+          className="absolute top-2 right-2 flex items-center gap-1"
+        >
+          <Zap className="h-3 w-3 text-blue-500" />
+          New
+        </Badge>
+      )}
+      {popular && isNew && (
+        <div className="absolute top-2 right-2 flex gap-1">
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-1"
+          >
+            <Zap className="h-3 w-3 text-blue-500" />
+            New
+          </Badge>
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-1"
+          >
+            <Star className="h-3 w-3 text-yellow-500" fill="currentColor" />
+            Popular
+          </Badge>
+        </div>
+      )}
+      <div className={`h-3 ${categoryColor}`} />
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-semibold">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{description}</p>
           </div>
         </div>
-        <div className={`h-1 w-full rounded-full ${categoryColor}`} />
-        <CardTitle className="text-lg font-bold group-hover:text-primary-600 transition-colors">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-4">
-        <p className="text-sm text-gray-600 line-clamp-3">{description}</p>
+        <div className="mt-4 flex items-center justify-between">
+          <Badge variant="outline" className="flex items-center">
+            {categoryIcon}
+            {categoryName}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-primary flex items-center"
+          >
+            Use Template
+            <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
+        </div>
       </CardContent>
-      <CardFooter className="pt-0">
-        <Button
-          onClick={onClick}
-          className="w-full bg-gradient-to-r from-brand-blue to-brand-green hover:from-primary-700 hover:to-secondary-700 text-white"
-        >
-          Use Template
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
