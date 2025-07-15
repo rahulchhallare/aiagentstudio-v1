@@ -207,6 +207,9 @@ AI-powered business analysis platform that helps business owners identify optima
 - Integrated with current LLM SEO scoring system for personalized optimization
 - Agent includes content analysis, optimization, schema generation, and performance tracking
 - Positioned as highest priority recommendation (95 priority score) for all businesses
+- Added LLM SEO optimizer to homepage AI Agent Templates section with "New" and "Popular" badges
+- Fixed agent templates API to use actual templates from agent-templates.ts instead of hardcoded samples
+- Updated AgentDeployment page to display real templates including LLM SEO optimizer
 
 ## User Preferences
 - Language: English
