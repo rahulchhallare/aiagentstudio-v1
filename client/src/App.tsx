@@ -44,6 +44,7 @@ import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
+import AuthGuard from "@/components/AuthGuard";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 
