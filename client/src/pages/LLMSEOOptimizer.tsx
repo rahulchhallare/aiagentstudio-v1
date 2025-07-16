@@ -680,24 +680,30 @@ export default function LLMSEOOptimizer() {
                     <div>
                       <h4 className="font-semibold mb-3">Visibility Metrics</h4>
                       <div className="space-y-2">
-                        {Object.entries(monitoringData.visibilityMetrics).map(([metric, value]) => (
+                        {monitoringData.visibilityMetrics && Object.entries(monitoringData.visibilityMetrics).map(([metric, value]) => (
                           <div key={metric} className="flex justify-between">
                             <span className="capitalize">{metric.replace(/([A-Z])/g, ' $1')}</span>
                             <span>{value as number}%</span>
                           </div>
                         ))}
+                        {!monitoringData.visibilityMetrics && (
+                          <div className="text-gray-500 text-sm">No visibility metrics available</div>
+                        )}
                       </div>
                     </div>
                     
                     <div>
                       <h4 className="font-semibold mb-3">Performance Insights</h4>
                       <div className="space-y-2">
-                        {monitoringData.performanceInsights.map((insight: string, index: number) => (
+                        {monitoringData.performanceInsights && monitoringData.performanceInsights.map((insight: string, index: number) => (
                           <div key={index} className="flex items-start gap-2">
                             <Eye className="w-4 h-4 text-blue-500 mt-0.5" />
                             <span className="text-sm">{insight}</span>
                           </div>
                         ))}
+                        {(!monitoringData.performanceInsights || monitoringData.performanceInsights.length === 0) && (
+                          <div className="text-gray-500 text-sm">No performance insights available</div>
+                        )}
                       </div>
                     </div>
                   </div>
