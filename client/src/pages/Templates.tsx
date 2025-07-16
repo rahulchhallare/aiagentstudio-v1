@@ -160,7 +160,12 @@ export default function Templates() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Templates page is now accessible without authentication
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   if (authLoading) {
     return (
@@ -345,8 +350,6 @@ export default function Templates() {
     
     // Store template ID for the builder to load
     localStorage.setItem("selectedTemplate", templateId);
-    
-    // If user is not authenticated, they can still view templates but will need to login when trying to use builder
     navigate("/builder");
   };
 
