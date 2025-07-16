@@ -74,7 +74,12 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
-            <Link href="/business-analyzer" className="text-blue-600 hover:text-blue-700 font-semibold">AI Analyzer</Link>
+            <button 
+              onClick={() => handleAuthRequiredNavigation("/business-analyzer", "AI Analyzer")}
+              className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer bg-transparent border-none"
+            >
+              AI Analyzer
+            </button>
             <Link href="#features" className="text-gray-600 hover:text-brand-blue font-medium">Features</Link>
             <Link href="#pricing" className="text-gray-600 hover:text-brand-blue font-medium">Pricing</Link>
             <Link href="/templates" className="text-gray-600 hover:text-brand-blue font-medium">Templates</Link>
@@ -174,6 +179,15 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <div className="flex flex-col space-y-4 p-6">
             {isLandingPage && !user ? (
               <Fragment>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleAuthRequiredNavigation("/business-analyzer", "AI Analyzer");
+                  }}
+                  className="text-blue-600 hover:text-blue-700 text-lg font-semibold py-2 cursor-pointer bg-transparent border-none text-left"
+                >
+                  AI Analyzer
+                </button>
                 <Link href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-900 hover:text-primary-600 text-lg font-medium py-2">
                   Features
                 </Link>
