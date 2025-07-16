@@ -134,17 +134,29 @@ export default function LLMSEOOptimizer() {
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
-      return await apiRequest("/api/llm-seo/analyze", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      console.log("Making API request with data:", data);
+      try {
+        const response = await apiRequest("POST", "/api/llm-seo/analyze", data);
+        console.log("API response received:", response);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const result = await response.json();
+        console.log("Parsed response:", result);
+        return result;
+      } catch (error) {
+        console.error("API request error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      console.log("Analysis succeeded:", data);
       setAnalysisResult(data.analysis);
       setActiveTab("results");
     },
     onError: (error) => {
       console.error("Analysis failed:", error);
+      alert("Analysis failed. Please try again.");
     }
   });
 
@@ -155,10 +167,8 @@ export default function LLMSEOOptimizer() {
       targetKeywords: string[]; 
       llmEngines: string[] 
     }) => {
-      return await apiRequest("/api/llm-seo/optimize-content", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/llm-seo/optimize-content", data);
+      return await response.json();
     },
     onSuccess: (data) => {
       setOptimizedContent(data.optimizedContent);
@@ -167,10 +177,8 @@ export default function LLMSEOOptimizer() {
 
   const keywordAnalysisMutation = useMutation({
     mutationFn: async (data: { businessName: string; industry: string; currentContent: string }) => {
-      return await apiRequest("/api/llm-seo/keyword-analysis", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/llm-seo/keyword-analysis", data);
+      return await response.json();
     },
     onSuccess: (data) => {
       setKeywordResults(data.keywords);
@@ -179,10 +187,8 @@ export default function LLMSEOOptimizer() {
 
   const monitoringMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; previousScore: number }) => {
-      return await apiRequest("/api/llm-seo/performance-monitoring", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/llm-seo/performance-monitoring", data);
+      return await response.json();
     },
     onSuccess: (data) => {
       setMonitoringData(data.monitoring);
