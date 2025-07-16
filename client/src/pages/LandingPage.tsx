@@ -12,6 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AuthGuard from "@/components/AuthGuard";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
+import { useToast } from "@/hooks/use-toast";
 
 // Icons
 import {
@@ -30,13 +33,24 @@ export default function LandingPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const { toast } = useToast();
 
   // No authentication requirement - allow all users to view landing page
   const handleUseTemplateClick = () => {
-    // Handle logic for "Use Template" button click
-    // For example, open a login modal or redirect to a template selection page
-    document.getElementById("signup-button")?.click()
-    console.log("Use Template button clicked");
+    if (user) {
+      // User is authenticated, redirect to templates
+      navigate("/templates");
+    } else {
+      // User is not authenticated, show login modal
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access templates",
+        variant: "destructive",
+      });
+      setIsLoginModalOpen(true);
+    }
   };
 
   return (
@@ -898,6 +912,26 @@ export default function LandingPage() {
             ></iframe>
           </DialogContent>
         </Dialog>
+
+        {/* Login Modal */}
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          onSignupClick={() => {
+            setIsLoginModalOpen(false);
+            setIsSignupModalOpen(true);
+          }}
+        />
+
+        {/* Signup Modal */}
+        <SignupModal
+          isOpen={isSignupModalOpen}
+          onClose={() => setIsSignupModalOpen(false)}
+          onLoginClick={() => {
+            setIsSignupModalOpen(false);
+            setIsLoginModalOpen(true);
+          }}
+        />
       </div>
     </AuthGuard>
   );
