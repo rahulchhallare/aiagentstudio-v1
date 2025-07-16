@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,13 +161,10 @@ export default function Templates() {
   const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
+  // No redirect - allow unauthenticated users to view templates
 
   if (authLoading) {
     return (
@@ -336,7 +335,18 @@ export default function Templates() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
-    // Special handling for business analyzer
+    // Check authentication first for all templates except business analyzer
+    if (!user && templateId !== "ba-1") {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to use AI agent templates",
+        variant: "destructive",
+      });
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    // Special handling for business analyzer (no auth required)
     if (templateId === "ba-1") {
       navigate("/business-analyzer");
       return;
@@ -602,6 +612,26 @@ export default function Templates() {
         </div>
         <Footer />
       </div>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSignupClick={() => {
+          setIsLoginModalOpen(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
+
+      {/* Signup Modal */}
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onLoginClick={() => {
+          setIsSignupModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
+      />
     </div>
   );
 }
