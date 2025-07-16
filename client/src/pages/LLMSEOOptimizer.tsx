@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import LoginModal from "@/components/LoginModal";
 import { 
   Card, 
   CardContent, 
@@ -135,10 +136,16 @@ export default function LLMSEOOptimizer() {
   const [keywordResults, setKeywordResults] = useState<KeywordData[]>([]);
   const [monitoringData, setMonitoringData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("analyze");
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // No authentication requirement - allow all users to access LLM SEO Optimizer
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!user) {
+      setShowLoginModal(true);
+    }
+  }, [user]);
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
@@ -207,8 +214,17 @@ export default function LLMSEOOptimizer() {
     console.log("Analysis button clicked");
     console.log("Form data:", { websiteUrl, businessName, industry });
     
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     if (!websiteUrl || !businessName || !industry) {
-      alert("Please fill in all required fields");
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -217,6 +233,11 @@ export default function LLMSEOOptimizer() {
   };
 
   const handleOptimizeContent = (optimization: LLMSEOOptimization) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setSelectedOptimization(optimization);
     optimizeContentMutation.mutate({
       originalContent: optimization.currentContent || "",
@@ -227,6 +248,11 @@ export default function LLMSEOOptimizer() {
   };
 
   const handleKeywordAnalysis = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     if (!businessName || !industry || !analysisResult) return;
     
     keywordAnalysisMutation.mutate({
@@ -237,6 +263,11 @@ export default function LLMSEOOptimizer() {
   };
 
   const handleMonitoring = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     if (!websiteUrl || !analysisResult) return;
     
     monitoringMutation.mutate({
@@ -246,7 +277,9 @@ export default function LLMSEOOptimizer() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <>
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
@@ -722,5 +755,6 @@ export default function LLMSEOOptimizer() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
