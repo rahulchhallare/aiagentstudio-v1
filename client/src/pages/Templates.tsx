@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,10 +156,16 @@ const TemplateCard = ({
 export default function Templates() {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // No redirect needed - allow non-authenticated users to view templates
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   if (authLoading) {
     return (
@@ -341,11 +348,6 @@ export default function Templates() {
       return;
     }
     
-    if (!user) {
-      // Redirect to home page with login prompt for non-logged-in users
-      navigate("/");
-      return;
-    }
     // Store template ID for the builder to load
     localStorage.setItem("selectedTemplate", templateId);
     navigate("/builder");

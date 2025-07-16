@@ -31,12 +31,7 @@ export default function LandingPage() {
   const { user } = useAuth();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // Redirect to dashboard if user is already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
-    }
-  }, [user, navigate]);
+  // No authentication requirement - allow all users to view landing page
 
   return (
     <AuthGuard requireAuth={false}>
@@ -640,8 +635,7 @@ export default function LandingPage() {
                       </svg>
                       <span>Custom integrations</span>
                     </li>
-                    <li className="flex items-start">
-                      <svg
+                    <li className="flex items-start"><svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-5 w-5 text-green-500 mt-1 mr-2"
                         viewBox="0 0 20 20"

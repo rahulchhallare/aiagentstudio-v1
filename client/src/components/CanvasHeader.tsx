@@ -39,6 +39,9 @@ export default function CanvasHeader({ onLoginClick, onSignupClick }: CanvasHead
           <Link href="/business-analyzer" className={`text-sm font-medium ${location === '/business-analyzer' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
             AI Analyzer
           </Link>
+          <Link href="/llm-seo-optimizer" className={`text-sm font-medium ${location === '/llm-seo-optimizer' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            LLM SEO Optimizer
+          </Link>
           <Link href="/templates" className={`text-sm font-medium ${location === '/templates' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
             Templates
           </Link>

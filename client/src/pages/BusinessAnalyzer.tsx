@@ -1,4 +1,5 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ interface AnalysisResult {
 }
 
 export default function BusinessAnalyzer() {
+  const [, navigate] = useLocation();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
@@ -83,6 +85,8 @@ export default function BusinessAnalyzer() {
   >(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // No authentication requirement - allow all users to analyze websites
 
   const handleAnalyze = async () => {
     if (!websiteUrl) {
@@ -261,93 +265,146 @@ export default function BusinessAnalyzer() {
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <div className={`text-3xl font-bold mr-3 ${
-                            analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'text-green-600' :
-                            analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {analysisResult.analysis.llmSearchRanking?.score || 0}
+                          <div
+                            className={`text-3xl font-bold mr-3 ${
+                              analysisResult.analysis.llmSearchRanking?.score >=
+                              80
+                                ? "text-green-600"
+                                : analysisResult.analysis.llmSearchRanking
+                                      ?.score >= 60
+                                  ? "text-yellow-600"
+                                  : "text-red-600"
+                            }`}
+                          >
+                            {analysisResult.analysis.llmSearchRanking?.score ||
+                              0}
                           </div>
                           <div>
-                            <div className="text-sm font-medium">AI Search Visibility</div>
-                            <Badge className={`text-sm ${
-                              analysisResult.analysis.llmSearchRanking?.score >= 80 ? 'bg-green-100 text-green-800' :
-                              analysisResult.analysis.llmSearchRanking?.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              Grade {analysisResult.analysis.llmSearchRanking?.grade || 'N/A'}
+                            <div className="text-sm font-medium">
+                              AI Search Visibility
+                            </div>
+                            <Badge
+                              className={`text-sm ${
+                                analysisResult.analysis.llmSearchRanking
+                                  ?.score >= 80
+                                  ? "bg-green-100 text-green-800"
+                                  : analysisResult.analysis.llmSearchRanking
+                                        ?.score >= 60
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              Grade{" "}
+                              {analysisResult.analysis.llmSearchRanking
+                                ?.grade || "N/A"}
                             </Badge>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
-                        <div className="text-sm font-medium">Performance Factors:</div>
+                        <div className="text-sm font-medium">
+                          Performance Factors:
+                        </div>
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Content Quality:</span>
                             <div className="flex items-center">
                               <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                                <div 
-                                  className="h-2 bg-primary rounded-full" 
-                                  style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%` }}
+                                <div
+                                  className="h-2 bg-primary rounded-full"
+                                  style={{
+                                    width: `${analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%`,
+                                  }}
                                 />
                               </div>
-                              <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.contentQuality || 0}%</span>
+                              <span className="text-sm font-medium w-8">
+                                {analysisResult.analysis.llmSearchRanking
+                                  ?.factors?.contentQuality || 0}
+                                %
+                              </span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">AI Readability:</span>
                             <div className="flex items-center">
                               <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                                <div 
-                                  className="h-2 bg-primary rounded-full" 
-                                  style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%` }}
+                                <div
+                                  className="h-2 bg-primary rounded-full"
+                                  style={{
+                                    width: `${analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%`,
+                                  }}
                                 />
                               </div>
-                              <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.aiReadability || 0}%</span>
+                              <span className="text-sm font-medium w-8">
+                                {analysisResult.analysis.llmSearchRanking
+                                  ?.factors?.aiReadability || 0}
+                                %
+                              </span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Structured Data:</span>
                             <div className="flex items-center">
                               <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                                <div 
-                                  className="h-2 bg-primary rounded-full" 
-                                  style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%` }}
+                                <div
+                                  className="h-2 bg-primary rounded-full"
+                                  style={{
+                                    width: `${analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%`,
+                                  }}
                                 />
                               </div>
-                              <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.structuredData || 0}%</span>
+                              <span className="text-sm font-medium w-8">
+                                {analysisResult.analysis.llmSearchRanking
+                                  ?.factors?.structuredData || 0}
+                                %
+                              </span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Semantic Clarity:</span>
                             <div className="flex items-center">
                               <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                                <div 
-                                  className="h-2 bg-primary rounded-full" 
-                                  style={{ width: `${analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%` }}
+                                <div
+                                  className="h-2 bg-primary rounded-full"
+                                  style={{
+                                    width: `${analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%`,
+                                  }}
                                 />
                               </div>
-                              <span className="text-sm font-medium w-8">{analysisResult.analysis.llmSearchRanking?.factors?.semanticClarity || 0}%</span>
+                              <span className="text-sm font-medium w-8">
+                                {analysisResult.analysis.llmSearchRanking
+                                  ?.factors?.semanticClarity || 0}
+                                %
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {analysisResult.analysis.llmSearchRanking?.recommendations && analysisResult.analysis.llmSearchRanking.recommendations.length > 0 && (
-                        <div className="p-3 bg-primary/10 rounded-lg">
-                          <div className="text-sm font-medium mb-2 text-primary">Priority Improvements:</div>
-                          <div className="space-y-1">
-                            {analysisResult.analysis.llmSearchRanking.recommendations.map((rec, index) => (
-                              <div key={index} className="text-xs text-primary/80 flex items-start">
-                                <div className="w-1 h-1 bg-primary rounded-full mt-1.5 mr-2 flex-shrink-0" />
-                                <span>{rec}</span>
-                              </div>
-                            ))}
+                      {analysisResult.analysis.llmSearchRanking
+                        ?.recommendations &&
+                        analysisResult.analysis.llmSearchRanking.recommendations
+                          .length > 0 && (
+                          <div className="p-3 bg-primary/10 rounded-lg">
+                            <div className="text-sm font-medium mb-2 text-primary">
+                              Priority Improvements:
+                            </div>
+                            <div className="space-y-1">
+                              {analysisResult.analysis.llmSearchRanking.recommendations.map(
+                                (rec, index) => (
+                                  <div
+                                    key={index}
+                                    className="text-xs text-primary/80 flex items-start"
+                                  >
+                                    <div className="w-1 h-1 bg-primary rounded-full mt-1.5 mr-2 flex-shrink-0" />
+                                    <span>{rec}</span>
+                                  </div>
+                                ),
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </CardContent>
                   </Card>
 
@@ -453,8 +510,6 @@ export default function BusinessAnalyzer() {
                       </div>
                     </CardContent>
                   </Card>
-
-
                 </div>
               </TabsContent>
 
@@ -966,45 +1021,253 @@ export default function BusinessAnalyzer() {
               {/* Implementation Tab */}
               <TabsContent value="implementation" className="space-y-6">
                 {selectedRecommendations.size === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">
-                        Select Solutions to Implement
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <h3 className="text-2xl font-semibold mb-2">
+                        Free AI Expert Implementation
                       </h3>
-                      <p className="text-gray-600">
-                        Go to the Recommendations tab and select the AI
-                        solutions you'd like to deploy.
+                      <p className="text-gray-600 max-w-2xl mx-auto">
+                        Get your AI solutions deployed by our certified experts
+                        completely free of charge. Select solutions from the
+                        Recommendations tab to begin.
                       </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-semibold">
-                      Ready for Implementation
-                    </h3>
-                    <p className="text-gray-600">
-                      You've selected {selectedRecommendations.size} AI
-                      solution(s) for implementation. Our guided setup process
-                      will help you deploy these solutions quickly.
-                    </p>
+                    </div>
 
+                    {/* Free Expert Implementation Offer */}
+                    <Card className="bg-gradient-to-r from-brand-blue to-brand-green text-white">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <Rocket className="w-12 h-12 mx-auto mb-4 text-white" />
+                          <h4 className="text-xl font-bold mb-2">
+                            🎉 FREE AI Expert Implementation
+                          </h4>
+                          <p className="text-white/90 mb-4 max-w-2xl mx-auto">
+                            Our certified AI experts will implement your
+                            selected solutions completely free of charge. No
+                            hidden costs, no setup fees - just professional
+                            deployment and ongoing support.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div className="text-center">
+                              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">
+                                100% Free Setup
+                              </p>
+                              <p className="text-xs text-white/80">
+                                No charges for implementation
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <Clock className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">
+                                Quick Deployment
+                              </p>
+                              <p className="text-xs text-white/80">
+                                Live within 24-48 hours
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <Target className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">
+                                Ongoing Support
+                              </p>
+                              <p className="text-xs text-white/80">
+                                Free implementation & optimization
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Action Options */}
+                    <div className="flex justify-center">
+                      <Card className="border-2 border-brand-blue max-w-md w-full">
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
+                            <h4 className="font-semibold text-lg mb-2">
+                              Free Expert Implementation
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                              Schedule a 30-minute implementation call with our
+                              AI experts to discuss your implementation strategy
+                              and get personalized recommendations.
+                            </p>
+                            <Button
+                              size="lg"
+                              className="w-full bg-brand-blue hover:bg-brand-blue/90"
+                              onClick={() => {
+                                // Open booking link in new tab
+                                window.open(
+                                  "https://calendly.com/aiagentstudio9/30min",
+                                  "_blank",
+                                );
+                              }}
+                            >
+                              <Clock className="w-4 h-4 mr-2" />
+                              Book Free Implementation Call
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Implementation Details */}
                     <Card>
                       <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
+                        <h4 className="font-semibold mb-3">
+                          What's Included in Your Free Implementation:
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <h4 className="font-medium">
-                              Next: Guided Setup Process
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Configure and deploy your selected AI solutions
-                              with step-by-step guidance
-                            </p>
+                            <h5 className="font-medium mb-2 text-brand-blue">
+                              Setup & Configuration
+                            </h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              <li>• Complete solution deployment</li>
+                              <li>• Custom integration with your systems</li>
+                              <li>• Data migration and setup</li>
+                              <li>• Performance optimization</li>
+                            </ul>
                           </div>
-                          <Button size="lg">
-                            Start Implementation
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </Button>
+                          <div>
+                            <h5 className="font-medium mb-2 text-brand-green">
+                              Training & Support
+                            </h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              <li>• Team training sessions</li>
+                              <li>• Documentation and guides</li>
+                              <li>• 90-day free support</li>
+                              <li>• Performance monitoring</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <h3 className="text-2xl font-semibold mb-2">
+                        Ready for Implementation
+                      </h3>
+                      <p className="text-gray-600 max-w-2xl mx-auto">
+                        You've selected {selectedRecommendations.size} AI
+                        solution(s) for implementation. Get your solutions
+                        deployed by our AI experts completely free of charge.
+                      </p>
+                    </div>
+
+                    {/* Free Expert Implementation Offer */}
+                    <Card className="bg-gradient-to-r from-brand-blue to-brand-green text-white">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <Rocket className="w-12 h-12 mx-auto mb-4 text-white" />
+                          <h4 className="text-xl font-bold mb-2">
+                            🎉 FREE AI Expert Implementation
+                          </h4>
+                          <p className="text-white/90 mb-4 max-w-2xl mx-auto">
+                            Our certified AI experts will implement your
+                            selected solutions completely free of charge. No
+                            hidden costs, no setup fees - just professional
+                            deployment and ongoing support.
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div className="text-center">
+                              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">
+                                100% Free Setup
+                              </p>
+                              <p className="text-xs text-white/80">
+                                No charges for implementation
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <Clock className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">
+                                Quick Deployment
+                              </p>
+                              <p className="text-xs text-white/80">
+                                Live within 24-48 hours
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <Target className="w-8 h-8 mx-auto mb-2 text-white" />
+                              <p className="text-sm font-medium">
+                                Ongoing Support
+                              </p>
+                              <p className="text-xs text-white/80">
+                                Free implementation & optimization
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Action Options */}
+                    <div className="flex justify-center">
+                      <Card className="border-2 border-brand-blue max-w-md w-full">
+                        <CardContent className="pt-6">
+                          <div className="text-center">
+                            <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
+                            <h4 className="font-semibold text-lg mb-2">
+                              Free Expert Implementation
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-4">
+                              Schedule a 30-minute implementation call with our
+                              AI experts to discuss your implementation strategy
+                              and get personalized recommendations.
+                            </p>
+                            <Button
+                              size="lg"
+                              className="w-full bg-brand-blue hover:bg-brand-blue/90"
+                              onClick={() => {
+                                // Open booking link in new tab
+                                window.open(
+                                  "https://calendly.com/aiagentstudio9/30min",
+                                  "_blank",
+                                );
+                              }}
+                            >
+                              <Clock className="w-4 h-4 mr-2" />
+                              Book Free Implementation Call
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Implementation Details */}
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h4 className="font-semibold mb-3">
+                          What's Included in Your Free Implementation:
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h5 className="font-medium mb-2 text-brand-blue">
+                              Setup & Configuration
+                            </h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              <li>• Complete solution deployment</li>
+                              <li>• Custom integration with your systems</li>
+                              <li>• Data migration and setup</li>
+                              <li>• Performance optimization</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium mb-2 text-brand-green">
+                              Training & Support
+                            </h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              <li>• Team training sessions</li>
+                              <li>• Documentation and guides</li>
+                              <li>• 90-day free support</li>
+                              <li>• Performance monitoring</li>
+                            </ul>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1012,11 +1275,13 @@ export default function BusinessAnalyzer() {
                 )}
               </TabsContent>
             </Tabs>
-            
+
             {/* Disclaimer Footer */}
             <div className="mt-8 p-4 bg-gray-50 border-t border-gray-200 rounded-lg">
               <p className="text-sm text-gray-600 text-center">
-                This Analysis, including all recommendations and financial projections, has been crafted by AI Business Analyzer. All estimations are AI-generated.
+                This Analysis, including all recommendations and financial
+                projections, has been crafted by AI Business Analyzer. All
+                estimations are AI-generated.
               </p>
             </div>
           </div>
