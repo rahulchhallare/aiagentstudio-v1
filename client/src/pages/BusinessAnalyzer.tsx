@@ -86,17 +86,7 @@ export default function BusinessAnalyzer() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access AI Business Analyzer",
-        variant: "destructive",
-      });
-      navigate("/");
-    }
-  }, [user, navigate, toast]);
+  // No authentication requirement - allow all users to analyze websites
 
   const handleAnalyze = async () => {
     if (!websiteUrl) {

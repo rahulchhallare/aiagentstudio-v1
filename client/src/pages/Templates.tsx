@@ -160,7 +160,12 @@ export default function Templates() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // No redirect needed - allow non-authenticated users to view templates
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   if (authLoading) {
     return (
@@ -331,17 +336,6 @@ export default function Templates() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
-    // Check authentication first for all templates
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to use AI agent templates",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-
     // Special handling for business analyzer
     if (templateId === "ba-1") {
       navigate("/business-analyzer");

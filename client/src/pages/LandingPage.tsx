@@ -31,12 +31,7 @@ export default function LandingPage() {
   const { user } = useAuth();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // Redirect to dashboard if user is already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
-    }
-  }, [user, navigate]);
+  // No authentication requirement - allow all users to view landing page
 
   return (
     <AuthGuard requireAuth={false}>

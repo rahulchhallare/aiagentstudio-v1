@@ -31,10 +31,15 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   const handleAuthRequiredNavigation = (path: string, itemName: string) => {
     if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: `Please log in to access ${itemName}`,
+        variant: "destructive",
+      });
       onLoginClick();
       return;
     }
-    //navigate(path); //Corrected typo here.
+    navigate(path);
   };
 
   // Check if we're on the landing page

@@ -138,17 +138,7 @@ export default function LLMSEOOptimizer() {
 
   const queryClient = useQueryClient();
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access LLM SEO Optimizer",
-        variant: "destructive",
-      });
-      navigate("/");
-    }
-  }, [user, navigate, toast]);
+  // No authentication requirement - allow all users to access LLM SEO Optimizer
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
