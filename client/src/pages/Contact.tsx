@@ -30,10 +30,10 @@ export default function Contact() {
     e.preventDefault();
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
+      const response = await fetch("/api/contact", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
@@ -41,12 +41,14 @@ export default function Contact() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || 'Failed to send message');
+        throw new Error(result.message || "Failed to send message");
       }
 
       toast({
         title: "Message Sent!",
-        description: result.message || "Thank you for contacting us. We'll get back to you within 24 hours.",
+        description:
+          result.message ||
+          "Thank you for contacting us. We'll get back to you within 24 hours.",
       });
 
       // Reset form
@@ -59,10 +61,13 @@ export default function Contact() {
         inquiryType: "",
       });
     } catch (error) {
-      console.error('Error submitting contact form:', error);
+      console.error("Error submitting contact form:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     }
@@ -78,12 +83,6 @@ export default function Contact() {
       title: "Email Us",
       content: "info@aiagentstudio.ai",
       description: "We typically respond within 24 hours",
-    },
-    {
-      icon: Phone,
-      title: "Call Us",
-      content: "+91 9561745581",
-      description: "Monday to Friday, 9 AM - 6 PM IST",
     },
     {
       icon: Clock,
@@ -112,7 +111,7 @@ export default function Contact() {
         {/* Contact Information */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <div className="grid md:grid-cols-2 gap-8 mb-16">
               {contactInfo.map((info) => (
                 <Card key={info.title} className="text-center">
                   <CardContent className="p-6">

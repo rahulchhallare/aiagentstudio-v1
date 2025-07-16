@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import CalendlyBookingWidget from "@/components/CalendlyBookingWidget";
 
 interface AnalysisResult {
   analysis: {
@@ -1142,66 +1141,6 @@ export default function BusinessAnalyzer() {
                         </div>
                       </CardContent>
                     </Card>
-
-                    {/* Emergency Contact */}
-                    <Card className="bg-gray-50">
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <h4 className="font-medium mb-2">
-                            Need Immediate Assistance?
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Our AI experts are available 24/7 for urgent
-                            implementation needs
-                          </p>
-                          <div className="flex justify-center gap-4">
-                            <Button variant="outline" size="sm">
-                              <span className="mr-2">📞</span>
-                              Call: +1 (555) 123-4567
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <span className="mr-2">💬</span>
-                              Live Chat Support
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <CalendlyBookingWidget />
-
-                    {/* CTA to select solutions */}
-                    <Card className="border-2 border-orange-200 bg-orange-50">
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <Target className="w-10 h-10 text-orange-600 mx-auto mb-3" />
-                          <h4 className="font-semibold text-lg mb-2">
-                            Ready to Get Started?
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Go to the AI Recommendations tab and select the
-                            solutions you'd like our experts to implement for
-                            free.
-                          </p>
-                          <Button
-                            size="lg"
-                            className="bg-orange-600 hover:bg-orange-700 text-white"
-                            onClick={() => {
-                              // Switch to recommendations tab
-                              const recommendationsTab = document.querySelector(
-                                '[data-state="inactive"][value="recommendations"]',
-                              );
-                              if (recommendationsTab) {
-                                (recommendationsTab as HTMLElement).click();
-                              }
-                            }}
-                          >
-                            <ArrowRight className="w-4 h-4 mr-2" />
-                            View AI Recommendations
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -1324,31 +1263,6 @@ export default function BusinessAnalyzer() {
                               <li>• 90-day free support</li>
                               <li>• Performance monitoring</li>
                             </ul>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Emergency Contact */}
-                    <Card className="bg-gray-50">
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <h4 className="font-medium mb-2">
-                            Need Immediate Assistance?
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Our AI experts are available 24/7 for urgent
-                            implementation needs
-                          </p>
-                          <div className="flex justify-center gap-4">
-                            <Button variant="outline" size="sm">
-                              <span className="mr-2">📞</span>
-                              Call: +1 (555) 123-4567
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <span className="mr-2">💬</span>
-                              Live Chat Support
-                            </Button>
                           </div>
                         </div>
                       </CardContent>
