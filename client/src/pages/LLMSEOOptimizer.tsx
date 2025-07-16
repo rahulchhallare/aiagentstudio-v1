@@ -140,29 +140,7 @@ export default function LLMSEOOptimizer() {
 
   const queryClient = useQueryClient();
 
-  // Check authentication on component mount and when user state changes
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        setShowLoginModal(true);
-      } else {
-        setShowLoginModal(false);
-      }
-    }
-  }, [user, isLoading]);
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // All mutations must be defined before any conditional logic
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
       console.log("Making API request with data:", data);
@@ -225,6 +203,29 @@ export default function LLMSEOOptimizer() {
       setMonitoringData(data.monitoring);
     }
   });
+
+  // Check authentication on component mount and when user state changes
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        setShowLoginModal(true);
+      } else {
+        setShowLoginModal(false);
+      }
+    }
+  }, [user, isLoading]);
+
+  // Show loading state while checking authentication (after all hooks)
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleAnalyze = () => {
     console.log("Analysis button clicked");
