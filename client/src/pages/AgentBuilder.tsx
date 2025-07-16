@@ -87,11 +87,23 @@ export default function AgentBuilder() {
   // Auth modals
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Get agent data from API
   const { agent, isLoading: isLoadingAgent } = useAgent(id);
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
+
+  // Check authentication on component mount and when user state changes
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        setShowLoginModal(true);
+      } else {
+        setShowLoginModal(false);
+      }
+    }
+  }, [user, authLoading]);
 
   // Load agent or template data
   useEffect(() => {
@@ -460,11 +472,13 @@ export default function AgentBuilder() {
   const handleLoginClick = () => {
     setIsSignupModalOpen(false);
     setIsLoginModalOpen(true);
+    setShowLoginModal(false);
   };
 
   const handleSignupClick = () => {
     setIsLoginModalOpen(false);
     setIsSignupModalOpen(true);
+    setShowLoginModal(false);
   };
 
   const handleDeployClose = () => {
@@ -600,6 +614,16 @@ export default function AgentBuilder() {
           onDeploy={handleDeployConfirm}
         />
       )}
+
+      {/* Authentication Protection Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSignupClick={() => {
+          setShowLoginModal(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
 
       {/* Auth Modals */}
       <LoginModal
