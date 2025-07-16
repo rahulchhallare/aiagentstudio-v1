@@ -32,6 +32,12 @@ export default function LandingPage() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // No authentication requirement - allow all users to view landing page
+  const handleUseTemplateClick = () => {
+    // Handle logic for "Use Template" button click
+    // For example, open a login modal or redirect to a template selection page
+    document.getElementById("signup-button")?.click()
+    console.log("Use Template button clicked");
+  };
 
   return (
     <AuthGuard requireAuth={false}>
@@ -57,6 +63,13 @@ export default function LandingPage() {
                       size="lg"
                     >
                       Analyze Your Business
+                    </Button>
+                    <Button
+                      onClick={handleUseTemplateClick}
+                      className="h-auto px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                      size="lg"
+                    >
+                      Use Template
                     </Button>
                     <Button
                       variant="outline"
