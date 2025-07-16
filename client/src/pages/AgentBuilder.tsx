@@ -101,9 +101,22 @@ export default function AgentBuilder() {
         setShowLoginModal(true);
       } else {
         setShowLoginModal(false);
+        
+        // After successful authentication, check if there's a pending template to load
+        const templateId = localStorage.getItem("selectedTemplate");
+        if (templateId && nodes.length === 0) {
+          // Load the template that was selected before authentication
+          const template = getTemplateById(templateId);
+          if (template) {
+            console.log("Loading template after authentication:", template);
+            setNodes(template.nodes);
+            setEdges(template.edges);
+            localStorage.removeItem("selectedTemplate");
+          }
+        }
       }
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, nodes.length]);
 
   // Load agent or template data
   useEffect(() => {
