@@ -106,7 +106,6 @@ export default function AgentBuilder() {
         const templateId = localStorage.getItem("selectedTemplate");
         if (templateId) {
           // Load the template that was selected before authentication
-          // This will replace any existing nodes to ensure the template loads correctly
           const template = getTemplateById(templateId);
           if (template) {
             console.log("Loading template after authentication:", template);
@@ -117,10 +116,15 @@ export default function AgentBuilder() {
         }
       }
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, setNodes, setEdges]);
 
   // Load agent or template data
   useEffect(() => {
+    // Don't load template if user is not authenticated yet
+    if (!user && !authLoading) {
+      return;
+    }
+
     // Load existing agent if ID is provided
     if (id && agent) {
       console.log("Loading existing agent:", agent);
@@ -277,30 +281,33 @@ export default function AgentBuilder() {
       return;
     }
 
-    // Otherwise, check for template
-    const templateId = localStorage.getItem("selectedTemplate");
+    // Only load template if user is authenticated
+    if (user) {
+      // Check for template
+      const templateId = localStorage.getItem("selectedTemplate");
 
-    if (templateId) {
-      const template = getTemplateById(templateId);
-      if (template) {
-        console.log("Loading template:", template);
-        setNodes(template.nodes);
-        setEdges(template.edges);
-        localStorage.removeItem("selectedTemplate");
-        return;
+      if (templateId) {
+        const template = getTemplateById(templateId);
+        if (template) {
+          console.log("Loading template:", template);
+          setNodes(template.nodes);
+          setEdges(template.edges);
+          localStorage.removeItem("selectedTemplate");
+          return;
+        }
+      }
+
+      // If starting with blank template
+      const isBlankTemplate = localStorage.getItem("blankTemplate") === "true";
+      if (isBlankTemplate) {
+        // Start with an empty canvas - no pre-placed nodes
+        console.log("Starting with blank template");
+        setNodes([]);
+        setEdges([]);
+        localStorage.removeItem("blankTemplate");
       }
     }
-
-    // If starting with blank template
-    const isBlankTemplate = localStorage.getItem("blankTemplate") === "true";
-    if (isBlankTemplate) {
-      // Start with an empty canvas - no pre-placed nodes
-      console.log("Starting with blank template");
-      setNodes([]);
-      setEdges([]);
-      localStorage.removeItem("blankTemplate");
-    }
-  }, [id, agent, setNodes, setEdges]);
+  }, [id, agent, user, authLoading, setNodes, setEdges]);
 
   // Handle connecting nodes
   const onConnect = useCallback(
