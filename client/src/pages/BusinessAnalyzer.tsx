@@ -938,8 +938,7 @@ export default function BusinessAnalyzer() {
                                             .agentName
                                         }
                                       </p></div>
-                                    <div>
-                                      <p className="text-sm font-medium text-orange-800">
+                                    <div>                                      <p className="text-sm font-medium text-orange-800">
                                         Purpose:
                                       </p>
                                       <p className="text-sm text-gray-700">
