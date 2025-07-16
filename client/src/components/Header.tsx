@@ -169,7 +169,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={()={() => setIsMobileMenuOpen(false)}
+              onClick={() => setIsMobileMenuOpen(false)}
               className="text-gray-600 hover:text-gray-900"
             >
               <X className="h-6 w-6" />
