@@ -335,14 +335,8 @@ export default function Templates() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
-    // Special handling for business analyzer (no auth required)
-    if (templateId === "ba-1") {
-      navigate("/business-analyzer");
-      return;
-    }
-
-    // Check authentication for ALL other templates
-    if (!user) {
+    // Check authentication first for all templates except business analyzer
+    if (!user && templateId !== "ba-1") {
       toast({
         title: "Authentication Required",
         description: "Please log in to use AI agent templates",
@@ -351,8 +345,14 @@ export default function Templates() {
       setIsLoginModalOpen(true);
       return;
     }
+
+    // Special handling for business analyzer (no auth required)
+    if (templateId === "ba-1") {
+      navigate("/business-analyzer");
+      return;
+    }
     
-    // Special handling for chatbot demo (only after authentication)
+    // Special handling for chatbot demo
     if (templateId === "chatbot-1") {
       navigate("/chatbot");
       return;
