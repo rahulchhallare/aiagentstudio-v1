@@ -363,7 +363,7 @@ export default function Templates() {
       {/* Main Content */}
       <div
         className={`flex-1 ${user ? "ml-0 lg:ml-64" : "ml-0"} transition-all duration-300 overflow-y-auto`}
-      ></div>
+      >
         <div className="container max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
