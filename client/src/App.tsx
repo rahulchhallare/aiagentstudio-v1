@@ -53,7 +53,11 @@ function Router() {
       <Route path="/" component={CanvasHome} />
       <Route path="/welcome" component={LandingPage} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/builder" component={AgentBuilder} />
+      <Route path="/builder" component={() => (
+        <AuthGuard requireAuth={true}>
+          <AgentBuilder />
+        </AuthGuard>
+      )} />
       <Route path="/builder/:id" component={AgentBuilder} />
       <Route path="/simple-builder" component={SimpleBuilder} />
       <Route path="/enhanced-builder" component={EnhancedBuilder} />
