@@ -190,10 +190,15 @@ export default function LLMSEOOptimizer() {
   });
 
   const handleAnalyze = () => {
+    console.log("Analysis button clicked");
+    console.log("Form data:", { websiteUrl, businessName, industry });
+    
     if (!websiteUrl || !businessName || !industry) {
       alert("Please fill in all required fields");
       return;
     }
+    
+    console.log("Starting analysis mutation");
     analyzeMutation.mutate({ websiteUrl, businessName, industry });
   };
 
