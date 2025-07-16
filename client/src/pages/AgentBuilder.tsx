@@ -104,8 +104,9 @@ export default function AgentBuilder() {
         
         // After successful authentication, check if there's a pending template to load
         const templateId = localStorage.getItem("selectedTemplate");
-        if (templateId && nodes.length === 0) {
+        if (templateId) {
           // Load the template that was selected before authentication
+          // This will replace any existing nodes to ensure the template loads correctly
           const template = getTemplateById(templateId);
           if (template) {
             console.log("Loading template after authentication:", template);
@@ -116,7 +117,7 @@ export default function AgentBuilder() {
         }
       }
     }
-  }, [user, authLoading, nodes.length]);
+  }, [user, authLoading]);
 
   // Load agent or template data
   useEffect(() => {
