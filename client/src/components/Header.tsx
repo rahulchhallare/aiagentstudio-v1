@@ -39,7 +39,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
       onLoginClick();
       return;
     }
-    navigate(path);
+    window.location.href = path;
   };
 
   // Check if we're on the landing page
