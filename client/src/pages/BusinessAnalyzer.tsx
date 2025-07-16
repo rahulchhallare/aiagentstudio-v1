@@ -1069,7 +1069,7 @@ export default function BusinessAnalyzer() {
                                 Ongoing Support
                               </p>
                               <p className="text-xs text-white/80">
-                                Free consultation & optimization
+                                Free implementation & optimization
                               </p>
                             </div>
                           </div>
@@ -1084,11 +1084,11 @@ export default function BusinessAnalyzer() {
                           <div className="text-center">
                             <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
                             <h4 className="font-semibold text-lg mb-2">
-                              Free Expert Consultation
+                              Free Expert Implementation
                             </h4>
                             <p className="text-sm text-gray-600 mb-4">
-                              Schedule a 30-minute consultation with our AI
-                              experts to discuss your implementation strategy
+                              Schedule a 30-minute implementation call with our
+                              AI experts to discuss your implementation strategy
                               and get personalized recommendations.
                             </p>
                             <Button
@@ -1103,7 +1103,7 @@ export default function BusinessAnalyzer() {
                               }}
                             >
                               <Clock className="w-4 h-4 mr-2" />
-                              Book Free Consultation
+                              Book Free Implementation Call
                             </Button>
                           </div>
                         </CardContent>
@@ -1255,7 +1255,7 @@ export default function BusinessAnalyzer() {
                                 Ongoing Support
                               </p>
                               <p className="text-xs text-white/80">
-                                Free consultation & optimization
+                                Free implementation & optimization
                               </p>
                             </div>
                           </div>
@@ -1270,11 +1270,11 @@ export default function BusinessAnalyzer() {
                           <div className="text-center">
                             <BarChart3 className="w-10 h-10 text-brand-blue mx-auto mb-3" />
                             <h4 className="font-semibold text-lg mb-2">
-                              Free Expert Consultation
+                              Free Expert Implementation
                             </h4>
                             <p className="text-sm text-gray-600 mb-4">
-                              Schedule a 30-minute consultation with our AI
-                              experts to discuss your implementation strategy
+                              Schedule a 30-minute implementation call with our
+                              AI experts to discuss your implementation strategy
                               and get personalized recommendations.
                             </p>
                             <Button
@@ -1289,7 +1289,7 @@ export default function BusinessAnalyzer() {
                               }}
                             >
                               <Clock className="w-4 h-4 mr-2" />
-                              Book Free Consultation
+                              Book Free Implementation Call
                             </Button>
                           </div>
                         </CardContent>

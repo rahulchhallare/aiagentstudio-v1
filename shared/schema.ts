@@ -293,6 +293,70 @@ export const insertChatbotAnalyticsSchema = createInsertSchema(chatbot_analytics
   event_data: true,
 });
 
+// LLM SEO Optimizer tables
+export const llm_seo_analyses = pgTable("llm_seo_analyses", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id),
+  website_url: text("website_url").notNull(),
+  business_name: text("business_name").notNull(),
+  industry: text("industry").notNull(),
+  current_score: integer("current_score").notNull(),
+  target_score: integer("target_score").notNull(),
+  content_analysis: jsonb("content_analysis").notNull(),
+  competitor_analysis: jsonb("competitor_analysis").notNull(),
+  search_queries: jsonb("search_queries").notNull(),
+  optimization_recommendations: jsonb("optimization_recommendations").notNull(),
+  implementation_status: text("implementation_status").default("pending"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const llm_seo_optimizations = pgTable("llm_seo_optimizations", {
+  id: serial("id").primaryKey(),
+  analysis_id: integer("analysis_id").notNull().references(() => llm_seo_analyses.id),
+  optimization_type: text("optimization_type").notNull(), // "content", "schema", "structure", "keywords"
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  current_content: text("current_content"),
+  optimized_content: text("optimized_content").notNull(),
+  impact_score: integer("impact_score").notNull(),
+  priority: text("priority").notNull(), // "high", "medium", "low"
+  llm_engines: jsonb("llm_engines").notNull(), // ["chatgpt", "gemini", "perplexity", "claude"]
+  implementation_status: text("implementation_status").default("pending"),
+  performance_metrics: jsonb("performance_metrics"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const llm_seo_keywords = pgTable("llm_seo_keywords", {
+  id: serial("id").primaryKey(),
+  analysis_id: integer("analysis_id").notNull().references(() => llm_seo_analyses.id),
+  keyword: text("keyword").notNull(),
+  search_volume: integer("search_volume"),
+  difficulty: integer("difficulty"),
+  current_ranking: integer("current_ranking"),
+  target_ranking: integer("target_ranking"),
+  llm_visibility: jsonb("llm_visibility").notNull(), // Visibility in different LLM engines
+  optimization_opportunities: jsonb("optimization_opportunities").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const llm_seo_monitoring = pgTable("llm_seo_monitoring", {
+  id: serial("id").primaryKey(),
+  analysis_id: integer("analysis_id").notNull().references(() => llm_seo_analyses.id),
+  monitoring_date: timestamp("monitoring_date").defaultNow(),
+  overall_score: integer("overall_score").notNull(),
+  chatgpt_score: integer("chatgpt_score").notNull(),
+  gemini_score: integer("gemini_score").notNull(),
+  perplexity_score: integer("perplexity_score").notNull(),
+  claude_score: integer("claude_score").notNull(),
+  visibility_metrics: jsonb("visibility_metrics").notNull(),
+  ranking_changes: jsonb("ranking_changes").notNull(),
+  performance_insights: jsonb("performance_insights").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Custom flow data schema
 export const flowDataSchema = z.object({
   nodes: z.array(
@@ -363,3 +427,69 @@ export const insertContactSchema = z.object({
   message: z.string().min(1, "Message is required"),
   inquiryType: z.string().optional(),
 });
+
+// LLM SEO insert schemas
+export const insertLLMSEOAnalysisSchema = createInsertSchema(llm_seo_analyses).pick({
+  user_id: true,
+  website_url: true,
+  business_name: true,
+  industry: true,
+  current_score: true,
+  target_score: true,
+  content_analysis: true,
+  competitor_analysis: true,
+  search_queries: true,
+  optimization_recommendations: true,
+  implementation_status: true,
+});
+
+export const insertLLMSEOOptimizationSchema = createInsertSchema(llm_seo_optimizations).pick({
+  analysis_id: true,
+  optimization_type: true,
+  title: true,
+  description: true,
+  current_content: true,
+  optimized_content: true,
+  impact_score: true,
+  priority: true,
+  llm_engines: true,
+  implementation_status: true,
+  performance_metrics: true,
+});
+
+export const insertLLMSEOKeywordSchema = createInsertSchema(llm_seo_keywords).pick({
+  analysis_id: true,
+  keyword: true,
+  search_volume: true,
+  difficulty: true,
+  current_ranking: true,
+  target_ranking: true,
+  llm_visibility: true,
+  optimization_opportunities: true,
+});
+
+export const insertLLMSEOMonitoringSchema = createInsertSchema(llm_seo_monitoring).pick({
+  analysis_id: true,
+  monitoring_date: true,
+  overall_score: true,
+  chatgpt_score: true,
+  gemini_score: true,
+  perplexity_score: true,
+  claude_score: true,
+  visibility_metrics: true,
+  ranking_changes: true,
+  performance_insights: true,
+});
+
+// LLM SEO types
+export type InsertLLMSEOAnalysis = z.infer<typeof insertLLMSEOAnalysisSchema>;
+export type LLMSEOAnalysis = typeof llm_seo_analyses.$inferSelect;
+
+export type InsertLLMSEOOptimization = z.infer<typeof insertLLMSEOOptimizationSchema>;
+export type LLMSEOOptimization = typeof llm_seo_optimizations.$inferSelect;
+
+export type InsertLLMSEOKeyword = z.infer<typeof insertLLMSEOKeywordSchema>;
+export type LLMSEOKeyword = typeof llm_seo_keywords.$inferSelect;
+
+export type InsertLLMSEOMonitoring = z.infer<typeof insertLLMSEOMonitoringSchema>;
+export type LLMSEOMonitoring = typeof llm_seo_monitoring.$inferSelect;

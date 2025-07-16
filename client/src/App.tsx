@@ -40,6 +40,7 @@ import BusinessAnalyzer from "@/pages/BusinessAnalyzer";
 import AgentDeployment from "@/pages/AgentDeployment";
 
 import AgentLibraryManager from "@/pages/AgentLibraryManager";
+import LLMSEOOptimizer from "@/pages/LLMSEOOptimizer";
 import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
@@ -87,7 +88,11 @@ function Router() {
       <Route path="/business-analyzer" component={BusinessAnalyzer} />
       <Route path="/agent-deployment" component={AgentDeployment} />
       <Route path="/agent-library-manager" component={AgentLibraryManager} />
+<<<<<<< HEAD
       
+=======
+      <Route path="/llm-seo-optimizer" component={LLMSEOOptimizer} />
+>>>>>>> bbc068d (Implement LLM SEO Optimizer feature to improve website search ranking)
       <Route component={NotFound} />
     </Switch>
   );

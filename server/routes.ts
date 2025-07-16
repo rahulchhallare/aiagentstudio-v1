@@ -30,6 +30,7 @@ import crypto from "crypto";
 import axios from "axios";
 import nodemailer from "nodemailer";
 // import { chatbotService } from "./chatbot-service";
+import { llmSEOOptimizer } from "./llm-seo-optimizer";
 
 // Extend session type
 declare module "express-session" {
@@ -3073,6 +3074,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+
+  // LLM SEO Optimizer API Routes
+  app.post("/api/llm-seo/analyze", async (req: Request, res: Response) => {
+    try {
+      const { websiteUrl, businessName, industry } = req.body;
+
+      if (!websiteUrl || !businessName || !industry) {
+        return res.status(400).json({
+          success: false,
+          error: "Website URL, business name, and industry are required"
+        });
+      }
+
+      const analysisResult = await llmSEOOptimizer.analyzeWebsiteForLLMSEO(
+        websiteUrl,
+        businessName,
+        industry
+      );
+
+      res.json({
+        success: true,
+        analysis: analysisResult
+      });
+    } catch (error) {
+      console.error("Error in LLM SEO analysis:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to analyze website for LLM SEO"
+      });
+    }
+  });
+
+  app.post("/api/llm-seo/optimize-content", async (req: Request, res: Response) => {
+    try {
+      const { originalContent, optimizationType, targetKeywords, llmEngines } = req.body;
+
+      if (!originalContent || !optimizationType || !targetKeywords || !llmEngines) {
+        return res.status(400).json({
+          success: false,
+          error: "All parameters are required: originalContent, optimizationType, targetKeywords, llmEngines"
+        });
+      }
+
+      const optimizedContent = await llmSEOOptimizer.generateOptimizedContent(
+        originalContent,
+        optimizationType,
+        targetKeywords,
+        llmEngines
+      );
+
+      res.json({
+        success: true,
+        optimizedContent
+      });
+    } catch (error) {
+      console.error("Error optimizing content:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to optimize content"
+      });
+    }
+  });
+
+  app.post("/api/llm-seo/keyword-analysis", async (req: Request, res: Response) => {
+    try {
+      const { businessName, industry, currentContent } = req.body;
+
+      if (!businessName || !industry || !currentContent) {
+        return res.status(400).json({
+          success: false,
+          error: "Business name, industry, and current content are required"
+        });
+      }
+
+      const keywordAnalysis = await llmSEOOptimizer.generateKeywordAnalysis(
+        businessName,
+        industry,
+        currentContent
+      );
+
+      res.json({
+        success: true,
+        keywords: keywordAnalysis
+      });
+    } catch (error) {
+      console.error("Error in keyword analysis:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to analyze keywords"
+      });
+    }
+  });
+
+  app.post("/api/llm-seo/performance-monitoring", async (req: Request, res: Response) => {
+    try {
+      const { websiteUrl, previousScore } = req.body;
+
+      if (!websiteUrl || previousScore === undefined) {
+        return res.status(400).json({
+          success: false,
+          error: "Website URL and previous score are required"
+        });
+      }
+
+      const monitoringData = await llmSEOOptimizer.generatePerformanceMonitoring(
+        websiteUrl,
+        previousScore
+      );
+
+      res.json({
+        success: true,
+        monitoring: monitoringData
+      });
+    } catch (error) {
+      console.error("Error in performance monitoring:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to generate performance monitoring"
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

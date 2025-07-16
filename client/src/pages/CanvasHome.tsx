@@ -351,6 +351,12 @@ export default function CanvasHome() {
       return;
     }
     
+    // Special handling for LLM SEO Optimizer
+    if (templateId === "llm-seo-optimizer") {
+      navigate("/llm-seo-optimizer");
+      return;
+    }
+    
     // Special handling for chatbot demo
     if (templateId === "chatbot-1") {
       navigate("/chatbot");
