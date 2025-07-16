@@ -12,9 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AuthGuard from "@/components/AuthGuard";
-import LoginModal from "@/components/LoginModal";
-import SignupModal from "@/components/SignupModal";
-import { useToast } from "@/hooks/use-toast";
 
 // Icons
 import {
@@ -33,25 +30,8 @@ export default function LandingPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-  const { toast } = useToast();
 
   // No authentication requirement - allow all users to view landing page
-  const handleUseTemplateClick = () => {
-    if (user) {
-      // User is authenticated, redirect to templates
-      navigate("/templates");
-    } else {
-      // User is not authenticated, show login modal
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access templates",
-        variant: "destructive",
-      });
-      setIsLoginModalOpen(true);
-    }
-  };
 
   return (
     <AuthGuard requireAuth={false}>
@@ -77,13 +57,6 @@ export default function LandingPage() {
                       size="lg"
                     >
                       Analyze Your Business
-                    </Button>
-                    <Button
-                      onClick={handleUseTemplateClick}
-                      className="h-auto px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
-                      size="lg"
-                    >
-                      Use Template
                     </Button>
                     <Button
                       variant="outline"
@@ -912,26 +885,6 @@ export default function LandingPage() {
             ></iframe>
           </DialogContent>
         </Dialog>
-
-        {/* Login Modal */}
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-          onSignupClick={() => {
-            setIsLoginModalOpen(false);
-            setIsSignupModalOpen(true);
-          }}
-        />
-
-        {/* Signup Modal */}
-        <SignupModal
-          isOpen={isSignupModalOpen}
-          onClose={() => setIsSignupModalOpen(false)}
-          onLoginClick={() => {
-            setIsSignupModalOpen(false);
-            setIsLoginModalOpen(true);
-          }}
-        />
       </div>
     </AuthGuard>
   );

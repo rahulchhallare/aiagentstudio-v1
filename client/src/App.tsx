@@ -44,7 +44,6 @@ import CanvasHeader from "@/components/CanvasHeader";
 import Shipping from "./pages/Shipping";
 import LoginModal from "@/components/LoginModal";
 import SignupModal from "@/components/SignupModal";
-import AuthGuard from "@/components/AuthGuard";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -54,11 +53,7 @@ function Router() {
       <Route path="/" component={CanvasHome} />
       <Route path="/welcome" component={LandingPage} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/builder" component={() => (
-        <AuthGuard requireAuth={true}>
-          <AgentBuilder />
-        </AuthGuard>
-      )} />
+      <Route path="/builder" component={AgentBuilder} />
       <Route path="/builder/:id" component={AgentBuilder} />
       <Route path="/simple-builder" component={SimpleBuilder} />
       <Route path="/enhanced-builder" component={EnhancedBuilder} />
