@@ -125,7 +125,7 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
 
 export default function LLMSEOOptimizer() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -142,12 +142,26 @@ export default function LLMSEOOptimizer() {
 
   // Check authentication on component mount and when user state changes
   useEffect(() => {
-    if (!user) {
-      setShowLoginModal(true);
-    } else {
-      setShowLoginModal(false);
+    if (!isLoading) {
+      if (!user) {
+        setShowLoginModal(true);
+      } else {
+        setShowLoginModal(false);
+      }
     }
-  }, [user]);
+  }, [user, isLoading]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
@@ -218,6 +232,11 @@ export default function LLMSEOOptimizer() {
     
     if (!user) {
       setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to use the LLM SEO Optimizer",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -237,6 +256,11 @@ export default function LLMSEOOptimizer() {
   const handleOptimizeContent = (optimization: LLMSEOOptimization) => {
     if (!user) {
       setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to optimize content",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -252,6 +276,11 @@ export default function LLMSEOOptimizer() {
   const handleKeywordAnalysis = () => {
     if (!user) {
       setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to perform keyword analysis",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -267,6 +296,11 @@ export default function LLMSEOOptimizer() {
   const handleMonitoring = () => {
     if (!user) {
       setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to monitor performance",
+        variant: "destructive",
+      });
       return;
     }
     
