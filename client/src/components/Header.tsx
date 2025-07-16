@@ -31,12 +31,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   const handleAuthRequiredNavigation = (path: string, itemName: string) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: `Please log in to access ${itemName}`,
-        variant: "destructive",
-      });
-      setIsLoginModalOpen(true);
+      onLoginClick();
       return;
     }
     //navigate(path); //Corrected typo here.
