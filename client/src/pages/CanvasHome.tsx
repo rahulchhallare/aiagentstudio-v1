@@ -171,9 +171,10 @@ export default function CanvasHome() {
   const [, navigate] = useLocation();
   const { user, isLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
 
   // Define template interfaces
   interface Template {
@@ -195,7 +196,7 @@ export default function CanvasHome() {
       popular: true,
       new: true,
     },
-    
+
     // LLM SEO Optimizer - positioned prominently after Business Analyzer
     {
       id: "llm-seo-optimizer",
@@ -205,7 +206,7 @@ export default function CanvasHome() {
       new: true,
       popular: true,
     },
-    
+
     // Customer Support & Service Agents
     {
       id: "customer-support-assistant",
@@ -350,19 +351,26 @@ export default function CanvasHome() {
       navigate("/business-analyzer");
       return;
     }
-    
+
     // Special handling for LLM SEO Optimizer
     if (templateId === "llm-seo-optimizer") {
       navigate("/llm-seo-optimizer");
       return;
     }
-    
+
     // Special handling for chatbot demo
     if (templateId === "chatbot-1") {
       navigate("/chatbot");
       return;
     }
-    
+
+    if (!user) {
+      // Store template ID for after login/signup
+      setPendingTemplateId(templateId);
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     // Store template ID for after login/signup
     localStorage.setItem("selectedTemplate", templateId);
 
@@ -386,24 +394,35 @@ export default function CanvasHome() {
     navigate("/builder");
   };
 
+  const handleLoginClick = () => {
+    setIsSignupModalOpen(false);
+    setIsLoginModalOpen(true);
+  };
+
+  const handleSignupClick = () => {
+    setIsLoginModalOpen(false);
+    setIsSignupModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
       {/* Login/Signup Modals */}
       <LoginModal
         isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onSignupClick={() => {
+        onClose={() => {
           setIsLoginModalOpen(false);
-          setIsSignupModalOpen(true);
+          setPendingTemplateId(null);
         }}
+        onSignupClick={handleSignupClick}
       />
+
       <SignupModal
         isOpen={isSignupModalOpen}
-        onClose={() => setIsSignupModalOpen(false)}
-        onLoginClick={() => {
+        onClose={() => {
           setIsSignupModalOpen(false);
-          setIsLoginModalOpen(true);
+          setPendingTemplateId(null);
         }}
+        onSwitchToLogin={handleLoginClick}
       />
 
       {/* Video Modal */}
@@ -499,7 +518,7 @@ export default function CanvasHome() {
         {/* AI Agent Templates Section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-center mb-8">AI Agent Templates</h2>
-          
+
           {/* Search Bar */}
           <div className="relative mb-8 max-w-md mx-auto">
             <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
@@ -795,15 +814,25 @@ export default function CanvasHome() {
         </div>
       </div>
       <Footer />
-      
-      {/* Customer Service Chatbot */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg cursor-pointer transition-colors" onClick={() => window.open('/chatbot', '_blank')}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.279 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.279-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-      </div>
+
+      {/* Authentication Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => {
+          setIsLoginModalOpen(false);
+          setPendingTemplateId(null);
+        }}
+        onSignupClick={handleSignupClick}
+      />
+
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => {
+          setIsSignupModalOpen(false);
+          setPendingTemplateId(null);
+        }}
+        onSwitchToLogin={handleLoginClick}
+      />
     </div>
   );
 }
