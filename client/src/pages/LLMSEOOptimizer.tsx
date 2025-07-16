@@ -140,10 +140,12 @@ export default function LLMSEOOptimizer() {
 
   const queryClient = useQueryClient();
 
-  // Check authentication on component mount
+  // Check authentication on component mount and when user state changes
   useEffect(() => {
     if (!user) {
       setShowLoginModal(true);
+    } else {
+      setShowLoginModal(false);
     }
   }, [user]);
 
