@@ -88,11 +88,8 @@ function Router() {
       <Route path="/business-analyzer" component={BusinessAnalyzer} />
       <Route path="/agent-deployment" component={AgentDeployment} />
       <Route path="/agent-library-manager" component={AgentLibraryManager} />
-<<<<<<< HEAD
-      
-=======
       <Route path="/llm-seo-optimizer" component={LLMSEOOptimizer} />
->>>>>>> bbc068d (Implement LLM SEO Optimizer feature to improve website search ranking)
+
       <Route component={NotFound} />
     </Switch>
   );
