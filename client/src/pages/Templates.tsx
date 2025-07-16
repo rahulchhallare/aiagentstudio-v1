@@ -160,12 +160,7 @@ export default function Templates() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
+  // Templates page is now accessible without authentication
 
   if (authLoading) {
     return (
@@ -350,6 +345,8 @@ export default function Templates() {
     
     // Store template ID for the builder to load
     localStorage.setItem("selectedTemplate", templateId);
+    
+    // If user is not authenticated, they can still view templates but will need to login when trying to use builder
     navigate("/builder");
   };
 
@@ -366,7 +363,7 @@ export default function Templates() {
       {/* Main Content */}
       <div
         className={`flex-1 ${user ? "ml-0 lg:ml-64" : "ml-0"} transition-all duration-300 overflow-y-auto`}
-      >
+      ></div>
         <div className="container max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
