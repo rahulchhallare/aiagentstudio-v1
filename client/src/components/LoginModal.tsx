@@ -29,7 +29,8 @@ import { Separator } from "@/components/ui/separator";
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSignupClick: () => void;
+  onSignupClick?: () => void;
+  onSwitchToSignup?: () => void;
 }
 
 const formSchema = z.object({
@@ -42,6 +43,7 @@ export default function LoginModal({
   isOpen,
   onClose,
   onSignupClick,
+  onSwitchToSignup,
 }: LoginModalProps) {
   const [, navigate] = useLocation();
   const { login } = useAuth();
@@ -230,7 +232,7 @@ export default function LoginModal({
               className="text-primary-600 hover:text-primary-700 p-0 h-auto"
               onClick={() => {
                 onClose();
-                onSignupClick();
+                (onSwitchToSignup || onSignupClick)?.();
               }}
               disabled={isLoading}
             >

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import LoginModal from "@/components/LoginModal";
 import { 
   Card, 
   CardContent, 
@@ -124,7 +125,7 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
 
 export default function LLMSEOOptimizer() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -135,11 +136,11 @@ export default function LLMSEOOptimizer() {
   const [keywordResults, setKeywordResults] = useState<KeywordData[]>([]);
   const [monitoringData, setMonitoringData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("analyze");
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // No authentication requirement - allow all users to access LLM SEO Optimizer
-
+  // All mutations must be defined before any conditional logic
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
       console.log("Making API request with data:", data);
@@ -203,12 +204,49 @@ export default function LLMSEOOptimizer() {
     }
   });
 
+  // Check authentication on component mount and when user state changes
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        setShowLoginModal(true);
+      } else {
+        setShowLoginModal(false);
+      }
+    }
+  }, [user, isLoading]);
+
+  // Show loading state while checking authentication (after all hooks)
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleAnalyze = () => {
     console.log("Analysis button clicked");
     console.log("Form data:", { websiteUrl, businessName, industry });
     
+    if (!user) {
+      setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to use the LLM SEO Optimizer",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!websiteUrl || !businessName || !industry) {
-      alert("Please fill in all required fields");
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -217,6 +255,16 @@ export default function LLMSEOOptimizer() {
   };
 
   const handleOptimizeContent = (optimization: LLMSEOOptimization) => {
+    if (!user) {
+      setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to optimize content",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSelectedOptimization(optimization);
     optimizeContentMutation.mutate({
       originalContent: optimization.currentContent || "",
@@ -227,6 +275,16 @@ export default function LLMSEOOptimizer() {
   };
 
   const handleKeywordAnalysis = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to perform keyword analysis",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!businessName || !industry || !analysisResult) return;
     
     keywordAnalysisMutation.mutate({
@@ -237,6 +295,16 @@ export default function LLMSEOOptimizer() {
   };
 
   const handleMonitoring = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to monitor performance",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!websiteUrl || !analysisResult) return;
     
     monitoringMutation.mutate({
@@ -246,7 +314,9 @@ export default function LLMSEOOptimizer() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <>
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
@@ -722,5 +792,6 @@ export default function LLMSEOOptimizer() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }

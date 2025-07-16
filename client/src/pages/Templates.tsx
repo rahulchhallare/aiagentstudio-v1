@@ -31,6 +31,8 @@ import {
   Star,
 } from "lucide-react";
 import Footer from "@/components/Footer";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
 
 // Template card component
 interface TemplateCardProps {
@@ -159,13 +161,9 @@ export default function Templates() {
   const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Redirect to home if not authenticated
-  useEffect(() => {
-    if (!user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
 
   if (authLoading) {
     return (
@@ -336,6 +334,18 @@ export default function Templates() {
 
   // Handle template selection
   const handleTemplateSelect = (templateId: string) => {
+    // If user is not authenticated, show login modal and store template selection
+    if (!user) {
+      setPendingTemplateId(templateId);
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    // User is authenticated, proceed with template selection
+    proceedWithTemplate(templateId);
+  };
+
+  const proceedWithTemplate = (templateId: string) => {
     // Special handling for business analyzer
     if (templateId === "ba-1") {
       navigate("/business-analyzer");
@@ -351,6 +361,36 @@ export default function Templates() {
     // Store template ID for the builder to load
     localStorage.setItem("selectedTemplate", templateId);
     navigate("/builder");
+  };
+
+  // Handle successful authentication
+  useEffect(() => {
+    if (user && pendingTemplateId) {
+      // User has authenticated and we have a pending template
+      proceedWithTemplate(pendingTemplateId);
+      setPendingTemplateId(null);
+    }
+  }, [user, pendingTemplateId]);
+
+  // Auth modal handlers
+  const handleLoginSuccess = () => {
+    setIsLoginModalOpen(false);
+    // The useEffect above will handle the template navigation
+  };
+
+  const handleSignupSuccess = () => {
+    setIsSignupModalOpen(false);
+    // The useEffect above will handle the template navigation
+  };
+
+  const handleLoginClick = () => {
+    setIsSignupModalOpen(false);
+    setIsLoginModalOpen(true);
+  };
+
+  const handleSignupClick = () => {
+    setIsLoginModalOpen(false);
+    setIsSignupModalOpen(true);
   };
 
   return (
@@ -602,6 +642,25 @@ export default function Templates() {
         </div>
         <Footer />
       </div>
+
+      {/* Authentication Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => {
+          setIsLoginModalOpen(false);
+          setPendingTemplateId(null);
+        }}
+        onSignupClick={handleSignupClick}
+      />
+
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => {
+          setIsSignupModalOpen(false);
+          setPendingTemplateId(null);
+        }}
+        onSwitchToLogin={handleLoginClick}
+      />
     </div>
   );
 }

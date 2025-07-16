@@ -33,7 +33,7 @@ import nodemailer from "nodemailer";
 import { llmSEOOptimizer } from "./llm-seo-optimizer";
 
 // Extend session type
-declare module "express-session" {
+declare module 'express-session' {
   interface SessionData {
     user?: {
       id: number;
@@ -78,7 +78,7 @@ async function sendContactFormNotifications(contactData: {
 
   // Create nodemailer transporter
   const transporter = nodemailer.createTransport({
-    service: "gmail", // or your preferred email service
+    service: 'gmail', // or your preferred email service
     auth: {
       user: process.env.SMTP_USER, // Your email
       pass: process.env.SMTP_PASS, // Your app password,
@@ -90,19 +90,19 @@ async function sendContactFormNotifications(contactData: {
   // Email to your team (notification)
   const teamEmailOptions = {
     from: process.env.SMTP_USER,
-    to: process.env.CONTACT_EMAIL || "info@aiagentstudio.ai",
+    to: process.env.CONTACT_EMAIL || 'info@aiagentstudio.ai',
     subject: `New Contact Form Submission: ${contactData.subject}`,
     html: `
       <h2>New Contact Form Submission</h2>
       <p><strong>Submitted:</strong> ${timestamp}</p>
       <p><strong>Name:</strong> ${contactData.name}</p>
       <p><strong>Email:</strong> ${contactData.email}</p>
-      ${contactData.company ? `<p><strong>Company:</strong> ${contactData.company}</p>` : ""}
-      ${contactData.inquiryType ? `<p><strong>Inquiry Type:</strong> ${contactData.inquiryType}</p>` : ""}
+      ${contactData.company ? `<p><strong>Company:</strong> ${contactData.company}</p>` : ''}
+      ${contactData.inquiryType ? `<p><strong>Inquiry Type:</strong> ${contactData.inquiryType}</p>` : ''}
       <p><strong>Subject:</strong> ${contactData.subject}</p>
       <p><strong>Message:</strong></p>
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
-        ${contactData.message.replace(/\n/g, "<br>")}
+        ${contactData.message.replace(/\n/g, '<br>')}
       </div>
       <hr>
       <p><em>Reply to: ${contactData.email}</em></p>
@@ -113,7 +113,7 @@ async function sendContactFormNotifications(contactData: {
   const userEmailOptions = {
     from: process.env.SMTP_USER,
     to: contactData.email,
-    subject: "Thank you for contacting AIAgentStudio.AI",
+    subject: 'Thank you for contacting AIAgentStudio.AI',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">Thank you for reaching out!</h2>
@@ -125,7 +125,7 @@ async function sendContactFormNotifications(contactData: {
           <p><strong>Subject:</strong> ${contactData.subject}</p>
           <p><strong>Message:</strong></p>
           <p style="background-color: white; padding: 15px; border-radius: 5px; border-left: 4px solid #2563eb;">
-            ${contactData.message.replace(/\n/g, "<br>")}
+            ${contactData.message.replace(/\n/g, '<br>')}
           </p>
         </div>
 
@@ -190,26 +190,21 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
     next();
   } else {
     // User is not authenticated
-    res
-      .status(401)
-      .json({ error: "Unauthorized", message: "Please log in to continue" });
+    res.status(401).json({ error: "Unauthorized", message: "Please log in to continue" });
   }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session configuration
-  app.use(
-    session({
-      secret:
-        process.env.SESSION_SECRET || "your-secret-key-change-in-production",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: false, // Set to true in production with HTTPS
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      },
-    }),
-  );
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
 
   // Razorpay webhook - MUST be defined BEFORE any JSON body parser middleware
   app.post(
@@ -243,13 +238,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           received: signature,
           expected: expectedSignature,
           bodyLength: bodyString.length,
-          webhookSecretLength: webhookSecret.length,
+          webhookSecretLength: webhookSecret.length
         });
 
         if (expectedSignature !== signature) {
-          console.error(
-            "Webhook signature mismatch - skipping verification for now",
-          );
+          console.error("Webhook signature mismatch - skipping verification for now");
           // Temporarily skip signature verification to allow webhooks to process
           // return res.status(400).json({ message: "Invalid webhook signature" });
         }
@@ -275,21 +268,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
 
         // Create a unique event identifier
-        const eventId =
-          event.payload?.payment?.entity?.id ||
-          event.payload?.subscription?.entity?.id ||
-          "unknown";
+        const eventId = event.payload?.payment?.entity?.id ||
+                       event.payload?.subscription?.entity?.id ||
+                       "unknown";
         const uniqueEventKey = `${event.event}_${eventId}`;
 
         // Check if this specific event was already processed
         const existingEvent = await storage.getWebhookEventById(uniqueEventKey);
         if (existingEvent) {
-          console.log(
-            "Event already processed, skipping:",
-            event.event,
-            "for entity:",
-            eventId,
-          );
+          console.log("Event already processed, skipping:", event.event, "for entity:", eventId);
           return res.json({ status: "already_processed" });
         }
 
@@ -313,17 +300,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               if (userId > 0) {
                 // Check if payment history already exists to prevent duplicates
-                const existingPaymentHistory =
-                  await storage.getPaymentHistoryByUserId(userId);
+                const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
                 const paymentExists = existingPaymentHistory.some(
-                  (p) => p.razorpay_payment_id === payment.id,
+                  (p) => p.razorpay_payment_id === payment.id
                 );
 
                 if (paymentExists) {
-                  console.log(
-                    "Payment history already exists for payment:",
-                    payment.id,
-                  );
+                  console.log("Payment history already exists for payment:", payment.id);
                   break;
                 }
 
@@ -339,22 +322,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   if (payment.amount >= 499000 && payment.amount <= 501000) {
                     planName = "Enterprise Monthly";
                     planId = PLAN_IDS.ENTERPRISE_MONTHLY;
-                  } else if (
-                    payment.amount >= 99000 &&
-                    payment.amount <= 101000
-                  ) {
+                  } else if (payment.amount >= 99000 && payment.amount <= 101000) {
                     planName = "Pro Monthly";
                     planId = PLAN_IDS.PRO_MONTHLY;
-                  } else if (
-                    payment.amount >= 999000 &&
-                    payment.amount <= 1001000
-                  ) {
+                  } else if (payment.amount >= 999000 && payment.amount <= 1001000) {
                     planName = "Pro Yearly";
                     planId = PLAN_IDS.PRO_YEARLY;
-                  } else if (
-                    payment.amount >= 4999000 &&
-                    payment.amount <= 5001000
-                  ) {
+                  } else if (payment.amount >= 4999000 && payment.amount <= 5001000) {
                     planName = "Enterprise Yearly";
                     planId = PLAN_IDS.ENTERPRISE_YEARLY;
                   }
@@ -380,8 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     subscriptionId = `manual_${payment.id}`;
                   }
 
-                  const existingSubscription =
-                    await storage.getSubscriptionByUserId(userId);
+                  const existingSubscription = await storage.getSubscriptionByUserId(userId);
 
                   if (existingSubscription) {
                     await storage.updateSubscription(
@@ -395,9 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         plan_id: planId,
                         price_id: planId,
                         current_period_start: new Date(),
-                        current_period_end: new Date(
-                          Date.now() + 30 * 24 * 60 * 60 * 1000,
-                        ),
+                        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                         updated_at: new Date(),
                       },
                     );
@@ -411,9 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       plan_id: planId,
                       price_id: planId,
                       current_period_start: new Date(),
-                      current_period_end: new Date(
-                        Date.now() + 30 * 24 * 60 * 60 * 1000,
-                      ),
+                      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                     });
                   }
                 }
@@ -431,22 +400,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               if (userId > 0) {
                 // Check if payment history already exists
-                const existingPaymentHistory =
-                  await storage.getPaymentHistoryByUserId(userId);
+                const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
                 const paymentExists = existingPaymentHistory.some(
-                  (p) => p.razorpay_payment_id === paidPaymentEntity.id,
+                  (p) => p.razorpay_payment_id === paidPaymentEntity.id
                 );
 
                 if (paymentExists) {
-                  console.log(
-                    "Payment history already exists for payment link payment:",
-                    paidPaymentEntity.id,
-                  );
+                  console.log("Payment history already exists for payment link payment:", paidPaymentEntity.id);
                   break;
                 }
 
-                const planName =
-                  paidPaymentEntity.notes?.planName || "Unknown Plan";
+                const planName = paidPaymentEntity.notes?.planName || "Unknown Plan";
                 const planId = paidPaymentEntity.notes?.planId || "";
 
                 await storage.createPaymentHistory({
@@ -458,8 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   description: `Payment for ${planName}`,
                 });
 
-                const existingSubscription =
-                  await storage.getSubscriptionByUserId(userId);
+                const existingSubscription = await storage.getSubscriptionByUserId(userId);
 
                 if (existingSubscription) {
                   await storage.updateSubscription(
@@ -472,9 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       plan_id: planId,
                       price_id: planId,
                       current_period_start: new Date(),
-                      current_period_end: new Date(
-                        Date.now() + 30 * 24 * 60 * 60 * 1000,
-                      ),
+                      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                       updated_at: new Date(),
                     },
                   );
@@ -488,9 +449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     plan_id: planId,
                     price_id: planId,
                     current_period_start: new Date(),
-                    current_period_end: new Date(
-                      Date.now() + 30 * 24 * 60 * 60 * 1000,
-                    ),
+                    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                   });
                 }
               }
@@ -506,45 +465,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             try {
               const userId = parseInt(subscription.notes?.userId || "0");
-              console.log(
-                "Processing subscription event:",
-                event.event,
-                "for user:",
-                userId,
-                "subscription:",
-                subscription.id,
-              );
+              console.log("Processing subscription event:", event.event, "for user:", userId, "subscription:", subscription.id);
 
               if (userId > 0) {
                 const planName = getPlanNameFromId(subscription.plan_id);
-                console.log("Plan details:", {
-                  planId: subscription.plan_id,
-                  planName,
-                });
+                console.log("Plan details:", { planId: subscription.plan_id, planName });
 
-                const existingSubscription =
-                  await storage.getSubscriptionByUserId(userId);
+                const existingSubscription = await storage.getSubscriptionByUserId(userId);
 
-                if (
-                  existingSubscription &&
-                  existingSubscription.razorpay_subscription_id ===
-                    subscription.id
-                ) {
+                if (existingSubscription && existingSubscription.razorpay_subscription_id === subscription.id) {
                   // Update existing subscription status
                   await storage.updateSubscription(subscription.id, {
                     status: subscription.status,
-                    current_period_start: new Date(
-                      subscription.current_start * 1000,
-                    ),
-                    current_period_end: new Date(
-                      subscription.current_end * 1000,
-                    ),
+                    current_period_start: new Date(subscription.current_start * 1000),
+                    current_period_end: new Date(subscription.current_end * 1000),
                     updated_at: new Date(),
                   });
-                  console.log(
-                    "Updated existing subscription:",
-                    subscription.id,
-                  );
+                  console.log("Updated existing subscription:", subscription.id);
                 } else {
                   // Create new subscription
                   await storage.createSubscription({
@@ -555,12 +492,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     plan_name: planName,
                     plan_id: subscription.plan_id,
                     price_id: subscription.plan_id,
-                    current_period_start: new Date(
-                      subscription.current_start * 1000,
-                    ),
-                    current_period_end: new Date(
-                      subscription.current_end * 1000,
-                    ),
+                    current_period_start: new Date(subscription.current_start * 1000),
+                    current_period_end: new Date(subscription.current_end * 1000),
                   });
                   console.log("Created new subscription:", subscription.id);
                 }
@@ -568,10 +501,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Create payment history if payment exists
                 if (paymentEntity) {
                   // Check if payment history already exists to prevent duplicates
-                  const existingPaymentHistory =
-                    await storage.getPaymentHistoryByUserId(userId);
+                  const existingPaymentHistory = await storage.getPaymentHistoryByUserId(userId);
                   const paymentExists = existingPaymentHistory.some(
-                    (p) => p.razorpay_payment_id === paymentEntity.id,
+                    (p) => p.razorpay_payment_id === paymentEntity.id
                   );
 
                   if (!paymentExists) {
@@ -581,20 +513,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       amount: paymentEntity.amount,
                       currency: paymentEntity.currency,
                       status: "succeeded",
-                      description:
-                        event.event === "subscription.activated"
-                          ? `Subscription activated for ${planName}`
-                          : `Subscription renewal payment for ${planName}`,
+                      description: event.event === "subscription.activated" 
+                        ? `Subscription activated for ${planName}`
+                        : `Subscription renewal payment for ${planName}`,
                     });
-                    console.log(
-                      "Created payment history for:",
-                      paymentEntity.id,
-                    );
+                    console.log("Created payment history for:", paymentEntity.id);
                   } else {
-                    console.log(
-                      "Payment history already exists for:",
-                      paymentEntity.id,
-                    );
+                    console.log("Payment history already exists for:", paymentEntity.id);
                   }
                 }
               }
@@ -657,7 +582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.user = {
         id: user.id,
         email: user.email,
-        username: user.username,
+        username: user.username
       };
 
       const { password, ...userWithoutPassword } = user;
@@ -690,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.user = {
         id: user.id,
         email: user.email,
-        username: user.username,
+        username: user.username
       };
 
       const { password: _, ...userWithoutPassword } = user;
@@ -786,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.user = {
         id: user.id,
         email: user.email,
-        username: user.username,
+        username: user.username
       };
 
       const userData = encodeURIComponent(JSON.stringify(user));
@@ -969,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res
             .status(403)
             .json({ message: "Agent is not currently active" });
-        }
+                }
 
         const flowData = flowDataSchema.parse(agent.flow_data);
         const result = await executeFlow(flowData, input);
@@ -1026,8 +951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deployUrl = `https://${host}/agent/${deployId}`;
 
       const agent = await storage.createAgent({
-        user_id: 1,
-        name: "Reliable Content Assistant",
+        user_id: 1,        name: "Reliable Content Assistant",
         description:
           "A helpful AI assistant using reliable Hugging Face models that can generate creative content based on your prompts.",
         flow_data,
@@ -1055,9 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Exchange rate endpoint
   app.get("/api/exchange-rate", async (req: Request, res: Response) => {
     try {
-      const response = await axios.get(
-        "https://api.exchangerate-api.com/v4/latest/USD",
-      );
+      const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
       const rate = response.data.rates.INR;
       res.json({ rate: rate || 83 });
     } catch (error) {
@@ -1072,160 +994,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create manual payment endpoint
-  app.post(
-    "/api/create-manual-payment",
-    async (req: Request, res: Response) => {
-      try {
-        const { planId, userId, email, amount } = req.body;
+  app.post("/api/create-manual-payment", async (req: Request, res: Response) => {
+    try {
+      const { planId, userId, email, amount } = req.body;
 
-        if (!planId || !userId || !email || !amount) {
-          return res.status(400).json({
-            message: "Plan ID, user ID, email, and amount are required",
-          });
-        }
-
-        // Get or create customer
-        let customer;
-        try {
-          const customers = await razorpay.customers.all({ email: email });
-
-          // Find exact email match
-          const exactMatch = customers.items?.find((c) => c.email === email);
-
-          if (exactMatch) {
-            customer = exactMatch;
-            console.log(
-              "Found existing customer for manual payment:",
-              customer.id,
-              "email:",
-              customer.email,
-            );
-          } else {
-            customer = await razorpay.customers.create({
-              name: email.split("@")[0],
-              email: email,
-              contact: "",
-              notes: {
-                userId: userId.toString(),
-              },
-            });
-            console.log(
-              "Created new customer for manual payment:",
-              customer.id,
-              "email:",
-              customer.email,
-            );
-          }
-        } catch (customerError) {
-          console.error("Failed to handle customer:", customerError);
-          return res.status(500).json({
-            message: "Failed to create or retrieve customer account",
-          });
-        }
-
-        // Map plan ID to plan name and validate amount
-        let planName: string;
-        let expectedAmount: number;
-
-        try {
-          expectedAmount = await getINRAmountByPlanId(planId);
-
-          switch (planId) {
-            case "pro-monthly":
-              planName = "Pro Monthly";
-              break;
-            case "pro-yearly":
-              planName = "Pro Yearly";
-              break;
-            case "enterprise-monthly":
-              planName = "Enterprise Monthly";
-              break;
-            case "enterprise-yearly":
-              planName = "Enterprise Yearly";
-              break;
-            default:
-              planName = `Plan ${planId}`;
-          }
-
-          // Validate the amount matches expected pricing (allow 5% variance for exchange rate fluctuations)
-          const variance = Math.abs(amount - expectedAmount) / expectedAmount;
-          if (variance > 0.05) {
-            console.warn(
-              `Amount mismatch for ${planId}: expected ${expectedAmount}, got ${amount}`,
-            );
-          }
-        } catch (error) {
-          console.error("Error validating plan pricing:", error);
-          return res.status(400).json({ message: "Invalid plan ID" });
-        }
-
-        // Get proper host and protocol for callback URL
-        const host = req.get("host") || "localhost:5000";
-        const protocol = req.get("host")?.includes("replit.dev")
-          ? "https"
-          : "http";
-
-        // Create payment link
-        const paymentLink = await razorpay.paymentLink.create({
-          amount: amount,
-          currency: "INR",
-          accept_partial: false,
-          description: `Manual Payment for ${planName}`,
-          customer: {
-            id: customer.id,
-          },
-          notify: {
-            sms: false,
-            email: true,
-          },
-          reminder_enable: true,
-          callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
-          callback_method: "get",
-          notes: {
-            planId: planId,
-            planName: planName,
-            userId: userId.toString(),
-            paymentType: "manual",
-          },
-          // Force automatic redirection
-          expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-          reference_id: `man_${userId}_${Date.now().toString().slice(-8)}`,
-        });
-
-        res.json({
-          success: true,
-          paymentLink: paymentLink.short_url,
-          paymentLinkId: paymentLink.id,
-          customerId: customer.id,
-          amount: amount,
-          currency: "INR",
-        });
-      } catch (error: any) {
-        console.error("Error creating manual payment:", error);
-        res.status(500).json({
-          message: "Failed to create manual payment",
-          error: error.message,
+      if (!planId || !userId || !email || !amount) {
+        return res.status(400).json({ 
+          message: "Plan ID, user ID, email, and amount are required" 
         });
       }
-    },
-  );
+
+      // Get or create customer
+      let customer;
+      try {
+        const customers = await razorpay.customers.all({ email: email });
+
+        // Find exact email match
+        const exactMatch = customers.items?.find(c => c.email === email);
+
+        if (exactMatch) {
+          customer = exactMatch;
+          console.log("Found existing customer for manual payment:", customer.id, "email:", customer.email);
+        } else {
+          customer = await razorpay.customers.create({
+            name: email.split("@")[0],
+            email: email,
+            contact: "",
+            notes: {
+              userId: userId.toString(),
+            },
+          });
+          console.log("Created new customer for manual payment:", customer.id, "email:", customer.email);
+        }
+      } catch (customerError) {
+        console.error("Failed to handle customer:", customerError);
+        return res.status(500).json({
+          message: "Failed to create or retrieve customer account",
+        });
+      }
+
+      // Map plan ID to plan name and validate amount
+      let planName: string;
+      let expectedAmount: number;
+
+      try {
+        expectedAmount = await getINRAmountByPlanId(planId);
+
+        switch (planId) {
+          case "pro-monthly":
+            planName = "Pro Monthly";
+            break;
+          case "pro-yearly":
+            planName = "Pro Yearly";
+            break;
+          case "enterprise-monthly":
+            planName = "Enterprise Monthly";
+            break;
+          case "enterprise-yearly":
+            planName = "Enterprise Yearly";
+            break;
+          default:
+            planName = `Plan ${planId}`;
+        }
+
+        // Validate the amount matches expected pricing (allow 5% variance for exchange rate fluctuations)
+        const variance = Math.abs(amount - expectedAmount) / expectedAmount;
+        if (variance > 0.05) {
+          console.warn(`Amount mismatch for ${planId}: expected ${expectedAmount}, got ${amount}`);
+        }
+      } catch (error) {
+        console.error("Error validating plan pricing:", error);
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      // Get proper host and protocol for callback URL
+      const host = req.get("host") || "localhost:5000";
+      const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
+
+      // Create payment link
+      const paymentLink = await razorpay.paymentLink.create({
+        amount: amount,
+        currency: "INR",
+        accept_partial: false,
+        description: `Manual Payment for ${planName}`,
+        customer: {
+          id: customer.id
+        },
+        notify: {
+          sms: false,
+          email: true
+        },
+        reminder_enable: true,
+        callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
+        callback_method: 'get',
+        notes: {
+          planId: planId,
+          planName: planName,
+          userId: userId.toString(),
+          paymentType: "manual"
+        },
+        // Force automatic redirection
+        expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+        reference_id: `man_${userId}_${Date.now().toString().slice(-8)}`
+      });
+
+      res.json({
+        success: true,
+        paymentLink: paymentLink.short_url,
+        paymentLinkId: paymentLink.id,
+        customerId: customer.id,
+        amount: amount,
+        currency: "INR"
+      });
+
+    } catch (error: any) {
+      console.error("Error creating manual payment:", error);
+      res.status(500).json({
+        message: "Failed to create manual payment",
+        error: error.message
+      });
+    }
+  });
 
   // Payment and subscription routes
   app.post(
     "/api/create-checkout-session",
     async (req: Request, res: Response) => {
-      console.log("Create checkout session request received:", {
-        body: req.body,
-      });
+      console.log("Create checkout session request received:", { body: req.body });
 
       try {
         const { planId, userId, email } = req.body;
 
-        console.log("Processing checkout session for:", {
-          planId,
-          userId,
-          email,
-        });
+        console.log("Processing checkout session for:", { planId, userId, email });
 
         if (!planId || !userId || !email) {
           console.log("Missing required fields");
@@ -1265,9 +1165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (error) {
           console.error("Error getting plan pricing:", error);
-          return res
-            .status(500)
-            .json({ message: "Failed to get plan pricing" });
+          return res.status(500).json({ message: "Failed to get plan pricing" });
         }
 
         console.log("Plan details:", { planAmount, planAmount, planName });
@@ -1275,41 +1173,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let customer;
         try {
           console.log("Looking for existing customer with email:", email);
-          const customers = await razorpay.customers.all({
+          const customers = await razorpay.customers.all({ 
             email: email,
-            count: 10,
+            count: 10 
           });
 
           console.log("Razorpay customers API response:", {
             count: customers.count,
-            items: customers.items?.length || 0,
+            items: customers.items?.length || 0
           });
 
           // Properly filter to find exact email match
-          const exactMatch = customers.items?.find((c) => c.email === email);
+          const exactMatch = customers.items?.find(c => c.email === email);
 
           if (exactMatch) {
             customer = exactMatch;
-            console.log(
-              "Found existing customer:",
-              customer.id,
-              "for email:",
-              customer.email,
-            );
+            console.log("Found existing customer:", customer.id, "for email:", customer.email);
           } else {
             console.log("No exact email match found. Creating new customer.");
             throw new Error("No existing customer found");
           }
         } catch (customerError) {
           console.log("Creating new customer for email:", email);
-          console.log(
-            "Customer creation error context:",
-            customerError.message,
-          );
+          console.log("Customer creation error context:", customerError.message);
 
           try {
             // Validate email format before creating customer
-            if (!email || !email.includes("@")) {
+            if (!email || !email.includes('@')) {
               throw new Error("Invalid email format");
             }
 
@@ -1321,22 +1211,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               contact: "", // Empty string is acceptable
               notes: {
                 userId: userId.toString(),
-                created_via: "checkout_session",
+                created_via: "checkout_session"
               },
             };
 
-            console.log(
-              "Creating customer with params:",
-              JSON.stringify(customerParams, null, 2),
-            );
+            console.log("Creating customer with params:", JSON.stringify(customerParams, null, 2));
 
             // Log the actual request being sent to Razorpay
             console.log("=== RAZORPAY CUSTOMER CREATE REQUEST ===");
             console.log("Endpoint: POST /v1/customers");
-            console.log(
-              "Request Body:",
-              JSON.stringify(customerParams, null, 2),
-            );
+            console.log("Request Body:", JSON.stringify(customerParams, null, 2));
             console.log("Timestamp:", new Date().toISOString());
 
             customer = await razorpay.customers.create(customerParams);
@@ -1346,39 +1230,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log("Response Body:", JSON.stringify(customer, null, 2));
             console.log("Response Status: SUCCESS");
             console.log("Timestamp:", new Date().toISOString());
-            console.log(
-              "Created new customer:",
-              customer.id,
-              "for email:",
-              customer.email,
-            );
+            console.log("Created new customer:", customer.id, "for email:", customer.email);
           } catch (createError: any) {
             console.error("Failed to create customer:", {
               message: createError.message,
               error: createError.error || createError,
-              statusCode: createError.statusCode,
+              statusCode: createError.statusCode
             });
             return res.status(500).json({
               message: "Failed to create customer account",
               error: createError.message || "Unknown customer creation error",
-              details:
-                createError.error?.description ||
-                "Please check your account details and try again",
+              details: createError.error?.description || "Please check your account details and try again"
             });
           }
         }
 
         const host = req.get("host") || "localhost:5000";
-        const protocol = req.get("host")?.includes("replit.dev")
-          ? "https"
-          : "http";
+        const protocol = req.get("host")?.includes("replit.dev") ? "https" : "http";
 
         console.log("Creating payment link with:", {
           planAmount,
           customerId: customer.id,
           planName,
           host,
-          protocol,
+          protocol
         });
 
         // Try to create a proper Razorpay subscription first
@@ -1403,30 +1278,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (!razorpayPlanId) {
-            throw new Error(
-              `Razorpay plan ID not configured for ${planId}. Please set the environment variable.`,
-            );
+            throw new Error(`Razorpay plan ID not configured for ${planId}. Please set the environment variable.`);
           }
 
-          console.log(
-            `Attempting to create Razorpay subscription with plan ID: ${razorpayPlanId}`,
-          );
+          console.log(`Attempting to create Razorpay subscription with plan ID: ${razorpayPlanId}`);
           console.log(`Customer ID: ${customer.id}`);
           console.log(`User ID: ${userId}`);
 
           // Validate customer exists and is properly formatted
-          if (!customer.id || typeof customer.id !== "string") {
+          if (!customer.id || typeof customer.id !== 'string') {
             throw new Error(`Invalid customer ID: ${customer.id}`);
           }
 
           // Set total_count based on plan type for 2-year subscription
           let totalCount = 100; // default fallback
-          if (planId === "pro-monthly" || planId === "enterprise-monthly") {
+          if (planId === 'pro-monthly' || planId === 'enterprise-monthly') {
             totalCount = 24; // 24 monthly cycles = 2 years
-          } else if (
-            planId === "pro-yearly" ||
-            planId === "enterprise-yearly"
-          ) {
+          } else if (planId === 'pro-yearly' || planId === 'enterprise-yearly') {
             totalCount = 2; // 2 yearly cycles = 2 years
           }
 
@@ -1439,26 +1307,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId: userId.toString(),
               planId: planId,
               planName: planName,
-              customer_id: customer.id,
-            },
+              customer_id: customer.id
+            }
           };
 
-          console.log(
-            "Creating subscription with params:",
-            JSON.stringify(subscriptionParams, null, 2),
-          );
+          console.log("Creating subscription with params:", JSON.stringify(subscriptionParams, null, 2));
 
           // Log the actual request being sent to Razorpay
           console.log("=== RAZORPAY SUBSCRIPTION CREATE REQUEST ===");
           console.log("Endpoint: POST /v1/subscriptions");
-          console.log(
-            "Request Body:",
-            JSON.stringify(subscriptionParams, null, 2),
-          );
+          console.log("Request Body:", JSON.stringify(subscriptionParams, null, 2));
           console.log("Timestamp:", new Date().toISOString());
 
-          const subscription =
-            await razorpay.subscriptions.create(subscriptionParams);
+          const subscription = await razorpay.subscriptions.create(subscriptionParams);
 
           // Log the complete response from Razorpay
           console.log("=== RAZORPAY SUBSCRIPTION CREATE RESPONSE ===");
@@ -1470,13 +1331,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Subscription short_url:", subscription.short_url);
 
           // Check if subscription has a payment URL, if not create a payment link instead
-          if (
-            !subscription.short_url ||
-            subscription.short_url.includes("api.razorpay.com/v1/t/")
-          ) {
-            console.log(
-              "Subscription created but no valid payment URL, falling back to payment link",
-            );
+          if (!subscription.short_url || subscription.short_url.includes('api.razorpay.com/v1/t/')) {
+            console.log("Subscription created but no valid payment URL, falling back to payment link");
             throw new Error("No valid payment URL for subscription");
           }
 
@@ -1493,10 +1349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (subscriptionError: any) {
           // Log the complete error response from Razorpay
           console.log("=== RAZORPAY SUBSCRIPTION CREATE ERROR RESPONSE ===");
-          console.log(
-            "Error Response:",
-            JSON.stringify(subscriptionError, null, 2),
-          );
+          console.log("Error Response:", JSON.stringify(subscriptionError, null, 2));
           console.log("Error Message:", subscriptionError.message);
           console.log("Error Status Code:", subscriptionError.statusCode);
           console.log("Timestamp:", new Date().toISOString());
@@ -1506,7 +1359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             error: subscriptionError.error || subscriptionError,
             statusCode: subscriptionError.statusCode,
             planId: razorpayPlanId,
-            customerId: customer?.id,
+            customerId: customer?.id
           });
 
           // Log detailed error information
@@ -1516,14 +1369,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               description: subscriptionError.error.description,
               field: subscriptionError.error.field,
               step: subscriptionError.error.step,
-              reason: subscriptionError.error,
+              reason: subscriptionError.error.reason
             });
           }
 
-          console.log(
-            "Subscription creation failed, falling back to payment link. Error:",
-            subscriptionError.message || "Unknown error",
-          );
+          console.log("Subscription creation failed, falling back to payment link. Error:", subscriptionError.message || "Unknown error");
 
           // Fallback to payment link
           try {
@@ -1533,47 +1383,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
               accept_partial: false,
               description: `Subscription Payment: ${planName}`,
               customer: {
-                id: customer.id,
+                id: customer.id
               },
               notify: {
                 sms: false,
-                email: true,
+                email: true
               },
               reminder_enable: true,
               callback_url: `${protocol}://${host}/billing?payment_success=true&plan=${planId}&redirect=auto`,
-              callback_method: "get",
+              callback_method: 'get',
               notes: {
                 planId: planId,
                 planName: planName,
                 userId: userId.toString(),
                 paymentType: "subscription_fallback",
-                originalSubscriptionId: subscription?.id || "none",
+                originalSubscriptionId: subscription?.id || "none"
               },
               expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-              reference_id: `sub_${userId}_${Date.now().toString().slice(-8)}`,
+              reference_id: `sub_${userId}_${Date.now().toString().slice(-8)}`
             };
 
             // Log the actual request being sent to Razorpay
             console.log("=== RAZORPAY PAYMENT LINK CREATE REQUEST ===");
             console.log("Endpoint: POST /v1/payment_links");
-            console.log(
-              "Request Body:",
-              JSON.stringify(paymentLinkParams, null, 2),
-            );
+            console.log("Request Body:", JSON.stringify(paymentLinkParams, null, 2));
             console.log("Timestamp:", new Date().toISOString());
 
-            const paymentLink =
-              await razorpay.paymentLink.create(paymentLinkParams);
+            const paymentLink = await razorpay.paymentLink.create(paymentLinkParams);
 
             // Log the complete response from Razorpay
             console.log("=== RAZORPAY PAYMENT LINK CREATE RESPONSE ===");
             console.log("Response Body:", JSON.stringify(paymentLink, null, 2));
             console.log("Response Status: SUCCESS");
             console.log("Timestamp:", new Date().toISOString());
-            console.log(
-              "Payment link created successfully:",
-              paymentLink.short_url,
-            );
+            console.log("Payment link created successfully:", paymentLink.short_url);
 
             return res.json({
               subscriptionId: `payment_link_${paymentLink.id}`,
@@ -1587,10 +1430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               failure_url: `${protocol}://${host}/pricing?subscription_failed=true`,
             });
           } catch (paymentLinkError) {
-            console.error(
-              "Payment link creation also failed:",
-              paymentLinkError,
-            );
+            console.error("Payment link creation also failed:", paymentLinkError);
             return res.status(500).json({
               message: "Failed to create subscription or payment link",
               error: paymentLinkError.message,
@@ -1616,9 +1456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (razorpay_subscription_id) {
         let subscription;
         try {
-          subscription = await razorpay.subscriptions.fetch(
-            razorpay_subscription_id,
-          );
+          subscription = await razorpay.subscriptions.fetch(razorpay_subscription_id);
         } catch (fetchError: any) {
           return res.status(400).json({
             message: "Invalid subscription ID or subscription not found.",
@@ -1626,19 +1464,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        if (
-          subscription.status === "active" ||
-          subscription.status === "authenticated"
-        ) {
+        if (subscription.status === "active" || subscription.status === "authenticated") {
           const planName = getPlanNameFromId(subscription.plan_id);
-          const existingSubscription = await storage.getSubscriptionByUserId(
-            parseInt(userId),
-          );
+          const existingSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
 
-          if (
-            !existingSubscription ||
-            existingSubscription.razorpay_subscription_id !== subscription.id
-          ) {
+          if (!existingSubscription || existingSubscription.razorpay_subscription_id !== subscription.id) {
             await storage.createSubscription({
               user_id: parseInt(userId),
               razorpay_subscription_id: subscription.id,
@@ -1667,470 +1497,385 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } else {
-        res
-          .status(400)
-          .json({ message: "Subscription ID required for verification" });
+        res.status(400).json({ message: "Subscription ID required for verification" });
       }
-    } catch (error) {
+    } catch (error){
       console.error("Error verifying subscription:", error);
       res.status(500).json({ message: "Failed to verify subscription" });
     }
   });
 
-  app.get(
-    "/api/subscription/user/:userId",
-    async (req: Request, res: Response) => {
-      try {
-        const userId = parseInt(req.params.userId);
+  app.get("/api/subscription/user/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
 
-        if (isNaN(userId)) {
-          return res.status(400).json({ message: "Valid user ID is required" });
-        }
-
-        res.set({
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        });
-
-        const subscription = await storage.getSubscriptionByUserId(userId);
-
-        if (!subscription) {
-          return res.status(404).json({ message: "No subscription found" });
-        }
-
-        return res.status(200).json(subscription);
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-        return res.status(500).json({ message: "Internal server error" });
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Valid user ID is required" });
       }
-    },
-  );
 
-  app.get(
-    "/api/payment-history/user/:userId",
-    async (req: Request, res: Response) => {
-      try {
-        const userId = parseInt(req.params.userId);
+      res.set({
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      });
 
-        if (isNaN(userId)) {
-          return res.status(400).json({ message: "Valid user ID is required" });
-        }
+      const subscription = await storage.getSubscriptionByUserId(userId);
 
-        const paymentHistory = await storage.getPaymentHistoryByUserId(userId);
-        return res.status(200).json(paymentHistory);
-      } catch (error) {
-        console.error("Error fetching payment history:", error);
-        return res.status(500).json({ message: "Internal server error" });
+      if (!subscription) {
+        return res.status(404).json({ message: "No subscription found" });
       }
-    },
-  );
+
+      return res.status(200).json(subscription);
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/payment-history/user/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Valid user ID is required" });
+      }
+
+      const paymentHistory = await storage.getPaymentHistoryByUserId(userId);
+      return res.status(200).json(paymentHistory);
+    } catch (error) {
+      console.error("Error fetching payment history:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   // Plan upgrade/downgrade routes
-  app.post(
-    "/api/subscription/:id/upgrade",
-    async (req: Request, res: Response) => {
-      try {
-        const { id } = req.params;
-        const { newPlanId, userId } = req.body;
+  app.post("/api/subscription/:id/upgrade", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPlanId, userId } = req.body;
 
-        if (!newPlanId || !userId) {
-          return res
-            .status(400)
-            .json({ error: "New plan ID and user ID are required" });
-        }
-
-        const subscription = await storage.getSubscriptionByUserId(
-          parseInt(userId),
-        );
-        if (!subscription) {
-          return res.status(404).json({ error: "Subscription not found" });
-        }
-
-        let actualRazorpayPlanId: string;
-        let newPlanName: string;
-        let planAmount: number;
-
-        try {
-          planAmount = await getINRAmountByPlanId(newPlanId);
-
-          switch (newPlanId) {
-            case "pro-monthly":
-              actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
-              newPlanName = "Pro Monthly";
-              break;
-            case "pro-yearly":
-              actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
-              newPlanName = "Pro Yearly";
-              break;
-            case "enterprise-monthly":
-              actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
-              newPlanName = "Enterprise Monthly";
-              break;
-            case "enterprise-yearly":
-              actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
-              newPlanName = "Enterprise Yearly";
-              break;
-            default:
-              return res
-                .status(400)
-                .json({ error: "Invalid plan ID for upgrade" });
-          }
-
-          if (planAmount === 0) {
-            return res.status(400).json({ error: "Invalid plan pricing" });
-          }
-        } catch (error) {
-          console.error("Error getting upgrade pricing:", error);
-          return res.status(500).json({ error: "Failed to get plan pricing" });
-        }
-
-        const user = await storage.getUser(parseInt(userId));
-        if (!user) {
-          return res.status(404).json({ error: "User not found" });
-        }
-
-        let customer;
-        try {
-          const existingCustomers = await razorpay.customers.all({
-            email: user.email,
-            count: 10, // Get more results to check
-          });
-
-          // Find exact email match
-          const exactMatch = existingCustomers.items?.find(
-            (c) => c.email === user.email,
-          );
-
-          if (exactMatch) {
-            customer = exactMatch;
-            console.log(
-              "Found existing customer for upgrade:",
-              customer.id,
-              "email:",
-              customer.email,
-            );
-          } else {
-            customer = await razorpay.customers.create({
-              name: user.username,
-              email: user.email,
-              contact: "+919000000000",
-            });
-            console.log(
-              "Created new customer for upgrade:",
-              customer.id,
-              "email:",
-              customer.email,
-            );
-          }
-        } catch (customerError) {
-          console.error(
-            "Failed to handle customer for upgrade:",
-            customerError,
-          );
-          return res.status(500).json({ error: "Failed to handle customer" });
-        }
-
-        try {
-          const paymentLink = await razorpay.paymentLink.create({
-            amount: planAmount,
-            currency: "INR",
-            accept_partial: false,
-            customer: {
-              id: customer.id,
-            },
-            description: `Upgrade to ${newPlanName}`,
-            callback_url: `${req.protocol}://${req.get("host")}/billing?payment_success=true&plan=${newPlanId}&redirect=auto`,
-            callback_method: "get",
-            notes: {
-              userId: userId,
-              planId: actualRazorpayPlanId,
-              planName: newPlanName,
-              upgradeFrom: subscription.plan_name,
-              upgradeTo: newPlanName,
-            },
-            // Force automatic redirection
-            expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
-            reference_id: `upg_${userId}_${Date.now().toString().slice(-8)}`,
-          });
-
-          res.json({
-            success: true,
-            paymentRequired: true,
-            paymentLink: paymentLink.short_url,
-            message: `To upgrade to ${newPlanName}, please complete the payment`,
-            upgradeDetails: {
-              currentPlan: subscription.plan_name,
-              newPlan: newPlanName,
-              amount: planAmount / 100,
-              currency: "INR",
-            },
-          });
-        } catch (paymentError) {
-          res.status(500).json({
-            error: "Failed to create upgrade payment",
-            message: "Please try again or contact support",
-          });
-        }
-      } catch (error) {
-        console.error("Error upgrading subscription:", error);
-        res.status(500).json({ error: "Failed to upgrade subscription" });
+      if (!newPlanId || !userId) {
+        return res.status(400).json({ error: "New plan ID and user ID are required" });
       }
-    },
-  );
 
-  app.post(
-    "/api/subscription/:id/downgrade",
-    async (req: Request, res: Response) => {
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!subscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      let actualRazorpayPlanId: string;
+      let newPlanName: string;
+      let planAmount: number;
+
       try {
-        const { id } = req.params;
-        const { newPlanId, userId } = req.body;
-
-        if (!newPlanId || !userId) {
-          return res
-            .status(400)
-            .json({ error: "New plan ID and user ID are required" });
-        }
-
-        const currentSubscription = await storage.getSubscriptionByUserId(
-          parseInt(userId),
-        );
-        if (!currentSubscription) {
-          return res.status(404).json({ error: "Subscription not found" });
-        }
-
-        let newPlanName: string;
-        let actualRazorpayPlanId: string;
+        planAmount = await getINRAmountByPlanId(newPlanId);
 
         switch (newPlanId) {
           case "pro-monthly":
-            newPlanName = "Pro Monthly";
             actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+            newPlanName = "Pro Monthly";
             break;
           case "pro-yearly":
-            newPlanName = "Pro Yearly";
             actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+            newPlanName = "Pro Yearly";
             break;
           case "enterprise-monthly":
-            newPlanName = "Enterprise Monthly";
             actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+            newPlanName = "Enterprise Monthly";
             break;
           case "enterprise-yearly":
-            newPlanName = "Enterprise Yearly";
             actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+            newPlanName = "Enterprise Yearly";
             break;
           default:
-            return res
-              .status(400)
-              .json({ error: "Invalid plan ID for downgrade" });
+            return res.status(400).json({ error: "Invalid plan ID for upgrade" });
         }
 
-        // Use the new switchSubscriptionPlan method to mark old as inactive and create new
-        const newSubscription = await storage.switchSubscriptionPlan(
-          parseInt(userId),
-          {
-            razorpay_subscription_id: `downgrade_${currentSubscription.id}_${Date.now()}`,
-            razorpay_customer_id:
-              currentSubscription.razorpay_customer_id || "unknown",
-            status: "active",
-            plan_name: newPlanName,
-            plan_id: actualRazorpayPlanId,
-            price_id: actualRazorpayPlanId,
-            current_period_start: new Date(),
-            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          },
-        );
+        if (planAmount === 0) {
+          return res.status(400).json({ error: "Invalid plan pricing" });
+        }
+      } catch (error) {
+        console.error("Error getting upgrade pricing:", error);
+        return res.status(500).json({ error: "Failed to get plan pricing" });
+      }
 
-        // Don't create misleading payment history for downgrades
-        // The plan change is tracked in the subscription table
+      const user = await storage.getUser(parseInt(userId));
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let customer;
+      try {
+        const existingCustomers = await razorpay.customers.all({
+          email: user.email,
+          count: 10, // Get more results to check
+        });
+
+        // Find exact email match
+        const exactMatch = existingCustomers.items?.find(c => c.email === user.email);
+
+        if (exactMatch) {
+          customer = exactMatch;
+          console.log("Found existing customer for upgrade:", customer.id, "email:", customer.email);
+        } else {
+          customer = await razorpay.customers.create({
+            name: user.username,
+            email: user.email,
+            contact: "+919000000000",
+          });
+          console.log("Created new customer for upgrade:", customer.id, "email:", customer.email);
+        }
+      } catch (customerError) {
+        console.error("Failed to handle customer for upgrade:", customerError);
+        return res.status(500).json({ error: "Failed to handle customer" });
+      }
+
+      try {
+        const paymentLink = await razorpay.paymentLink.create({
+          amount: planAmount,
+          currency: "INR",
+          accept_partial: false,
+          customer: {
+            id: customer.id,
+          },
+          description: `Upgrade to ${newPlanName}`,
+          callback_url: `${req.protocol}://${req.get('host')}/billing?payment_success=true&plan=${newPlanId}&redirect=auto`,
+          callback_method: 'get',
+          notes: {
+            userId: userId,
+            planId: actualRazorpayPlanId,
+            planName: newPlanName,
+            upgradeFrom: subscription.plan_name,
+            upgradeTo: newPlanName,
+          },
+          // Force automatic redirection
+          expire_by: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+          reference_id: `upg_${userId}_${Date.now().toString().slice(-8)}`
+        });
 
         res.json({
           success: true,
-          subscription: newSubscription,
-          message: `Successfully downgraded from ${currentSubscription.plan_name} to ${newPlanName}`,
-        });
-      } catch (error) {
-        console.error("Error downgrading subscription:", error);
-        res.status(500).json({ error: "Failed to downgrade subscription" });
-      }
-    },
-  );
-
-  app.post(
-    "/api/subscription/:id/cancel",
-    async (req: Request, res: Response) => {
-      try {
-        const { id } = req.params;
-        const { userId } = req.body;
-
-        const subscription = await storage.getSubscriptionByUserId(
-          parseInt(userId),
-        );
-        if (!subscription) {
-          return res.status(404).json({ error: "Subscription not found" });
-        }
-
-        const subscriptionIdToUpdate =
-          subscription.razorpay_subscription_id ||
-          subscription.stripe_subscription_id ||
-          id;
-
-        try {
-          await razorpay.subscriptions.cancel(subscriptionIdToUpdate, {
-            cancel_at_cycle_end: 1,
-          });
-        } catch (razorpayError: any) {
-          console.error(
-            "Error cancelling Razorpay subscription:",
-            razorpayError,
-          );
-        }
-
-        const dbUpdate = await storage.updateSubscription(
-          subscriptionIdToUpdate,
-          {
-            status: "cancelled",
-            cancel_at_period_end: false,
-            updated_at: new Date(),
-          },
-        );
-
-        if (userId) {
-          await storage.createPaymentHistory({
-            user_id: parseInt(userId),
-            razorpay_payment_id: `cancel_${subscriptionIdToUpdate}_${Date.now()}`,
-            amount: 0,
+          paymentRequired: true,
+          paymentLink: paymentLink.short_url,
+          message: `To upgrade to ${newPlanName}, please complete the payment`,
+          upgradeDetails: {
+            currentPlan: subscription.plan_name,
+            newPlan: newPlanName,
+            amount: planAmount / 100,
             currency: "INR",
-            status: "succeeded",
-            description: `Subscription cancelled: ${subscription.plan_name}`,
+          },
+        });
+      } catch (paymentError) {
+        res.status(500).json({
+          error: "Failed to create upgrade payment",
+          message: "Please try again or contact support",
+        });
+      }
+    } catch (error) {
+      console.error("Error upgrading subscription:", error);
+      res.status(500).json({ error: "Failed to upgrade subscription" });
+    }
+  });
+
+  app.post("/api/subscription/:id/downgrade", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPlanId, userId } = req.body;
+
+      if (!newPlanId || !userId) {
+        return res.status(400).json({ error: "New plan ID and user ID are required" });
+      }
+
+      const currentSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!currentSubscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      let newPlanName: string;
+      let actualRazorpayPlanId: string;
+
+      switch (newPlanId) {
+        case "pro-monthly":
+          newPlanName = "Pro Monthly";
+          actualRazorpayPlanId = PLAN_IDS.PRO_MONTHLY;
+          break;
+        case "pro-yearly":
+          newPlanName = "Pro Yearly";
+          actualRazorpayPlanId = PLAN_IDS.PRO_YEARLY;
+          break;
+        case "enterprise-monthly":
+          newPlanName = "Enterprise Monthly";
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_MONTHLY;
+          break;
+        case "enterprise-yearly":
+          newPlanName = "Enterprise Yearly";
+          actualRazorpayPlanId = PLAN_IDS.ENTERPRISE_YEARLY;
+          break;
+        default:
+          return res.status(400).json({ error: "Invalid plan ID for downgrade" });
+      }
+
+      // Use the new switchSubscriptionPlan method to mark old as inactive and create new
+      const newSubscription = await storage.switchSubscriptionPlan(parseInt(userId), {
+        razorpay_subscription_id: `downgrade_${currentSubscription.id}_${Date.now()}`,
+        razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",
+        status: "active",
+        plan_name: newPlanName,
+        plan_id: actualRazorpayPlanId,
+        price_id: actualRazorpayPlanId,
+        current_period_start: new Date(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      });
+
+      // Don't create misleading payment history for downgrades
+      // The plan change is tracked in the subscription table
+
+      res.json({
+        success: true,
+        subscription: newSubscription,
+        message: `Successfully downgraded from ${currentSubscription.plan_name} to ${newPlanName}`,
+      });
+    } catch (error) {
+      console.error("Error downgrading subscription:", error);
+      res.status(500).json({ error: "Failed to downgrade subscription" });
+    }
+  });
+
+  app.post("/api/subscription/:id/cancel", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.body;
+
+      const subscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!subscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      const subscriptionIdToUpdate =
+        subscription.razorpay_subscription_id ||
+        subscription.stripe_subscription_id ||
+        id;
+
+      try {
+        await razorpay.subscriptions.cancel(subscriptionIdToUpdate, {
+          cancel_at_cycle_end: 1,
+        });
+      } catch (razorpayError: any) {
+        console.error("Error cancelling Razorpay subscription:", razorpayError);
+      }
+
+      const dbUpdate = await storage.updateSubscription(subscriptionIdToUpdate, {
+        status: "cancelled",
+        cancel_at_period_end: false,
+        updated_at: new Date(),
+      });
+
+      if (userId) {
+        await storage.createPaymentHistory({
+          user_id: parseInt(userId),
+          razorpay_payment_id: `cancel_${subscriptionIdToUpdate}_${Date.now()}`,
+          amount: 0,
+          currency: "INR",
+          status: "succeeded",
+          description: `Subscription cancelled: ${subscription.plan_name}`,
+        });
+      }
+
+      res.json({
+        success: true,
+        subscription: dbUpdate,
+        message: "Subscription cancelled successfully.",
+      });
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ error: "Failed to cancel subscription" });
+    }
+  });
+
+  app.post("/api/subscription/:id/downgrade-to-free", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+
+      const currentSubscription = await storage.getSubscriptionByUserId(parseInt(userId));
+      if (!currentSubscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      // Cancel the Razorpay subscription if it exists
+      try {
+        if (currentSubscription.razorpay_subscription_id) {
+          await razorpay.subscriptions.cancel(currentSubscription.razorpay_subscription_id, {
+            cancel_at_cycle_end: 0, // Cancel immediately
           });
         }
-
-        res.json({
-          success: true,
-          subscription: dbUpdate,
-          message: "Subscription cancelled successfully.",
-        });
-      } catch (error) {
-        console.error("Error cancelling subscription:", error);
-        res.status(500).json({ error: "Failed to cancel subscription" });
+      } catch (razorpayError: any) {
+        console.error("Error cancelling Razorpay subscription:", razorpayError);
+        // Continue with local cancellation even if Razorpay fails
       }
-    },
-  );
 
-  app.post(
-    "/api/subscription/:id/downgrade-to-free",
-    async (req: Request, res: Response) => {
-      try {
-        const { id } = req.params;
-        const { userId } = req.body;
+      // Use the new switchSubscriptionPlan method to mark old as inactive and create new free plan
+      const newSubscription = await storage.switchSubscriptionPlan(parseInt(userId), {
+        razorpay_subscription_id: `free_${currentSubscription.id}_${Date.now()}`,
+        razorpay_customer_id: currentSubscription.razorpay_customer_id || "unknown",        status: "cancelled",
+        plan_name: "Free",        plan_id: "free",
+        price_id: "free",
+        current_period_start: new Date(),
+        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now (free plan)
+      });
 
-        if (!userId) {
-          return res.status(400).json({ error: "User ID is required" });
-        }
+      // Don't create misleading payment history for downgrades to free
+      // The plan change is tracked in the subscription table
 
-        const currentSubscription = await storage.getSubscriptionByUserId(
-          parseInt(userId),
-        );
-        if (!currentSubscription) {
-          return res.status(404).json({ error: "Subscription not found" });
-        }
-
-        // Cancel the Razorpay subscription if it exists
-        try {
-          if (currentSubscription.razorpay_subscription_id) {
-            await razorpay.subscriptions.cancel(
-              currentSubscription.razorpay_subscription_id,
-              {
-                cancel_at_cycle_end: 0, // Cancel immediately
-              },
-            );
-          }
-        } catch (razorpayError: any) {
-          console.error(
-            "Error cancelling Razorpay subscription:",
-            razorpayError,
-          );
-          // Continue with local cancellation even if Razorpay fails
-        }
-
-        // Use the new switchSubscriptionPlan method to mark old as inactive and create new free plan
-        const newSubscription = await storage.switchSubscriptionPlan(
-          parseInt(userId),
-          {
-            razorpay_subscription_id: `free_${currentSubscription.id}_${Date.now()}`,
-            razorpay_customer_id:
-              currentSubscription.razorpay_customer_id || "unknown",
-            status: "cancelled",
-            plan_name: "Free",
-            plan_id: "free",
-            price_id: "free",
-            current_period_start: new Date(),
-            current_period_end: new Date(
-              Date.now() + 365 * 24 * 60 * 60 * 1000,
-            ), // 1 year from now (free plan)
-          },
-        );
-
-        // Don't create misleading payment history for downgrades to free
-        // The plan change is tracked in the subscription table
-
-        res.json({
-          success: true,
-          subscription: newSubscription,
-          message:
-            "Successfully downgraded to Free plan. Your subscription has been cancelled.",
-        });
-      } catch (error) {
-        console.error("Error downgrading to free:", error);
-        res.status(500).json({ error: "Failed to downgrade to free plan" });
-      }
-    },
-  );
+      res.json({
+        success: true,
+        subscription: newSubscription,
+        message: "Successfully downgraded to Free plan. Your subscription has been cancelled.",
+      });
+    } catch (error) {
+      console.error("Error downgrading to free:", error);
+      res.status(500).json({ error: "Failed to downgrade to free plan" });
+    }
+  });
 
   // Get user's saved business analyses
-  app.get(
-    "/api/business-analyses",
-    requireAuth,
-    async (req: Request, res: Response) => {
-      try {
-        const userId = req.session!.user!.id;
-        const analyses = await storage.getBusinessAnalysesByUserId(userId);
-        res.json(analyses);
-      } catch (error: any) {
-        console.error("Error fetching business analyses:", error);
-        res.status(500).json({ error: "Failed to fetch business analyses" });
-      }
-    },
-  );
+  app.get("/api/business-analyses", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session!.user!.id;
+      const analyses = await storage.getBusinessAnalysesByUserId(userId);
+      res.json(analyses);
+    } catch (error: any) {
+      console.error("Error fetching business analyses:", error);
+      res.status(500).json({ error: "Failed to fetch business analyses" });
+    }
+  });
 
   // Get specific business analysis with recommendations
-  app.get(
-    "/api/business-analyses/:id",
-    requireAuth,
-    async (req: Request, res: Response) => {
-      try {
-        const analysisId = parseInt(req.params.id);
-        const userId = req.session!.user!.id;
+  app.get("/api/business-analyses/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const analysisId = parseInt(req.params.id);
+      const userId = req.session!.user!.id;
 
-        const analysis = await storage.getBusinessAnalysis(analysisId);
-        if (!analysis || analysis.user_id !== userId) {
-          return res.status(404).json({ error: "Analysis not found" });
-        }
-
-        const recommendations =
-          await storage.getRecommendationsByAnalysisId(analysisId);
-
-        res.json({
-          analysis,
-          recommendations,
-        });
-      } catch (error: any) {
-        console.error("Error fetching business analysis:", error);
-        res.status(500).json({ error: "Failed to fetch business analysis" });
+      const analysis = await storage.getBusinessAnalysis(analysisId);
+      if (!analysis || analysis.user_id !== userId) {
+        return res.status(404).json({ error: "Analysis not found" });
       }
-    },
-  );
+
+      const recommendations = await storage.getRecommendationsByAnalysisId(analysisId);
+
+      res.json({
+        analysis,
+        recommendations
+      });
+    } catch (error: any) {
+      console.error("Error fetching business analysis:", error);
+      res.status(500).json({ error: "Failed to fetch business analysis" });
+    }
+  });
 
   // Contact form submission route
   app.post("/api/contact", async (req: Request, res: Response) => {
@@ -2149,9 +1894,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Contact submission saved successfully:", submission.id);
       } catch (storageError) {
         console.error("Error saving contact submission:", storageError);
-        return res.status(500).json({
+        return res.status(500).json({ 
           message: "Failed to save contact submission. Please try again.",
-          error: "STORAGE_ERROR",
+          error: "STORAGE_ERROR"
         });
       }
 
@@ -2165,28 +1910,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Don't fail the request if email fails - just log it
         }
       } else {
-        console.log(
-          "Email credentials not configured - skipping email notifications",
-        );
+        console.log("Email credentials not configured - skipping email notifications");
       }
 
-      return res.status(201).json({
-        message:
-          "Contact form submitted successfully. We'll get back to you within 24 hours.",
+      return res.status(201).json({ 
+        message: "Contact form submitted successfully. We'll get back to you within 24 hours.",
         success: true,
-        submissionId: submission?.id || "unknown",
+        submissionId: submission?.id || "unknown"
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Validation error",
-          errors: error.errors,
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
         });
       }
       console.error("Error processing contact form:", error);
-      return res.status(500).json({
+      return res.status(500).json({ 
         message: "Internal server error. Please try again or contact support.",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
@@ -2220,20 +1962,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         sessionId,
-        message:
-          "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
+        message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
         status: "connected",
-        requiresGDPR: true,
+        requiresGDPR: true
       });
     } catch (error) {
-      console.error("Error creating chatbot session:", error);
-      res.status(500).json({
-        error: "Failed to create session",
+      console.error('Error creating chatbot session:', error);
+      res.status(500).json({ 
+        error: 'Failed to create session',
         sessionId: `fallback_${Date.now()}`,
-        message:
-          "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
+        message: "Hello! I'm here to help you with orders, returns, shipping, and any other questions. How can I assist you today?",
         status: "connected",
-        requiresGDPR: true,
+        requiresGDPR: true
       });
     }
   });
@@ -2252,94 +1992,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lowerMessage = message.toLowerCase();
       let response;
 
-      if (
-        lowerMessage.includes("hi") ||
-        lowerMessage.includes("hello") ||
-        lowerMessage.includes("hey")
-      ) {
+      if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
         response = {
-          message:
-            "Hello! Thanks for reaching out. I'm here to help you with:\n\n" +
-            "• Order tracking and status updates\n" +
-            "• Shipping information and delivery options\n" +
-            "• Returns and exchanges\n" +
-            "• Payment questions\n" +
-            "• Product information\n\n" +
-            "What can I help you with today?",
+          message: "Hello! Thanks for reaching out. I'm here to help you with:\n\n" +
+                  "• Order tracking and status updates\n" +
+                  "• Shipping information and delivery options\n" +
+                  "• Returns and exchanges\n" +
+                  "• Payment questions\n" +
+                  "• Product information\n\n" +
+                  "What can I help you with today?"
         };
-      } else if (
-        lowerMessage.includes("return") ||
-        lowerMessage.includes("exchange")
-      ) {
+      } else if (lowerMessage.includes('return') || lowerMessage.includes('exchange')) {
         response = {
-          message:
-            "I can help you with returns! Here's how it works:\n\n" +
-            "1. Items can be returned within 30 days of purchase\n" +
-            "2. Items must be in original condition with tags\n" +
-            "3. Original receipt or order number required\n" +
-            "4. Refunds processed within 5-7 business days\n\n" +
-            "Would you like me to start a return request for you? I'll need your order number.",
+          message: "I can help you with returns! Here's how it works:\n\n" +
+                  "1. Items can be returned within 30 days of purchase\n" +
+                  "2. Items must be in original condition with tags\n" +
+                  "3. Original receipt or order number required\n" +
+                  "4. Refunds processed within 5-7 business days\n\n" +
+                  "Would you like me to start a return request for you? I'll need your order number."
         };
-      } else if (
-        lowerMessage.includes("shipping") ||
-        lowerMessage.includes("delivery")
-      ) {
+      } else if (lowerMessage.includes('shipping') || lowerMessage.includes('delivery')) {
         response = {
-          message:
-            "Here are our shipping options:\n\n" +
-            "• **Free Standard Shipping** (3-5 business days) - Orders over $50\n" +
-            "• **Express Shipping** (1-2 business days) - $9.99\n" +
-            "• **Overnight Shipping** (next business day) - $19.99\n" +
-            "• **International Shipping** (7-14 business days) - Rates vary\n\n" +
-            "All orders are processed within 24 hours. Would you like tracking information for an existing order?",
+          message: "Here are our shipping options:\n\n" +
+                  "• **Free Standard Shipping** (3-5 business days) - Orders over $50\n" +
+                  "• **Express Shipping** (1-2 business days) - $9.99\n" +
+                  "• **Overnight Shipping** (next business day) - $19.99\n" +
+                  "• **International Shipping** (7-14 business days) - Rates vary\n\n" +
+                  "All orders are processed within 24 hours. Would you like tracking information for an existing order?"
         };
-      } else if (
-        lowerMessage.includes("order") ||
-        lowerMessage.includes("track")
-      ) {
+      } else if (lowerMessage.includes('order') || lowerMessage.includes('track')) {
         response = {
-          message:
-            "I can help you track your order! Please provide your order number (it usually starts with # or contains letters and numbers like ABC123).\n\n" +
-            "You can find your order number in:\n" +
-            "• Your order confirmation email\n" +
-            "• Your account dashboard\n" +
-            "• Your receipt\n\n" +
-            "Once you provide the order number, I'll get you the latest status and tracking information.",
+          message: "I can help you track your order! Please provide your order number (it usually starts with # or contains letters and numbers like ABC123).\n\n" +
+                  "You can find your order number in:\n" +
+                  "• Your order confirmation email\n" +
+                  "• Your account dashboard\n" +
+                  "• Your receipt\n\n" +
+                  "Once you provide the order number, I'll get you the latest status and tracking information."
         };
-      } else if (
-        lowerMessage.includes("payment") ||
-        lowerMessage.includes("billing")
-      ) {
+      } else if (lowerMessage.includes('payment') || lowerMessage.includes('billing')) {
         response = {
-          message:
-            "I can help with payment and billing questions! We accept:\n\n" +
-            "• Credit/Debit cards (Visa, Mastercard, Amex)\n" +
-            "• PayPal\n" +
-            "• Apple Pay & Google Pay\n" +
-            "• Buy now, pay later options\n\n" +
-            "For billing issues, please provide your order number so I can look into it for you.",
+          message: "I can help with payment and billing questions! We accept:\n\n" +
+                  "• Credit/Debit cards (Visa, Mastercard, Amex)\n" +
+                  "• PayPal\n" +
+                  "• Apple Pay & Google Pay\n" +
+                  "• Buy now, pay later options\n\n" +
+                  "For billing issues, please provide your order number so I can look into it for you."
         };
       } else {
         response = {
-          message:
-            "I'd be happy to help! I can assist you with:\n\n" +
-            "• Order tracking and status updates\n" +
-            "• Shipping information and options\n" +
-            "• Returns and exchanges\n" +
-            "• Payment methods and billing questions\n" +
-            "• Product information\n\n" +
-            "What specific question can I help you with today?",
+          message: "I'd be happy to help! I can assist you with:\n\n" +
+                  "• Order tracking and status updates\n" +
+                  "• Shipping information and options\n" +
+                  "• Returns and exchanges\n" +
+                  "• Payment methods and billing questions\n" +
+                  "• Product information\n\n" +
+                  "What specific question can I help you with today?"
         };
       }
 
       console.log(`Chatbot response: ${JSON.stringify(response)}`);
       res.json(response);
     } catch (error) {
-      console.error("Error processing chatbot message:", error);
-      res.status(500).json({
-        message:
-          "I'm sorry, I'm having technical difficulties. Please try again.",
-        error: true,
+      console.error('Error processing chatbot message:', error);
+      res.status(500).json({ 
+        message: "I'm sorry, I'm having technical difficulties. Please try again.",
+        error: true
       });
     }
   });
@@ -2349,14 +2066,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { sessionId, consent } = req.body;
 
       res.json({
-        message: consent
-          ? "Thank you for your consent. How can I help you today?"
+        message: consent 
+          ? "Thank you for your consent. How can I help you today?" 
           : "I understand. I can still help with general questions without storing personal data.",
-        status: "consent_updated",
+        status: "consent_updated"
       });
     } catch (error) {
-      console.error("Error updating consent:", error);
-      res.status(500).json({ error: "Failed to update consent" });
+      console.error('Error updating consent:', error);
+      res.status(500).json({ error: 'Failed to update consent' });
     }
   });
 
@@ -2381,180 +2098,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Business Analysis API Routes
   app.post("/api/analyze-website", async (req: Request, res: Response) => {
+  try {
+    const { websiteUrl, userId } = req.body;
+
+    if (!websiteUrl) {
+      return res.status(400).json({ error: "Website URL is required" });
+    }
+
+    // Get user ID from session (authenticated users) or request body (fallback)
+    const authenticatedUserId = req.session?.user?.id || userId;
+    
+    console.log('Authentication check:', {
+      sessionExists: !!req.session,
+      sessionUser: req.session?.user,
+      sessionUserId: req.session?.user?.id,
+      bodyUserId: userId,
+      finalUserId: authenticatedUserId,
+      isAuthenticated: !!req.session?.user?.id
+    });
+
+    // Only proceed with database save if user is properly authenticated via session
+    const isAuthenticated = !!req.session?.user?.id;
+
+    // Import analyzer here to avoid circular dependencies
+    const { websiteAnalyzer } = await import("./website-analyzer");
+    const { recommendationEngine } = await import("./recommendation-engine");
+
+    // Analyze website content
+    const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
+
+    // Save analysis to database only if user is authenticated via session
+    let savedAnalysis = null;
     try {
-      const { websiteUrl, userId } = req.body;
-
-      if (!websiteUrl) {
-        return res.status(400).json({ error: "Website URL is required" });
-      }
-
-      // Get user ID from session (authenticated users) or request body (fallback)
-      const authenticatedUserId = req.session?.user?.id || userId;
-
-      console.log("Authentication check:", {
-        sessionExists: !!req.session,
-        sessionUser: req.session?.user,
-        sessionUserId: req.session?.user?.id,
-        bodyUserId: userId,
-        finalUserId: authenticatedUserId,
-        isAuthenticated: !!req.session?.user?.id,
+      savedAnalysis = await storage.createBusinessAnalysis({
+        user_id: isAuthenticated ? authenticatedUserId : null, // Only use user ID if properly authenticated
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        business_type: analysis.businessType,
+        industry: analysis.industry,
+        pain_points: analysis.painPoints,
+        workflows: analysis.workflows,
+        content_summary: analysis.contentSummary,
+        key_features: analysis.keyFeatures,
+        target_audience: analysis.targetAudience,
+        current_tech: analysis.currentTech,
       });
 
-      // Only proceed with database save if user is properly authenticated via session
-      const isAuthenticated = !!req.session?.user?.id;
-
-      // Import analyzer here to avoid circular dependencies
-      const { websiteAnalyzer } = await import("./website-analyzer");
-      const { recommendationEngine } = await import("./recommendation-engine");
-
-      // Analyze website content
-      const analysis = await websiteAnalyzer.analyzeWebsite(websiteUrl);
-
-      // Save analysis to database only if user is authenticated via session
-      let savedAnalysis = null;
-      try {
-        savedAnalysis = await storage.createBusinessAnalysis({
-          user_id: isAuthenticated ? authenticatedUserId : null, // Only use user ID if properly authenticated
-          website_url: websiteUrl,
-          business_name: analysis.businessName,
-          business_type: analysis.businessType,
-          industry: analysis.industry,
-          pain_points: analysis.painPoints,
-          workflows: analysis.workflows,
-          content_summary: analysis.contentSummary,
-          key_features: analysis.keyFeatures,
-          target_audience: analysis.targetAudience,
-          current_tech: analysis.currentTech,
-        });
-
-        if (isAuthenticated && savedAnalysis.id) {
-          console.log(
-            "Business analysis saved to database for authenticated user:",
-            authenticatedUserId,
-            "with ID:",
-            savedAnalysis.id,
-          );
-        } else {
-          console.log(
-            "Business analysis created for unauthenticated user (not persisted to database)",
-          );
-        }
-      } catch (analysisError) {
-        console.error("Failed to save analysis to database:", analysisError);
-        // Create a fallback analysis object
-        savedAnalysis = {
-          id: Date.now(),
-          user_id: isAuthenticated ? authenticatedUserId : null,
-          website_url: websiteUrl,
-          business_name: analysis.businessName,
-          created_at: new Date(),
-        };
+      if (isAuthenticated && savedAnalysis.id) {
+        console.log('Business analysis saved to database for authenticated user:', authenticatedUserId, 'with ID:', savedAnalysis.id);
+      } else {
+        console.log('Business analysis created for unauthenticated user (not persisted to database)');
       }
+    } catch (analysisError) {
+      console.error("Failed to save analysis to database:", analysisError);
+      // Create a fallback analysis object
+      savedAnalysis = { 
+        id: Date.now(), 
+        user_id: isAuthenticated ? authenticatedUserId : null,
+        website_url: websiteUrl,
+        business_name: analysis.businessName,
+        created_at: new Date() 
+      };
+    }
 
-      // Generate AI recommendations
-      const recommendations =
-        await recommendationEngine.generateRecommendations(analysis);
+    // Generate AI recommendations
+    const recommendations = await recommendationEngine.generateRecommendations(analysis);
 
-      // Save recommendations to database only if user is authenticated and analysis was saved
-      if (
-        savedAnalysis &&
-        savedAnalysis.id &&
-        isAuthenticated &&
-        authenticatedUserId
-      ) {
-        console.log("Saving recommendations for authenticated user:", {
-          analysisId: savedAnalysis.id,
-          userId: authenticatedUserId,
-          recommendationCount: recommendations.length,
-          isAuthenticated: isAuthenticated,
-        });
+    // Save recommendations to database only if user is authenticated and analysis was saved
+    if (savedAnalysis && savedAnalysis.id && isAuthenticated && authenticatedUserId) {
+      console.log('Saving recommendations for authenticated user:', {
+        analysisId: savedAnalysis.id,
+        userId: authenticatedUserId,
+        recommendationCount: recommendations.length,
+        isAuthenticated: isAuthenticated
+      });
 
-        try {
-          const savedRecommendations = await Promise.all(
-            recommendations.map(async (rec: any) => {
-              try {
-                // Validate analysis_id before saving
-                if (!savedAnalysis.id) {
-                  console.log(
-                    "No valid analysis_id provided, skipping database save for recommendation",
-                  );
-                  return null;
-                }
-
-                console.log(
-                  `Saving recommendation: ${rec.solutionType} for analysis ${savedAnalysis.id}`,
-                );
-
-                return await storage.createAiRecommendation({
-                  analysis_id: savedAnalysis.id,
-                  solution_type: rec.solutionType,
-                  solution_name: rec.solutionName,
-                  description: rec.description,
-                  estimated_cost_savings: rec.estimatedCostSavings,
-                  estimated_time_savings: rec.estimatedTimeSavings,
-                  implementation_difficulty: rec.implementationDifficulty,
-                  roi_percentage: rec.roiPercentage,
-                  industry_benchmark: rec.industryBenchmark || "",
-                  priority_score: rec.priorityScore,
-                  template_id: rec.templateId,
-                  customization_data: rec.customizationData || {},
-                  reasoning: rec.reasoning,
-                  rag_evidence: rec.ragEvidence || [],
-                  case_studies: rec.caseStudies || [],
-                  ethical_considerations: rec.ethicalConsiderations || "",
-                  compliance_requirements: rec.complianceRequirements || [],
-                  monitoring_metrics: rec.monitoringMetrics || [],
-                  implementation_timeline: rec.implementationTimeline || "",
-                  expected_revenue: rec.expectedRevenue || 0,
-                  risk_factors: rec.riskFactors || [],
-                });
-              } catch (recError) {
-                console.error("Failed to save recommendation:", recError);
+      try {
+        const savedRecommendations = await Promise.all(
+          recommendations.map(async (rec: any) => {
+            try {
+              // Validate analysis_id before saving
+              if (!savedAnalysis.id) {
+                console.log('No valid analysis_id provided, skipping database save for recommendation');
                 return null;
               }
-            }),
-          );
 
-          // Filter out failed saves
-          const validRecommendations = savedRecommendations.filter(
-            (rec) => rec !== null,
-          );
-          console.log(
-            `Saved ${validRecommendations.length} recommendations to database`,
-          );
-        } catch (recError) {
-          console.error("Failed to save recommendations:", recError);
-        }
-      } else {
-        console.log("Skipping recommendation database saves:", {
-          savedAnalysis: !!savedAnalysis,
-          analysisId: savedAnalysis?.id,
-          authenticatedUserId,
-          reason: !savedAnalysis
-            ? "No saved analysis"
-            : !savedAnalysis.id
-              ? "No analysis ID"
-              : !authenticatedUserId
-                ? "User not authenticated"
-                : "Unknown",
-        });
+              console.log(`Saving recommendation: ${rec.solutionType} for analysis ${savedAnalysis.id}`);
+
+              return await storage.createAiRecommendation({
+                analysis_id: savedAnalysis.id,
+                solution_type: rec.solutionType,
+                solution_name: rec.solutionName,
+                description: rec.description,
+                estimated_cost_savings: rec.estimatedCostSavings,
+                estimated_time_savings: rec.estimatedTimeSavings,
+                implementation_difficulty: rec.implementationDifficulty,
+                roi_percentage: rec.roiPercentage,
+                industry_benchmark: rec.industryBenchmark || '',
+                priority_score: rec.priorityScore,
+                template_id: rec.templateId,
+                customization_data: rec.customizationData || {},
+                reasoning: rec.reasoning,
+                rag_evidence: rec.ragEvidence || [],
+                case_studies: rec.caseStudies || [],
+                ethical_considerations: rec.ethicalConsiderations || '',
+                compliance_requirements: rec.complianceRequirements || [],
+                monitoring_metrics: rec.monitoringMetrics || [],
+                implementation_timeline: rec.implementationTimeline || '',
+                expected_revenue: rec.expectedRevenue || 0,
+                risk_factors: rec.riskFactors || []
+              });
+            } catch (recError) {
+              console.error("Failed to save recommendation:", recError);
+              return null;
+            }
+          })
+        );
+
+        // Filter out failed saves
+        const validRecommendations = savedRecommendations.filter(rec => rec !== null);
+        console.log(`Saved ${validRecommendations.length} recommendations to database`);
+      } catch (recError) {
+        console.error("Failed to save recommendations:", recError);
       }
-
-      res.json({
-        success: true,
-        analysis: analysis,
-        recommendations: recommendations,
-        websiteUrl: websiteUrl,
-        analysisId: savedAnalysis?.id || null,
-      });
-    } catch (error: any) {
-      console.error("Website analysis error:", error);
-      res.status(500).json({
-        message: "Failed to analyze website",
-        error: error.message,
+    } else {
+      console.log('Skipping recommendation database saves:', {
+        savedAnalysis: !!savedAnalysis,
+        analysisId: savedAnalysis?.id,
+        authenticatedUserId,
+        reason: !savedAnalysis ? 'No saved analysis' : !savedAnalysis.id ? 'No analysis ID' : !authenticatedUserId ? 'User not authenticated' : 'Unknown'
       });
     }
-  });
+
+    res.json({
+      success: true,
+      analysis: analysis,
+      recommendations: recommendations,
+      websiteUrl: websiteUrl,
+      analysisId: savedAnalysis?.id || null
+    });
+  } catch (error: any) {
+    console.error("Website analysis error:", error);
+    res.status(500).json({ 
+      message: "Failed to analyze website",
+      error: error.message 
+    });
+  }
+});
 
   app.get("/api/analysis/:id", async (req: Request, res: Response) => {
     try {
@@ -2569,48 +2259,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Analysis not found" });
       }
 
-      const recommendations =
-        await storage.getRecommendationsByAnalysisId(analysisId);
+      const recommendations = await storage.getRecommendationsByAnalysisId(analysisId);
 
       res.json({
         success: true,
         analysis,
-        recommendations,
+        recommendations
       });
     } catch (error: any) {
-      console.error("Error fetching analysis:", error);
-      res.status(500).json({
+      console.error('Error fetching analysis:', error);
+      res.status(500).json({ 
         message: "Failed to fetch analysis",
-        error: error.message,
+        error: error.message 
       });
     }
   });
 
-  app.post(
-    "/api/recommendations/:id/select",
-    async (req: Request, res: Response) => {
-      try {
-        const recommendationId = parseInt(req.params.id);
+  app.post("/api/recommendations/:id/select", async (req: Request, res: Response) => {
+    try {
+      const recommendationId = parseInt(req.params.id);
 
-        if (isNaN(recommendationId)) {
-          return res.status(400).json({ message: "Invalid recommendation ID" });
-        }
-
-        await storage.updateRecommendationStatus(recommendationId, "selected");
-
-        res.json({
-          success: true,
-          message: "Recommendation selected for implementation",
-        });
-      } catch (error: any) {
-        console.error("Error selecting recommendation:", error);
-        res.status(500).json({
-          message: "Failed to select recommendation",
-          error: error.message,
-        });
+      if (isNaN(recommendationId)) {
+        return res.status(400).json({ message: "Invalid recommendation ID" });
       }
-    },
-  );
+
+      await storage.updateRecommendationStatus(recommendationId, 'selected');
+
+      res.json({
+        success: true,
+        message: "Recommendation selected for implementation"
+      });
+    } catch (error: any) {
+      console.error('Error selecting recommendation:', error);
+      res.status(500).json({ 
+        message: "Failed to select recommendation",
+        error: error.message 
+      });
+    }
+  });
 
   // Agent Deployment API Routes
 
@@ -2626,39 +2312,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           deployment_status: "active",
           deployment_url: "/chatbot",
           deployment_id: "cs-assistant-001",
-          configuration: {
+          configuration: { 
             name: "Customer Support Assistant",
-            description: "24/7 automated customer service",
+            description: "24/7 automated customer service"
           },
           performance_metrics: {
             requests_handled: 1247,
             satisfaction_rate: 94.5,
-            response_time: "1.2s",
+            response_time: "1.2s"
           },
           created_at: new Date().toISOString(),
           analysis: {
             business_name: "TechCorp Solutions",
-            industry: "Technology",
+            industry: "Technology"
           },
           template: {
             name: "Customer Support Assistant",
             solution_type: "Customer Support",
-            capabilities: [
-              "Order Tracking",
-              "FAQ Handling",
-              "Human Escalation",
-              "Sentiment Analysis",
-            ],
-          },
-        },
+            capabilities: ["Order Tracking", "FAQ Handling", "Human Escalation", "Sentiment Analysis"]
+          }
+        }
       ];
 
       res.json(deployedSolutions);
     } catch (error: any) {
-      console.error("Error fetching deployed solutions:", error);
-      res.status(500).json({
+      console.error('Error fetching deployed solutions:', error);
+      res.status(500).json({ 
         message: "Failed to fetch deployed solutions",
-        error: error.message,
+        error: error.message 
       });
     }
   });
@@ -2685,12 +2366,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         implementation_difficulty: template.implementationDifficulty,
         roi_percentage: template.roiPercentage
       }));
+
       res.json(templates);
     } catch (error: any) {
-      console.error("Error fetching agent templates:", error);
-      res.status(500).json({
+      console.error('Error fetching agent templates:', error);
+      res.status(500).json({ 
         message: "Failed to fetch agent templates",
-        error: error.message,
+        error: error.message 
       });
     }
   });
@@ -2701,8 +2383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { template_id, name, description, configuration } = req.body;
 
       if (!template_id || !name) {
-        return res.status(400).json({
-          message: "Template ID and name are required",
+        return res.status(400).json({ 
+          message: "Template ID and name are required" 
         });
       }
 
@@ -2727,9 +2409,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         configuration: {
           name,
           description,
-          ...configuration,
+          ...configuration
         },
-        created_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       };
 
       // Simulate deployment delay
@@ -2740,51 +2422,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         deployment: deployedSolution,
-        message: "Agent deployment initiated successfully",
+        message: "Agent deployment initiated successfully"
       });
     } catch (error: any) {
-      console.error("Error deploying agent:", error);
-      res.status(500).json({
+      console.error('Error deploying agent:', error);
+      res.status(500).json({ 
         message: "Failed to deploy agent",
-        error: error.message,
+        error: error.message 
       });
     }
   });
 
   // Update Business Analyzer to include deployment flow integration
-  app.post(
-    "/api/recommendations/:id/deploy",
-    async (req: Request, res: Response) => {
-      try {
-        const recommendationId = parseInt(req.params.id);
-        const { configuration } = req.body;
+  app.post("/api/recommendations/:id/deploy", async (req: Request, res: Response) => {
+    try {
+      const recommendationId = parseInt(req.params.id);
+      const { configuration } = req.body;
 
-        if (isNaN(recommendationId)) {
-          return res.status(400).json({ message: "Invalid recommendation ID" });
-        }
-
-        // Mark recommendation as selected for deployment
-        await storage.updateRecommendationStatus(recommendationId, "deploying");
-
-        // TODO: Implement automatic agent deployment from recommendation
-        const deploymentId = `rec-${recommendationId}-${Date.now()}`;
-        const deploymentUrl = `https://${deploymentId}.aiagntstudio.ai`;
-
-        res.json({
-          success: true,
-          deployment_id: deploymentId,
-          deployment_url: deploymentUrl,
-          message: "Recommendation deployment initiated",
-        });
-      } catch (error: any) {
-        console.error("Error deploying recommendation:", error);
-        res.status(500).json({
-          message: "Failed to deploy recommendation",
-          error: error.message,
-        });
+      if (isNaN(recommendationId)) {
+        return res.status(400).json({ message: "Invalid recommendation ID" });
       }
-    },
-  );
+
+      // Mark recommendation as selected for deployment
+      await storage.updateRecommendationStatus(recommendationId, 'deploying');
+
+      // TODO: Implement automatic agent deployment from recommendation
+      const deploymentId = `rec-${recommendationId}-${Date.now()}`;
+      const deploymentUrl = `https://${deploymentId}.aiagntstudio.ai`;
+
+      res.json({
+        success: true,
+        deployment_id: deploymentId,
+        deployment_url: deploymentUrl,
+        message: "Recommendation deployment initiated"
+      });
+    } catch (error: any) {
+      console.error('Error deploying recommendation:', error);
+      res.status(500).json({ 
+        message: "Failed to deploy recommendation",
+        error: error.message 
+      });
+    }
+  });
 
   // Serve the chatbot test/demo page
   app.get("/test-embed", (req: Request, res: Response) => {
@@ -2974,17 +2653,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </body>
 </html>`;
 
-    res.setHeader("Content-Type", "text/html");
+    res.setHeader('Content-Type', 'text/html');
     res.send(testPageHTML);
   });
 
-  // Also serve chatbot-embed.js with proper headers
+  // Also serve chatbot-embed.js with proper headers  
   app.get("/chatbot-embed.js", (req: Request, res: Response) => {
-    import("fs").then((fs) => {
-      import("path").then((path) => {
-        import("url").then((url) => {
-          res.setHeader("Content-Type", "application/javascript");
-          res.setHeader("Access-Control-Allow-Origin", "*");
+    import('fs').then(fs => {
+      import('path').then(path => {
+        import('url').then(url => {
+          res.setHeader('Content-Type', 'application/javascript');
+          res.setHeader('Access-Control-Allow-Origin', '*');
           const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
           res.sendFile(path.join(__dirname, "../public/chatbot-embed.js"));
         });
@@ -2993,87 +2672,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-deploy missing AI agents
-  app.post(
-    "/api/deploy-missing-agents",
-    async (req: Request, res: Response) => {
-      try {
-        const { agentAutoDeployer } = await import("./agent-auto-deploy");
-        const userId = req.body.userId || 1; // Default to system user
+  app.post("/api/deploy-missing-agents", async (req: Request, res: Response) => {
+    try {
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const userId = req.body.userId || 1; // Default to system user
 
-        await agentAutoDeployer.deployAllMissingAgents(userId);
-        const status = await agentAutoDeployer.getDeploymentStatus();
+      await agentAutoDeployer.deployAllMissingAgents(userId);
+      const status = await agentAutoDeployer.getDeploymentStatus();
 
-        res.json({
-          success: true,
-          message: "Missing agents deployed successfully",
-          status,
-        });
-      } catch (error) {
-        console.error("Error deploying missing agents:", error);
-        res.status(500).json({
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to deploy agents",
-        });
-      }
-    },
-  );
+      res.json({
+        success: true,
+        message: "Missing agents deployed successfully",
+        status
+      });
+    } catch (error) {
+      console.error("Error deploying missing agents:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to deploy agents"
+      });
+    }
+  });
 
   // Get comprehensive agent templates
-  app.get(
-    "/api/comprehensive-agent-templates",
-    async (req: Request, res: Response) => {
-      try {
-        const { agentAutoDeployer } = await import("./agent-auto-deploy");
-        const templates = agentAutoDeployer.getAvailableTemplates();
-        const categorized = agentAutoDeployer.getTemplatesByCategory();
+  app.get("/api/comprehensive-agent-templates", async (req: Request, res: Response) => {
+    try {
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const templates = agentAutoDeployer.getAvailableTemplates();
+      const categorized = agentAutoDeployer.getTemplatesByCategory();
 
-        res.json({
-          success: true,
-          templates,
-          categorized,
-          total: templates.length,
-        });
-      } catch (error) {
-        console.error("Error getting comprehensive agent templates:", error);
-        res.status(500).json({
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to get templates",
-        });
-      }
-    },
-  );
+      res.json({
+        success: true,
+        templates,
+        categorized,
+        total: templates.length
+      });
+    } catch (error) {
+      console.error("Error getting comprehensive agent templates:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get templates"
+      });
+    }
+  });
 
   // Deploy specific agent by template ID
-  app.post(
-    "/api/deploy-agent-template/:templateId",
-    async (req: Request, res: Response) => {
-      try {
-        const { templateId } = req.params;
-        const { agentAutoDeployer } = await import("./agent-auto-deploy");
-        const userId = req.body.userId || 1;
+  app.post("/api/deploy-agent-template/:templateId", async (req: Request, res: Response) => {
+    try {
+      const { templateId } = req.params;
+      const { agentAutoDeployer } = await import("./agent-auto-deploy");
+      const userId = req.body.userId || 1;
 
-        const deployedAgent = await agentAutoDeployer.deploySpecificAgent(
-          templateId,
-          userId,
-        );
+      const deployedAgent = await agentAutoDeployer.deploySpecificAgent(templateId, userId);
 
-        res.json({
-          success: true,
-          message: "Agent deployed successfully",
-          agent: deployedAgent,
-        });
-      } catch (error) {
-        console.error("Error deploying specific agent:", error);
-        res.status(500).json({
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to deploy agent",
-        });
-      }
-    },
-  );
+      res.json({
+        success: true,
+        message: "Agent deployed successfully",
+        agent: deployedAgent
+      });
+    } catch (error) {
+      console.error("Error deploying specific agent:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to deploy agent"
+      });
+    }
+  });
 
   // LLM SEO Optimizer API Routes
   app.post("/api/llm-seo/analyze", async (req: Request, res: Response) => {
