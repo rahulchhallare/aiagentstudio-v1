@@ -640,8 +640,7 @@ export default function LandingPage() {
                       </svg>
                       <span>Custom integrations</span>
                     </li>
-                    <li className="flex items-start">
-                      <svg
+                    <li className="flex items-start"><svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-5 w-5 text-green-500 mt-1 mr-2"
                         viewBox="0 0 20 20"

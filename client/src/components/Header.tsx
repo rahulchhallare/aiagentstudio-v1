@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AlertCircle, Bell, ChevronDown, HelpCircle, Menu, User, LogOut, X } from 'lucide-react';
 import logoPath from '@assets/image_1749638537646.png';
+import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -22,8 +23,24 @@ interface HeaderProps {
 export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+
+  const handleAuthRequiredNavigation = (path: string, itemName: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: `Please log in to access ${itemName}`,
+        variant: "destructive",
+      });
+      setIsLoginModalOpen(true);
+      return;
+    }
+    //navigate(path); //Corrected typo here.
+  };
 
   // Check if we're on the landing page
   const isLandingPage = location === '/';
@@ -46,7 +63,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <img src={logoPath} alt="AIAgentStudio.AI" className="h-10 w-auto block max-w-none" style={{display: 'block', position: 'relative'}} />
           </Link>
         </div>
-        
+
         {/* Mobile menu button */}
         <div className="block sm:hidden">
           <Button
@@ -58,7 +75,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <Menu className="h-6 w-6" />
           </Button>
         </div>
-        
+
         {/* Desktop navigation for landing page */}
         {isLandingPage && !user && (
           <div className="hidden sm:flex space-x-8">
@@ -96,7 +113,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             </div>
           </div>
         )}
-        
+
         {/* User menu when authenticated */}
         {user && (
           <div className="flex items-center space-x-4">
@@ -107,7 +124,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             >
               <Bell className="h-5 w-5" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -115,7 +132,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
@@ -144,7 +161,7 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </div>
         )}
       </nav>
-      
+
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
@@ -152,13 +169,13 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={()={() => setIsMobileMenuOpen(false)}
               className="text-gray-600 hover:text-gray-900"
             >
               <X className="h-6 w-6" />
             </Button>
           </div>
-          
+
           <div className="flex flex-col space-y-4 p-6">
             {isLandingPage && !user ? (
               <Fragment>
@@ -235,7 +252,3 @@ export default function Header({ onLoginClick, onSignupClick }: HeaderProps) {
     </header>
   );
 }
-
-
-
-

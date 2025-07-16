@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ interface AnalysisResult {
 }
 
 export default function BusinessAnalyzer() {
+  const [, navigate] = useLocation();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
@@ -83,6 +85,18 @@ export default function BusinessAnalyzer() {
   >(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access AI Business Analyzer",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [user, navigate, toast]);
 
   const handleAnalyze = async () => {
     if (!websiteUrl) {

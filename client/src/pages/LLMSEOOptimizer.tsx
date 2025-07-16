@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   Card, 
@@ -120,6 +123,9 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
 };
 
 export default function LLMSEOOptimizer() {
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [industry, setIndustry] = useState("");
@@ -131,6 +137,18 @@ export default function LLMSEOOptimizer() {
   const [activeTab, setActiveTab] = useState("analyze");
 
   const queryClient = useQueryClient();
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access LLM SEO Optimizer",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [user, navigate, toast]);
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: { websiteUrl: string; businessName: string; industry: string }) => {
