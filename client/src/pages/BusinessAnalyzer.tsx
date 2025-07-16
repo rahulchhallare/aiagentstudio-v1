@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
 
 interface AnalysisResult {
   analysis: {
@@ -83,9 +87,20 @@ export default function BusinessAnalyzer() {
   const [selectedRecommendations, setSelectedRecommendations] = useState<
     Set<number>
   >(new Set());
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const handleLoginClick = () => {
+    setIsSignupModalOpen(false);
+    setIsLoginModalOpen(true);
+  };
+
+  const handleSignupClick = () => {
+    setIsLoginModalOpen(false);
+    setIsSignupModalOpen(true);
+  };
   // No authentication requirement - allow all users to analyze websites
 
   const handleAnalyze = async () => {
@@ -172,6 +187,7 @@ export default function BusinessAnalyzer() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Header onLoginClick={handleLoginClick} onSignupClick={handleSignupClick} />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -921,8 +937,7 @@ export default function BusinessAnalyzer() {
                                           recommendation.creationPrompt
                                             .agentName
                                         }
-                                      </p>
-                                    </div>
+                                      </p></div>
                                     <div>
                                       <p className="text-sm font-medium text-orange-800">
                                         Purpose:
@@ -1287,6 +1302,20 @@ export default function BusinessAnalyzer() {
           </div>
         )}
       </div>
+<Footer />
+
+      {/* Login and Signup Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSignupClick={handleSignupClick}
+      />
+
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onLoginClick={handleLoginClick}
+      />
     </div>
   );
 }
