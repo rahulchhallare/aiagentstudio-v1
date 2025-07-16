@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import LoginModal from "@/components/LoginModal";
+import SignupModal from "@/components/SignupModal";
 
 interface AnalysisResult {
   analysis: {
@@ -83,12 +85,24 @@ export default function BusinessAnalyzer() {
   const [selectedRecommendations, setSelectedRecommendations] = useState<
     Set<number>
   >(new Set());
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  // No authentication requirement - allow all users to analyze websites
+  // Check if user is authenticated, if not show login modal
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setShowLoginModal(true);
+    }
+  }, [user, isLoading]);
 
   const handleAnalyze = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (!websiteUrl) {
       toast({
         title: "URL Required",
@@ -102,7 +116,7 @@ export default function BusinessAnalyzer() {
     try {
       const response = await apiRequest("POST", "/api/analyze-website", {
         websiteUrl,
-        userId: user?.id,
+        userId: user.id,
       });
 
       if (response.ok) {
@@ -184,8 +198,14 @@ export default function BusinessAnalyzer() {
             <Alert className="max-w-2xl mx-auto mb-6">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Please log in to save your analysis results. You can still
-                analyze websites without logging in, but results won't be saved.
+                Please log in to use the AI Business Analyzer. 
+                <Button
+                  variant="link"
+                  className="p-0 h-auto ml-1 text-primary underline"
+                  onClick={() => setShowLoginModal(true)}
+                >
+                  Sign in here
+                </Button>
               </AlertDescription>
             </Alert>
           )}
@@ -208,7 +228,7 @@ export default function BusinessAnalyzer() {
                     />
                     <Button
                       onClick={handleAnalyze}
-                      disabled={isAnalyzing || !websiteUrl}
+                      disabled={isAnalyzing || !websiteUrl || !user}
                       className="ml-2"
                     >
                       {isAnalyzing ? (
@@ -219,7 +239,7 @@ export default function BusinessAnalyzer() {
                       ) : (
                         <>
                           <Globe className="w-4 h-4 mr-2" />
-                          Analyze
+                          {!user ? "Sign in to Analyze" : "Analyze"}
                         </>
                       )}
                     </Button>
@@ -1287,6 +1307,26 @@ export default function BusinessAnalyzer() {
           </div>
         )}
       </div>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSignupClick={() => {
+          setShowLoginModal(false);
+          setShowSignupModal(true);
+        }}
+      />
+
+      {/* Signup Modal */}
+      <SignupModal
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onLoginClick={() => {
+          setShowSignupModal(false);
+          setShowLoginModal(true);
+        }}
+      />
     </div>
   );
 }
